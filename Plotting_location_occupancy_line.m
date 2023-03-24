@@ -1,4 +1,3 @@
-
 %% horizontal line plot
 
 %dir='/Users/jisoo/Williams Lab Dropbox/Guillaume Etter/Jisoo/JisooProject2020/2020_Results_aftercutting/Decoding'
