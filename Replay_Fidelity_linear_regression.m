@@ -287,6 +287,7 @@ Shuffle_position_jumpiness=NaN(numshuffles,length(Replay_score_actual));
 Shuffle_time_jumpiness=NaN(numshuffles,length(Replay_score_actual));
 
 warning off
+rng(123,'twister')
 for k=1:numshuffles;
     tic
     % Use decoded probabilities - shuffle- get maximum value. 

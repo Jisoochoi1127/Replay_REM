@@ -112,7 +112,7 @@ box off
 Replay_score_shuffle_position=[];
 Replay_score_shuffle_time=[];
 
-
+rng(123,'twister')
 for k=1:numshuffles;
     % Use decoded probabilities - shuffle- get maximum value. 
     % 
