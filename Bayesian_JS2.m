@@ -28,6 +28,7 @@
 
  % add speed for each spatial bin_jisoo - done in fig2_ag
  
+ %lalalala test
  function [decoding]=Bayesian_JS2
 %% Loading input
 

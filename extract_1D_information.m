@@ -22,6 +22,7 @@ function [MI, posterior, occupancy_vector, prob_being_active, likelihood ] = ext
 % OPTIONAL vectors:
 % inclusion_vec: logical vector including (1) or excluding (0) corresponding timestamps. Has to be the same size as binary_trace.
 
+% Test dkdkdkdk
 %% Ignore excluded periods
 binarized_trace = binarized_trace(inclusion_vector);
 interp_behav_vec = interp_behav_vec(inclusion_vector);
