@@ -1,43 +1,12 @@
-%% To do list
-% add evaluation of confusion matrix
-% add directionality in LT - i added to fig2a_g_js but... how to combine
-%Calculate mean velocity for each spatial bin - Done
-%Add Occupancy_bin to check the occpuancy rate for each bin - done
-
-%Test with only using place cell - Turns out higher decoding error, lower
-%agreement
-%HAT - decoding error, agreement half/left/right trajecoty-Done higher
-%decoding performance in anxiety zone
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%1. check why there is moment that decoding can't estimate during REM -Done
-%2. Check if deconvolved signal - makes better !-Done (not better -
-%convert deconvolved 0,1 and then ran Decoding_with_deconvolv_JS -
-%agreement; 0.08, error;34
-
-%3. Make time window - start with ..... - check calcium imaigng decoding
-%time bin
-
-%4. calculate linear regression on the time bin
-%5. save R2 value 
-%6. shuffle time, space bin  and calculate the R2
-%7. Compare /quantify replay events exceed 99percent?
-
-
- % add speed for each spatial bin_jisoo - done in fig2_ag
- 
- %lalalala test
- function [decoding]=Bayesian_JS2
+function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_pre_SW, all_binary_post_SW, all_binary_post_REM)
 %% Loading input
 
-clear;
-close all;
+% clear;
+% close all;
 
 %Loading track data and convert to each variable
-load 'ms'
-load 'behav'
+% load 'ms'
+% % load 'behav'
 ca_time= ms.time/1000;
 ca_data=ms.RawTraces ;
 behav_time=behav.time/1000;
@@ -46,10 +15,10 @@ behav_vec=behav.position(:,1);
  cell_used = logical(ones(size(ca_data,2),1)); % Use every cell
 
 %Loading sleep data
-load 'all_binary_post_REM'
-load 'all_binary_post_SW'
-load 'all_binary_pre_REM'
-load 'all_binary_pre_SW'
+% load 'all_binary_post_REM'
+% load 'all_binary_post_SW'
+% load 'all_binary_pre_REM'
+% load 'all_binary_pre_SW'
 
 %%  Binarizing calcium data during Track
 sampling_frequency = 30; % This data set has been sampled at 30 images per second
