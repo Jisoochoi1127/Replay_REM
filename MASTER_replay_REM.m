@@ -2,21 +2,30 @@
 
 %% Jisoo to do list
 
-% for master script
+% for master scrip
 % DONE_ collect data first as ms is needed for params
 % DONE_ Set up parameters -- May 11th 
-% need to add line(line 45) for passing some sessions doens't have sleep data
-%(ex)pv1254-Dark transparet
+% DONE_need to add line(line 45) for passing some sessions doens't have sleep data
+% DONE_ add Plotting part from Bayesian_JS script
+% Run data session for whole session
 
 % for Bayesian_JS2 script
 % DONE_ change Bayesian JS2 variable using params -- May 11th 
-% Separate plotting section from Bayesian JS2
-% Remove all_binary_pre_SW,all_binary_post_SW in the analysis
+% DONE_ add blocking method to get training_set 
+% DONE_ Separate plotting section from Bayesian JS2
+% DONE_ Remove all_binary_pre_SW,all_binary_post_SW in the analysis
+% Remove plotting part from Bayesian_JS2
+% add shuffling error 
 
 % for Replay script
 % separate the selection part from replay
 % input jumpiness in replay script 
 
+%% something to discuss
+% Plotting tunincurve, confusion in the master script?-Then we need to save
+% variables not just decoding.
+% Does RNG at the beginning make same shuffling...?
+% Set parameters for figures or we can run Eric's script later
 
 
 %% set path for data
@@ -34,15 +43,15 @@ sub_list = dir('pv*');
 
 for iSub = length(sub_list):-1:1
     cd([data_dir filesep sub_list(iSub).name]);
-    sess_list = dir('*D*');
+    LT_list = dir('*LTD*');
+    HAT_list= dir('*HATD*');
+    sess_list=[LT_list; HAT_list];
     
     for iS  = length(sess_list):-1:1
         
         cd([data_dir filesep sub_list(iSub).name filesep sess_list(iS).name]);
         
-        % need to add line for pass this if the session doesn't have this
-        % structure
-        
+       
         warning off
         load('ms.mat', 'ms')
         load('behav.mat')
@@ -76,16 +85,17 @@ PARAMS.data.behav_time=behav.time/1000;
 PARAMS.data.behav_vec=behav.position(:,1);
 
 % set the parameters for decoding
-
 PARAMS.decoding.bin_size = 3;
 PARAMS.decoding.cell_used = logical(ones(size(ca_data,2),1)); % Use every cell
 PARAMS.decoding.sampling_frequency = 30; % This data set has been sampled at 30 images per second
 PARAMS.decoding.z_threshold = 2; % A 2 standard-deviation threshold is usually optimal to differentiate calcium ativity from background noise
 PARAMS.decoding.min_speed_threshold = 5; % 2 cm.s-1
-
+PARAMS.decoding.training_set_creation_method = 'Block'; 
+%'quarter_portion'%'Non_overlapped';%divided ; quarter%'random'; % 'odd', odd timestamps; 'first_portion', first portion of the recording; 3, 'random' random frames
+PARAMS.decoding.training_set_portion = 1; % Portion of the recording used to train the decoder for method 2 and 3
+PARAMS.decoding.len = 10; % length of block frames(alternating training/decoding for this length of block)
 
 % set the parameters for replay
-
 PARAMS.replay.step_size=10;
 PARAMS.replay.windowsize=29;
 PARAMS.replay.numshuffles = 1000; 
@@ -134,6 +144,80 @@ end
 
 
 %% Figures
+
+% Plot the tunning curves
+[~,max_index] = max(tuning_curve_data,[],1);
+[~,sorted_index] = sort(max_index);
+sorted_tuning_curve_data = tuning_curve_data(:,sorted_index);
+
+figure
+imagesc(bin_centers_vector,1:size(PARAMS.data.ca_data,2),sorted_tuning_curve_data')
+daspect([1 1 1])
+caxis([0 0.3])
+title 'Neuronal tuning curves'
+xlabel 'Position on the track (cm)'
+ylabel 'Cell ID'
+
+% Plot the confusion matrix
+figure
+imagesc(bin_centers_vector, bin_centers_vector, confusion_matrix)
+set(gca,'YDir','normal') 
+colormap hot
+colorbar
+caxis([0 1])
+title 'Confusion matrix'
+xlabel 'Actual position (cm)'
+ylabel 'Decoded position (cm)'
+
+Confusion_max=max(confusion_matrix)';
+figure
+plot(Confusion_max);
+
+% Plotting decoded position during post-REM
+    
+figure;
+subplot(2,1,1)
+x1=1:size(all_binary_post_REM,1);
+
+imagesc(x1,bin_centers_vector,REM_decoded_probabilities)
+title 'Posterior probabilities during REM'
+xlabel 'Time (s)'
+ylabel 'Position on the track (cm)'
+ax1 = gca;
+ax1.CLim = [0 0.1];
+%ax1.XLim = [447 452];
+%ax1.XLim = [480 484]; % Modified by Jisoo
+subplot(2,1,2)
+plot(x1,sum(all_binary_post_REM,2))
+title 'Sum_binarized'
+xlabel 'Time (s)'
+ylabel 'Total binary'
+ax2 = gca;
+linkaxes([ax1 ax2], 'x')
+    
+
+% Plotting decoded position during pre-REM
+    
+figure;
+subplot(2,1,1)
+x3=1:size(all_binary_pre_REM,1);
+imagesc(x3,bin_centers_vector,pre_REM_decoded_probabilities)
+title 'Posterior probabilities during pre REM'
+xlabel 'Time (s)'
+ylabel 'Position on the track (cm)'
+ax1 = gca;
+ax1.CLim = [0 0.1];
+
+subplot(2,1,2)
+plot(x3,sum(all_binary_pre_REM,2))
+title 'Sum_binarized'
+xlabel 'Time (s)'
+ylabel 'Total binary'
+ax2 = gca;
+linkaxes([ax1 ax2], 'x')
+
+
+
 
 
 % script for Fig 1

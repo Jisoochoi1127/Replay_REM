@@ -33,10 +33,23 @@ for cell_i = 1:size(PARAMS.data.ca_data,2)
     binarized_data(:,cell_i) = extract_binary(PARAMS.data.ca_data(:,cell_i), PARAMS.decoding.sampling_frequency, PARAMS.decoding.z_threshold);
 end
 
-%% Select random frames to train decoder on 50% of wake data
+%% Select random frames to train decoder 
 
-training_ts = create_training_set(PARAMS.data.ca_time,'random',0.5);
-training_ts(running_ts == 0) = 0;
+if contains(PARAMS.decoding.training_set_creation_method,'Block')
+    
+    len = 10; % length of block frames(alternating training/decoding for this length of block)
+
+    [training_ts] =Analysis_Create_training_decoding_alternate(ca_time,PARAMS.decoding.len);
+    
+   training_ts(running_ts == 0) = 0; % Exclude periods of immobility from the traing set
+
+   
+else
+    training_ts = create_training_set(PARAMS.data.ca_time,'random',0.5);
+    training_ts(running_ts == 0) = 0;
+    % Exclude periods of immobility from the traing set
+end
+
 
 %% Create tuning curves for every cell
     for cell_i = 1:size(binarized_data,2)
@@ -137,28 +150,16 @@ ax2 = gca;
 ax2.XLim = [515 521]; % Let's plot a single trajectory
 linkaxes([ax1 ax2], 'x')
 
-% subplot(4,1,4)
-% plot(ca_time,sum(binarized_data,2))
-% title 'Sum_binarized'
-% xlabel 'Time (s)'
-% ylabel 'Total binary'
-% ax2 = gca;
-% ax2.XLim = [447 452]; % Let's plot a single trajectory
-% linkaxes([ax1 ax2], 'x')
 
 %% Remove training timestamps to assess decoding error rate
 decoded_bin(~decoding_ts) = nan;
-
 decoded_position(~decoding_ts) = nan;
-%decoded_probabilities(:,~decoding_ts) = nan; % this is wrong.
 WAKE_decoded_probabilities(:,~decoding_ts) = nan;
 
 actual_bin(~decoding_ts) = nan;
 actual_position(~decoding_ts) = nan;
 actual_bin = actual_bin';
 actual_position =  actual_position';
-
-
 
 
 %% Compute decoding agreement
@@ -209,23 +210,10 @@ plot(Confusion_max);
     REM_decoded_position = bin_centers_vector(REM_decoded_bin);
     
     REM_decoded_bin(isnan(REM_max_prob)) = nan;
-    % added by jisoo _ nan value for position as well
 
     REM_decoded_position(isnan(REM_decoded_bin)) = nan;
 
 
-%% Extract decoded position during post SWS sleep
-
-[SWS_decoded_probabilities] = bayesian_decode1D(all_binary_post_SW, occupancy_vector, prob_being_active, tuning_curve_data, PARAMS.decoding.cell_used);
-
-% Maximum a posteriori
-[SWS_max_prob, SWS_decoded_bin] = max(SWS_decoded_probabilities,[],1);
-SWS_decoded_position = bin_centers_vector(SWS_decoded_bin);
-
-SWS_decoded_bin(isnan(SWS_max_prob)) = nan;
-%added by jisoo
-
-SWS_decoded_position(isnan(SWS_decoded_bin)) = nan;
 
   
 %% Extract decoded position during pre REM sleep
@@ -237,26 +225,11 @@ SWS_decoded_position(isnan(SWS_decoded_bin)) = nan;
 pre_REM_decoded_position = bin_centers_vector(pre_REM_decoded_bin);
 
 pre_REM_decoded_bin(isnan(pre_REM_max_prob)) = nan;
-%added by jisoo
+
 pre_REM_decoded_position(isnan(pre_REM_decoded_bin)) = nan;
 
-
-
-%% Extract decoded position during pre SWS sleep
-
-[pre_SWS_decoded_probabilities] = bayesian_decode1D(all_binary_pre_SW, occupancy_vector, prob_being_active, tuning_curve_data, PARAMS.decoding.cell_used);
-
-% Maximum a posteriori
-[pre_SWS_max_prob, pre_SWS_decoded_bin] = max(pre_SWS_decoded_probabilities,[],1);
-pre_SWS_decoded_position = bin_centers_vector(pre_SWS_decoded_bin);
-
-pre_SWS_decoded_bin(isnan(pre_SWS_max_prob)) = nan;
-%added by jisoo
-
-pre_SWS_decoded_position(isnan(pre_SWS_decoded_bin)) = nan;
-
  
-  %% Plotting decoded position during REM
+%% Plotting decoded position during post-REM
     
 figure;
 subplot(2,1,1)
@@ -278,28 +251,9 @@ ylabel 'Total binary'
 ax2 = gca;
 linkaxes([ax1 ax2], 'x')
     
-%% Plotting decoded position during SWS
-    
-figure;
-subplot(2,1,1)
-x2=1:size(all_binary_post_SW,1);
 
-imagesc(x2,bin_centers_vector,SWS_decoded_probabilities)
-title 'Posterior probabilities during SWS'
-xlabel 'Time (s)'
-ylabel 'Position on the track (cm)'
-ax1 = gca;
-ax1.CLim = [0 0.1];
 
-subplot(2,1,2)
-plot(x2,sum(all_binary_post_SW,2))
-title 'Sum_binarized'
-xlabel 'Time (s)'
-ylabel 'Total binary'
-ax2 = gca;
-linkaxes([ax1 ax2], 'x')
-
-%% Plotting decoded position during pre REM
+%% Plotting decoded position during pre-REM
     
 figure;
 subplot(2,1,1)
@@ -319,25 +273,6 @@ ylabel 'Total binary'
 ax2 = gca;
 linkaxes([ax1 ax2], 'x')
 
-%% Plotting decoded position during pre SWS
-    
-figure;
-subplot(2,1,1)
-x4=1:size(all_binary_pre_SW,1);
-imagesc(x4,bin_centers_vector,pre_SWS_decoded_probabilities)
-title 'Posterior probabilities during pre SWS'
-xlabel 'Time (s)'
-ylabel 'Position on the track (cm)'
-ax1 = gca;
-ax1.CLim = [0 0.1];
-
-subplot(2,1,2)
-plot(x4,sum(all_binary_pre_SW,2))
-title 'Sum_binarized'
-xlabel 'Time (s)'
-ylabel 'Total binary'
-ax2 = gca;
-linkaxes([ax1 ax2], 'x')
 
 %% Save the output of decoded results
 decoding.bin_centers_vector=bin_centers_vector;
@@ -352,23 +287,16 @@ decoding.REM_decoded_probabilities=REM_decoded_probabilities;
 decoding.REM_max_prob=REM_max_prob;
 decoding.REM_decoded_position=REM_decoded_position;
 
-decoding.SWS_decoded_probabilities=SWS_decoded_probabilities;
-decoding.SWS_max_prob=SWS_max_prob;
-decoding.SWS_decoded_position=SWS_decoded_position;
-
 decoding.pre_REM_decoded_probabilities=pre_REM_decoded_probabilities;
 decoding.pre_REM_max_prob=pre_REM_max_prob;
 decoding.pre_REM_decoded_position=pre_REM_decoded_position;
 
-decoding.pre_SWS_decoded_probabilities=pre_SWS_decoded_probabilities;
-decoding.pre_SWS_max_prob=pre_SWS_max_prob;
-decoding.pre_SWS_decoded_position=pre_SWS_decoded_position;
+
 decoding.decoding_error=decoding_error;
 decoding.abs_decoding_error=abs_decoding_error;
     
 
 %save('decoding.mat','decoding')
-%save('decoding_training90.mat','decoding')
 
  end
 
