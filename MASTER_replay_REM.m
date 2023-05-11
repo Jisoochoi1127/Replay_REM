@@ -7,17 +7,25 @@
 % DONE_ Set up parameters -- May 11th 
 % DONE_need to add line(line 45) for passing some sessions doens't have sleep data
 % DONE_ add Plotting part from Bayesian_JS script
+% DONE_ add replay part
 % Run data session for whole session
+
 
 % for Bayesian_JS2 script
 % DONE_ change Bayesian JS2 variable using params -- May 11th 
 % DONE_ add blocking method to get training_set 
 % DONE_ Separate plotting section from Bayesian JS2
 % DONE_ Remove all_binary_pre_SW,all_binary_post_SW in the analysis
+% DONE_ add shuffling error
+% DONE_ save decoding as id, data
+% check shuffling error
+%Check [Shuffled_decoded_probabilities] = bayesian_decode1D(Shuffled_binarized_data, occupancy_vector_S, prob_being_active_S, tuning_curve_data_shuffled, PARAMS.decoding.cell_used);
+% add half left, right decoding error
 % Remove plotting part from Bayesian_JS2
-% add shuffling error 
+
 
 % for Replay script
+% step size etc put PARAMS.
 % separate the selection part from replay
 % input jumpiness in replay script 
 
@@ -26,6 +34,8 @@
 % variables not just decoding.
 % Does RNG at the beginning make same shuffling...?
 % Set parameters for figures or we can run Eric's script later
+% Bayesian_JS2 ; check rng with shuffled data
+% decoding save - if it's saved as subject, session, ... when we load...?
 
 
 %% set path for data
@@ -34,6 +44,8 @@ inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Ma
 mkdir(inter_dir);
 decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
 mkdir(decoding_dir);
+replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+mkdir(replay_dir);
 
 
 %% collect data and generate intermediate files.
@@ -94,6 +106,7 @@ PARAMS.decoding.training_set_creation_method = 'Block';
 %'quarter_portion'%'Non_overlapped';%divided ; quarter%'random'; % 'odd', odd timestamps; 'first_portion', first portion of the recording; 3, 'random' random frames
 PARAMS.decoding.training_set_portion = 1; % Portion of the recording used to train the decoder for method 2 and 3
 PARAMS.decoding.len = 10; % length of block frames(alternating training/decoding for this length of block)
+PARAMS.decoding.numshuffles = 1000; % calculate average decoding error with 1000 shuffled data
 
 % set the parameters for replay
 PARAMS.replay.step_size=10;
@@ -105,7 +118,7 @@ PARAMS.replay.jumpiness=50;
 
 % style parameters for figures
 
-%% Generate tunning curves
+%% Decoding
 cd(inter_dir);
 
 fnames = dir('*_data.mat');
@@ -116,11 +129,11 @@ for iF = 1:length(fnames)
     warning on
     fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
     tic
-    [decoding] = Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_pre_SW, all_binary_post_SW, all_binary_post_REM);
+    [decoding] = Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM);
     toc
     
     % where and how do we save this decoding?
-    save([decoding_dir filesep info.subject '_' info.session '_data.mat'], 'decoding')
+    save([decoding_dir filesep info.subject '_' info.session '_decoding.mat'], 'decoding')
     
     
     clear decoding ms behav info all_binary_pre_REM all_binary_pre_SW all_binary_post_REM all_binary_post_SW
@@ -134,11 +147,26 @@ end
 % along with the paramters and let it go.
 
 
-%% Decoding
-
-
-
 %% Replay
+
+cd(decoding_dir);
+fnames = dir('*_decoding.mat');
+for iF = 1:length(fnames)
+    warning off
+    load(fnames(iF).name)
+    warning on
+    fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
+    tic
+   
+    [out]=Replay_Fidelity_linear_regression(decoding)
+    toc
+    
+    % where and how do we save this decoding?
+    save([replay_dir filesep info.subject '_' info.session '_replay.mat'], 'out')
+        
+    
+    fprintf('done\n')
+end
 
 
 

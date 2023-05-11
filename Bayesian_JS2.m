@@ -1,7 +1,7 @@
 %add Params. input 
  
 
-function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_pre_SW, all_binary_post_SW, all_binary_post_REM)
+function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM)
 
 %% Interpolate behav and calcium
 
@@ -53,7 +53,7 @@ end
 
 %% Create tuning curves for every cell
     for cell_i = 1:size(binarized_data,2)
-        [~, ~, occupancy_vector, prob_being_active(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, training_ts);
+        [MI(cell_i), PDF(:,cell_i), occupancy_vector, prob_being_active(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, training_ts);
     end
     
     Occupancy_bin=occupancy_vector;
@@ -174,6 +174,69 @@ decoding_error = actual_position - decoded_position;
 abs_decoding_error=abs(decoding_error);
 mean_decoding_error = mean(abs(decoding_error), 'omitnan');
 
+%% To calculate decoding error in Half left/right in HAT
+Half_left_actual=find(actual_position<=50);
+Half_right_actual=find(actual_position>50);
+Half_left_decoded=decoded_position(Half_left_actual);
+Half_right_decoded=decoded_position(Half_right_actual);
+decoding_error_half_left = actual_position(Half_left_actual) - Half_left_decoded;
+mean_decoding_error_half_left = mean(abs(decoding_error_half_left), 'omitnan');
+
+decoding_error_half_right = actual_position(Half_right_actual) - Half_right_decoded;
+mean_decoding_error_half_right = mean(abs(decoding_error_half_right), 'omitnan');
+
+
+%% To calculate decoding error in half left/ right with matched frames in open/closed
+
+ if contains(data,'day1') | contains(data,'day5')
+    
+        for k=1:Numshuffle;
+        random_frames_to_match=randperm(length(Half_right_actual),length(Half_left_actual));
+        Matched_right_frame=Half_right_actual(random_frames_to_match);
+        Matched_Half_right_decoded=decoded_position(Matched_right_frame);
+        Matched_decoding_error_half_right = actual_position(Matched_right_frame) - Matched_Half_right_decoded;
+        Matched_mean_decoding_error_half_right(k) = mean(abs(Matched_decoding_error_half_right), 'omitnan');
+        
+        end
+
+        Matched_Avg_decoding_error_closed=mean(Matched_mean_decoding_error_half_right);
+        Matcehd_Avg_decoding_error_open = mean(abs(decoding_error_half_left), 'omitnan');
+ else
+     
+      for k=1:Numshuffle;
+        random_frames_to_match=randperm(length(Half_left_actual),length(Half_right_actual));
+        Matched_left_frame=Half_left_actual(random_frames_to_match);
+        Matched_Half_left_decoded=decoded_position(Matched_left_frame);
+        Matched_decoding_error_half_left = actual_position(Matched_left_frame) - Matched_Half_left_decoded;
+        Matched_mean_decoding_error_half_left(k) = mean(abs(Matched_decoding_error_half_left), 'omitnan');
+        
+        end
+
+        Matched_Avg_decoding_error_open=mean(Matched_mean_decoding_error_half_left);
+        Matcehd_Avg_decoding_error_closed = mean(abs(decoding_error_half_right), 'omitnan');
+      
+     
+ end
+ 
+
+        
+   
+
+%% Calculate decoding agreement , decoding error in half left/right
+
+left_idx_actual=find(actual_bin<=17);
+right_idx_actual=find(actual_bin>17);
+
+left_decoded=decoded_bin(left_idx_actual);
+right_decoded=decoded_bin(right_idx_actual);
+
+left_actual=actual_bin(left_idx_actual);
+right_actual=actual_bin(right_idx_actual);
+
+left_correct=sum(double(left_decoded==left_actual))/length(left_idx_actual);
+right_correct=sum(double(right_decoded==right_actual))/length(right_idx_actual);
+
+
 %% Compute confusion matrix
 confusion_matrix = zeros(length(bin_centers_vector),length(bin_centers_vector));
 
@@ -198,6 +261,45 @@ Confusion_max=max(confusion_matrix)';
 figure
 plot(Confusion_max);
 
+%% Create tuning curves with shuffled binarized
+
+for k=PARAMS.decoding.numshuffles:-1:1
+    
+    Shuffled_binarized_data =zeros(size(binarized_data));
+    random_ts=[];
+    for ii=size(binarized_data,2):-1:1
+     
+        rng(1234, 'twister'); 
+        random_ts(ii) = randi(size(binarized_data,1));
+        Shuffled_binarized_data(:,ii)=circshift(binarized_data(:,ii),random_ts(ii),1);
+      
+    end
+    
+    
+for cell_i = size(Shuffled_binarized_data,2):-1:1
+    [MI_S(cell_i), PDF_S(:,cell_i), occupancy_vector_S, prob_being_active_S(cell_i), tuning_curve_data_shuffled(:,cell_i) ] = extract_1D_information(Shuffled_binarized_data(:,cell_i), interp_behav_vec, bin_vector, training_ts);
+end
+
+
+[Shuffled_decoded_probabilities] = bayesian_decode1D(Shuffled_binarized_data, occupancy_vector_S, prob_being_active_S, tuning_curve_data_shuffled, PARAMS.decoding.cell_used);
+
+[max_shuffled_decoded_prob, shuffled_decoded_bin] = max(Shuffled_decoded_probabilities,[],1);
+decoded_position_shuffle = bin_centers_vector(shuffled_decoded_bin);
+
+%% Remove training timestamps to assess decoding error rate
+shuffled_decoded_bin(~decoding_ts) = nan;
+decoded_position_shuffle(~decoding_ts) = nan;
+Shuffled_decoded_probabilities(:,~decoding_ts) = nan;
+
+
+%% Compute decoding error
+decoding_error_shuffle = actual_position - decoded_position_shuffle;
+mean_decoding_error_shuffle(k) = mean(abs(decoding_error_shuffle), 'omitnan')';
+abs_decoding_error_shuffle=abs(decoding_error_shuffle);
+whole_shuffle_error=abs(mean_decoding_error_shuffle);
+
+end
+Avg_total_shuffle_error=mean(mean_decoding_error_shuffle);
 
 
 
@@ -294,9 +396,9 @@ decoding.pre_REM_decoded_position=pre_REM_decoded_position;
 
 decoding.decoding_error=decoding_error;
 decoding.abs_decoding_error=abs_decoding_error;
-    
+decoding.Avg_total_shuffle_error=Avg_total_shuffle_error;
+decoding.whole_shuffle_error=whole_shuffle_error;
 
-%save('decoding.mat','decoding')
 
  end
 
