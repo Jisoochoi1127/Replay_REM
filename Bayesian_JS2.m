@@ -1,13 +1,15 @@
 
  
- function [decoding]=Bayesian_JS2(ms,behav,all_binary_post_REM,all_binary_post_SW,all_binary_pre_REM,all_binary_pre_SW)
+
+function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_pre_SW, all_binary_post_SW, all_binary_post_REM)
 %% Loading input
 
-clear;
-close all;
+% clear;
+% close all;
 
 %Loading track data and convert to each variable
 % load 'ms'
+
 % load 'behav'
  ca_time= ms.time/1000;
  ca_data=ms.RawTraces ;
@@ -15,6 +17,14 @@ close all;
  behav_vec=behav.position(:,1);
 % 
 % cell_used = logical(ones(size(ca_data,2),1)); % Use every cell
+
+% % load 'behav'
+ca_time= ms.time/1000;
+ca_data=ms.RawTraces ;
+behav_time=behav.time/1000;
+behav_vec=behav.position(:,1);
+
+ cell_used = logical(ones(size(ca_data,2),1)); % Use every cell
 
 %Loading sleep data
 % load 'all_binary_post_REM'
