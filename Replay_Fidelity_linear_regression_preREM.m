@@ -1,7 +1,7 @@
 %% 1. Binning the time
 tic
 load decoding
-
+rng(PARAMS.rng, 'twister');
 %step_size ; overlapped portion. 
 %windowsize=duration of time window.
 

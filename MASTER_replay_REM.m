@@ -9,6 +9,7 @@
 % DONE_ add Plotting part from Bayesian_JS script
 % DONE_ add replay part
 % Run data session for whole session
+% Add Place cell script - pv1254_HATD1
 
 
 % for Bayesian_JS2 script
@@ -21,8 +22,8 @@
 % check shuffling error
 %Check [Shuffled_decoded_probabilities] = bayesian_decode1D(Shuffled_binarized_data, occupancy_vector_S, prob_being_active_S, tuning_curve_data_shuffled, PARAMS.decoding.cell_used);
 % add half left, right decoding error
-% Remove plotting part from Bayesian_JS2
-
+% Remove plotting part from Bayesian_JS2-confusion matrix. etc
+%add decoding.tuningcurve
 
 % for Replay script
 % step size etc put PARAMS.
@@ -30,11 +31,9 @@
 % input jumpiness in replay script 
 
 %% something to discuss
-% Plotting tunincurve, confusion in the master script?-Then we need to save
 % variables not just decoding.
-% Does RNG at the beginning make same shuffling...?
-% Set parameters for figures or we can run Eric's script later
-% Bayesian_JS2 ; check rng with shuffled data
+
+%  run Eric's script later
 % decoding save - if it's saved as subject, session, ... when we load...?
 
 
@@ -55,9 +54,12 @@ sub_list = dir('pv*');
 
 for iSub = length(sub_list):-1:1
     cd([data_dir filesep sub_list(iSub).name]);
+    
+    
     LT_list = dir('*LTD*');
     HAT_list= dir('*HATD*');
     sess_list=[LT_list; HAT_list];
+    
     
     for iS  = length(sess_list):-1:1
         
@@ -80,7 +82,7 @@ for iSub = length(sub_list):-1:1
         
         
         fprintf('Saving %s   %s ...\n', info.subject, info.session)
-        save([inter_dir filesep info.subject '_' info.session '_data.mat'], 'ms', 'behav', 'all_binary_pre_REM', 'all_binary_pre_SW', 'all_binary_post_REM', 'all_binary_post_SW', 'info')
+        save([inter_dir filesep info.subject '_' info.session '_data.mat'], 'ms', 'behav', 'all_binary_pre_REM', 'all_binary_post_REM', 'info')
         warning on
     end
 end
@@ -88,7 +90,7 @@ end
 %% PARAMS
 
 % set RNG for consistency
-rng(1234, 'twister'); 
+PARAMS.rng = 1234;
 
 % set the parameters for data
 PARAMS.data.ca_time= ms.time/1000;

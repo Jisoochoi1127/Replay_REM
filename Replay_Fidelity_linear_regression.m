@@ -6,6 +6,7 @@
 %% 1. Binning the time
 function [out]=Replay_Fidelity_linear_regression(decoding)
 tic
+rng(PARAMS.rng, 'twister');
 %load decoding
 %load decoding_training90.mat
 

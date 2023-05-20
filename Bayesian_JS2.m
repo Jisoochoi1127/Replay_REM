@@ -1,8 +1,7 @@
 %add Params. input 
- 
 
 function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM)
-
+rng(PARAMS.rng, 'twister'); 
 %% Interpolate behav and calcium
 
 [unique_behavtime, IAbehav, ICbehav]=unique(PARAMS.data.behav_time);
@@ -269,7 +268,7 @@ for k=PARAMS.decoding.numshuffles:-1:1
     random_ts=[];
     for ii=size(binarized_data,2):-1:1
      
-        rng(1234, 'twister'); 
+        %rng(1234, 'twister'); 
         random_ts(ii) = randi(size(binarized_data,1));
         Shuffled_binarized_data(:,ii)=circshift(binarized_data(:,ii),random_ts(ii),1);
       
@@ -293,9 +292,8 @@ Shuffled_decoded_probabilities(:,~decoding_ts) = nan;
 
 
 %% Compute decoding error
-decoding_error_shuffle = actual_position - decoded_position_shuffle;
-mean_decoding_error_shuffle(k) = mean(abs(decoding_error_shuffle), 'omitnan')';
-abs_decoding_error_shuffle=abs(decoding_error_shuffle);
+decoding_error_shuffle = abs(actual_position - decoded_position_shuffle);
+mean_decoding_error_shuffle(k) = mean(decoding_error_shuffle, 'omitnan')';
 whole_shuffle_error=abs(mean_decoding_error_shuffle);
 
 end
