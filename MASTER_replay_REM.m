@@ -8,7 +8,7 @@
 % DONE_need to add line(line 45) for passing some sessions doens't have sleep data
 % DONE_ add Plotting part from Bayesian_JS script
 % DONE_ add replay part
-% Run data session for whole session
+% DONE_Run data session for whole session 5/26
 % Add Place cell script - pv1254_HATD1
 
 
@@ -19,22 +19,29 @@
 % DONE_ Remove all_binary_pre_SW,all_binary_post_SW in the analysis
 % DONE_ add shuffling error
 % DONE_ save decoding as id, data
-% check shuffling error
-%Check [Shuffled_decoded_probabilities] = bayesian_decode1D(Shuffled_binarized_data, occupancy_vector_S, prob_being_active_S, tuning_curve_data_shuffled, PARAMS.decoding.cell_used);
-% add half left, right decoding error
-% Remove plotting part from Bayesian_JS2-confusion matrix. etc
-%add decoding.tuningcurve
+% DONE_ check shuffling error with GE
+% DONE_ check shuffling error line by line 5/26
+
+% DONE_ Check [Shuffled_decoded_probabilities] = bayesian_decode1D(Shuffled_binarized_data, occupancy_vector_S, prob_being_active_S, tuning_curve_data_shuffled, PARAMS.decoding.cell_used);
+% DONE_ add half left, right decoding error 5/26
+% DONE_ Remove plotting part from Bayesian_JS2-confusion matrix. etc
+% DONE_add decoding.tuningcurve
+%Check rng seed - for bayesianjs2
+% add decoding_parameters..? different length., cell number.
+% half left, right error with matching frames _ HAT..
 
 % for Replay script
 % step size etc put PARAMS.
 % separate the selection part from replay
 % input jumpiness in replay script 
 
+% etc
+% Add place cell script before decoding
+% Add theta amplitude/frequency during replay script
+% Add Bias index script 
+% Check the selction of replay _by slope/ jumpiness
 %% something to discuss
-% variables not just decoding.
 
-%  run Eric's script later
-% decoding save - if it's saved as subject, session, ... when we load...?
 
 
 %% set path for data
@@ -92,15 +99,9 @@ end
 % set RNG for consistency
 PARAMS.rng = 1234;
 
-% set the parameters for data
-PARAMS.data.ca_time= ms.time/1000;
-PARAMS.data.ca_data=ms.RawTraces ;
-PARAMS.data.behav_time=behav.time/1000;
-PARAMS.data.behav_vec=behav.position(:,1);
-
 % set the parameters for decoding
 PARAMS.decoding.bin_size = 3;
-PARAMS.decoding.cell_used = logical(ones(size(ca_data,2),1)); % Use every cell
+PARAMS.decoding.cell_used = 'Whole_cell'; %Whole_cell, Place_cell, Non_Place_cell
 PARAMS.decoding.sampling_frequency = 30; % This data set has been sampled at 30 images per second
 PARAMS.decoding.z_threshold = 2; % A 2 standard-deviation threshold is usually optimal to differentiate calcium ativity from background noise
 PARAMS.decoding.min_speed_threshold = 5; % 2 cm.s-1
@@ -131,6 +132,13 @@ for iF = 1:length(fnames)
     warning on
     fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
     tic
+    
+    % set the parameters for data
+    PARAMS.data.ca_time= ms.time/1000;
+    PARAMS.data.ca_data=ms.RawTraces ;
+    PARAMS.data.behav_time=behav.time/1000;
+    PARAMS.data.behav_vec=behav.position(:,1);
+    
     [decoding] = Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM);
     toc
     
@@ -176,9 +184,9 @@ end
 %% Figures
 
 % Plot the tunning curves
-[~,max_index] = max(tuning_curve_data,[],1);
+[~,max_index] = max(decoding.tuning_curve_data,[],1);
 [~,sorted_index] = sort(max_index);
-sorted_tuning_curve_data = tuning_curve_data(:,sorted_index);
+sorted_tuning_curve_data = decoding.tuning_curve_data(:,sorted_index);
 
 figure
 imagesc(bin_centers_vector,1:size(PARAMS.data.ca_data,2),sorted_tuning_curve_data')
@@ -190,7 +198,7 @@ ylabel 'Cell ID'
 
 % Plot the confusion matrix
 figure
-imagesc(bin_centers_vector, bin_centers_vector, confusion_matrix)
+imagesc(bin_centers_vector, bin_centers_vector, decoding.confusion_matrix)
 set(gca,'YDir','normal') 
 colormap hot
 colorbar
@@ -199,9 +207,47 @@ title 'Confusion matrix'
 xlabel 'Actual position (cm)'
 ylabel 'Decoded position (cm)'
 
-Confusion_max=max(confusion_matrix)';
+Confusion_max=max(decoding.confusion_matrix)';
 figure
 plot(Confusion_max);
+
+% plotting running (actual position and decoded position)
+figure
+subplot(3,1,1)
+imagesc(PARAMS.data.ca_time,bin_centers_vector,WAKE_decoded_probabilities)
+title 'Posterior probabilities'
+xlabel 'Time (s)'
+ylabel 'Position on the track (cm)'
+ax1 = gca;
+colormap(hot)
+% colorbar
+caxis([0.02,0.08]);
+%ax1.CLim = [0 0.1];
+ax1.XLim = [515 521];
+ax1.YDir = 'normal';
+
+subplot(3,1,2)
+scatter(PARAMS.data.ca_time,actual_position,'o')
+hold on
+scatter(PARAMS.data.ca_time, decoded_position,'*')
+title 'Actual versus decoded position'
+xlabel 'Time (s)'
+ylabel 'Location on the track (cm)'
+ax2 = gca;
+ax2.XLim = [515 521]; % Let's plot a single trajectory
+linkaxes([ax1 ax2], 'x')
+legend('actual','decoded');
+
+subplot(3,1,3)
+plot(PARAMS.data.ca_time,velocity,'LineWidth',1)
+title 'Speed'
+xlabel 'Time (s)'
+ylabel 'Velocity'
+ax2 = gca;
+ax2.XLim = [515 521]; % Let's plot a single trajectory
+linkaxes([ax1 ax2], 'x')
+
+
 
 % Plotting decoded position during post-REM
     

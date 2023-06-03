@@ -1,6 +1,6 @@
 %add Params. input 
 
-function [decoding]= Bayesian_JS2(PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM)
+function [decoding]= Bayesian_JS2(decoding_dir, info,PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM)
 rng(PARAMS.rng, 'twister'); 
 %% Interpolate behav and calcium
 
@@ -36,9 +36,7 @@ end
 
 if contains(PARAMS.decoding.training_set_creation_method,'Block')
     
-    len = 10; % length of block frames(alternating training/decoding for this length of block)
-
-    [training_ts] =Analysis_Create_training_decoding_alternate(ca_time,PARAMS.decoding.len);
+    [training_ts] =Analysis_Create_training_decoding_alternate(PARAMS.data.ca_time,PARAMS.decoding.len);
     
    training_ts(running_ts == 0) = 0; % Exclude periods of immobility from the traing set
 
@@ -57,18 +55,6 @@ end
     
     Occupancy_bin=occupancy_vector;
     
-%% Plot the tunning curves
-[~,max_index] = max(tuning_curve_data,[],1);
-[~,sorted_index] = sort(max_index);
-sorted_tuning_curve_data = tuning_curve_data(:,sorted_index);
-
-figure
-imagesc(bin_centers_vector,1:size(PARAMS.data.ca_data,2),sorted_tuning_curve_data')
-daspect([1 1 1])
-caxis([0 0.3])
-title 'Neuronal tuning curves'
-xlabel 'Position on the track (cm)'
-ylabel 'Cell ID'
 
 %% Decode position
 
@@ -83,12 +69,27 @@ occupancy_vector = occupancy_vector./occupancy_vector*(1/length(occupancy_vector
     
 %% Extract  decoded position during Track
 
+if PARAMS.decoding.cell_used == 'Whole_cell'; %Whole_cell, Place_cell, Non_Place_cell
+    
+    PARAMS.decoding.cell_used=logical(ones(size(PARAMS.data.ca_data,2),1)); % Use every cell
+    
+end
+% else if PARAMS.decoding.cell_used = 'Place_cell'
+%         PARAMS.decoding.cell_used= 
+%         
+%     end
+% 
+% else if PARAMS.decoding.cell_used = 'Non_Place_cell'
+%         PARAMS.decoding.cell_used=
+%         
+%     end
+% end
 [WAKE_decoded_probabilities] = bayesian_decode1D(binarized_data, occupancy_vector, prob_being_active, tuning_curve_data, PARAMS.decoding.cell_used);
 
 [max_decoded_prob, decoded_bin] = max(WAKE_decoded_probabilities,[],1);
 decoded_position = bin_centers_vector(decoded_bin);
 
-%added by jisoo
+% added by jisoo
 decoded_bin(isnan(max_decoded_prob)) = nan;
 decoded_position(isnan(decoded_bin)) = nan;
 
@@ -113,41 +114,6 @@ for i=1:length(bin_vector)-1
 end
 Velocity_bin=Velocity_bin';
 
-%% plotting 
-figure
-subplot(3,1,1)
-imagesc(PARAMS.data.ca_time,bin_centers_vector,WAKE_decoded_probabilities)
-title 'Posterior probabilities'
-xlabel 'Time (s)'
-ylabel 'Position on the track (cm)'
-ax1 = gca;
-colormap(hot)
-% colorbar
-caxis([0.02,0.08]);
-%ax1.CLim = [0 0.1];
-ax1.XLim = [515 521];
-ax1.YDir = 'normal';
-
-subplot(3,1,2)
-scatter(PARAMS.data.ca_time,actual_position,'o')
-hold on
-scatter(PARAMS.data.ca_time, decoded_position,'*')
-title 'Actual versus decoded position'
-xlabel 'Time (s)'
-ylabel 'Location on the track (cm)'
-ax2 = gca;
-ax2.XLim = [515 521]; % Let's plot a single trajectory
-linkaxes([ax1 ax2], 'x')
-legend('actual','decoded');
-
-subplot(3,1,3)
-plot(PARAMS.data.ca_time,velocity,'LineWidth',1)
-title 'Speed'
-xlabel 'Time (s)'
-ylabel 'Velocity'
-ax2 = gca;
-ax2.XLim = [515 521]; % Let's plot a single trajectory
-linkaxes([ax1 ax2], 'x')
 
 
 %% Remove training timestamps to assess decoding error rate
@@ -171,7 +137,7 @@ decoding_agreement = sum(decoding_agreement_vector)./length(decoding_agreement_v
 %% Compute decoding error
 decoding_error = actual_position - decoded_position;
 abs_decoding_error=abs(decoding_error);
-mean_decoding_error = mean(abs(decoding_error), 'omitnan');
+mean_decoding_error = mean(abs_decoding_error, 'omitnan');
 
 %% To calculate decoding error in Half left/right in HAT
 Half_left_actual=find(actual_position<=50);
@@ -185,56 +151,6 @@ decoding_error_half_right = actual_position(Half_right_actual) - Half_right_deco
 mean_decoding_error_half_right = mean(abs(decoding_error_half_right), 'omitnan');
 
 
-%% To calculate decoding error in half left/ right with matched frames in open/closed
-
- if contains(data,'day1') | contains(data,'day5')
-    
-        for k=1:Numshuffle;
-        random_frames_to_match=randperm(length(Half_right_actual),length(Half_left_actual));
-        Matched_right_frame=Half_right_actual(random_frames_to_match);
-        Matched_Half_right_decoded=decoded_position(Matched_right_frame);
-        Matched_decoding_error_half_right = actual_position(Matched_right_frame) - Matched_Half_right_decoded;
-        Matched_mean_decoding_error_half_right(k) = mean(abs(Matched_decoding_error_half_right), 'omitnan');
-        
-        end
-
-        Matched_Avg_decoding_error_closed=mean(Matched_mean_decoding_error_half_right);
-        Matcehd_Avg_decoding_error_open = mean(abs(decoding_error_half_left), 'omitnan');
- else
-     
-      for k=1:Numshuffle;
-        random_frames_to_match=randperm(length(Half_left_actual),length(Half_right_actual));
-        Matched_left_frame=Half_left_actual(random_frames_to_match);
-        Matched_Half_left_decoded=decoded_position(Matched_left_frame);
-        Matched_decoding_error_half_left = actual_position(Matched_left_frame) - Matched_Half_left_decoded;
-        Matched_mean_decoding_error_half_left(k) = mean(abs(Matched_decoding_error_half_left), 'omitnan');
-        
-        end
-
-        Matched_Avg_decoding_error_open=mean(Matched_mean_decoding_error_half_left);
-        Matcehd_Avg_decoding_error_closed = mean(abs(decoding_error_half_right), 'omitnan');
-      
-     
- end
- 
-
-        
-   
-
-%% Calculate decoding agreement , decoding error in half left/right
-
-left_idx_actual=find(actual_bin<=17);
-right_idx_actual=find(actual_bin>17);
-
-left_decoded=decoded_bin(left_idx_actual);
-right_decoded=decoded_bin(right_idx_actual);
-
-left_actual=actual_bin(left_idx_actual);
-right_actual=actual_bin(right_idx_actual);
-
-left_correct=sum(double(left_decoded==left_actual))/length(left_idx_actual);
-right_correct=sum(double(right_decoded==right_actual))/length(right_idx_actual);
-
 
 %% Compute confusion matrix
 confusion_matrix = zeros(length(bin_centers_vector),length(bin_centers_vector));
@@ -245,30 +161,15 @@ for actual_i = 1:length(bin_centers_vector)
    end
 end
 
-% Plot the confusion matrix
-figure
-imagesc(bin_centers_vector, bin_centers_vector, confusion_matrix)
-set(gca,'YDir','normal') 
-colormap hot
-colorbar
-caxis([0 1])
-title 'Confusion matrix'
-xlabel 'Actual position (cm)'
-ylabel 'Decoded position (cm)'
-
-Confusion_max=max(confusion_matrix)';
-figure
-plot(Confusion_max);
 
 %% Create tuning curves with shuffled binarized
-
+mean_decoding_error_shuffle=[];
 for k=PARAMS.decoding.numshuffles:-1:1
     
     Shuffled_binarized_data =zeros(size(binarized_data));
     random_ts=[];
     for ii=size(binarized_data,2):-1:1
      
-        %rng(1234, 'twister'); 
         random_ts(ii) = randi(size(binarized_data,1));
         Shuffled_binarized_data(:,ii)=circshift(binarized_data(:,ii),random_ts(ii),1);
       
@@ -293,13 +194,10 @@ Shuffled_decoded_probabilities(:,~decoding_ts) = nan;
 
 %% Compute decoding error
 decoding_error_shuffle = abs(actual_position - decoded_position_shuffle);
-mean_decoding_error_shuffle(k) = mean(decoding_error_shuffle, 'omitnan')';
-whole_shuffle_error=abs(mean_decoding_error_shuffle);
+mean_decoding_error_shuffle(k) = mean(decoding_error_shuffle, 'omitnan');
 
 end
 Avg_total_shuffle_error=mean(mean_decoding_error_shuffle);
-
-
 
 %% Extract decoded position during post REM sleep
 
@@ -329,55 +227,18 @@ pre_REM_decoded_bin(isnan(pre_REM_max_prob)) = nan;
 pre_REM_decoded_position(isnan(pre_REM_decoded_bin)) = nan;
 
  
-%% Plotting decoded position during post-REM
-    
-figure;
-subplot(2,1,1)
-x1=1:size(all_binary_post_REM,1);
-
-imagesc(x1,bin_centers_vector,REM_decoded_probabilities)
-title 'Posterior probabilities during REM'
-xlabel 'Time (s)'
-ylabel 'Position on the track (cm)'
-ax1 = gca;
-ax1.CLim = [0 0.1];
-%ax1.XLim = [447 452];
-%ax1.XLim = [480 484]; % Modified by Jisoo
-subplot(2,1,2)
-plot(x1,sum(all_binary_post_REM,2))
-title 'Sum_binarized'
-xlabel 'Time (s)'
-ylabel 'Total binary'
-ax2 = gca;
-linkaxes([ax1 ax2], 'x')
-    
-
-
-%% Plotting decoded position during pre-REM
-    
-figure;
-subplot(2,1,1)
-x3=1:size(all_binary_pre_REM,1);
-imagesc(x3,bin_centers_vector,pre_REM_decoded_probabilities)
-title 'Posterior probabilities during pre REM'
-xlabel 'Time (s)'
-ylabel 'Position on the track (cm)'
-ax1 = gca;
-ax1.CLim = [0 0.1];
-
-subplot(2,1,2)
-plot(x3,sum(all_binary_pre_REM,2))
-title 'Sum_binarized'
-xlabel 'Time (s)'
-ylabel 'Total binary'
-ax2 = gca;
-linkaxes([ax1 ax2], 'x')
-
 
 %% Save the output of decoded results
+
+decoding.tuning_curve_data=tuning_curve_data;
+decoding.Velocity_bin=Velocity_bin;
+decoding.confusion_matrix=confusion_matrix;
+
 decoding.bin_centers_vector=bin_centers_vector;
 decoding.WAKE_decoded_probabilities =whole_Wake_decoded_probabilities;
 decoding.WAKE_decoded_position=whole_Wake_decoded_position;
+decoding.MI=MI;
+decoding.PDF=PDF;
 
 decoding.Testing_wake_decoded_probabilities=WAKE_decoded_probabilities;
 decoding.Testing_wake_decoded_position=decoded_position;
@@ -394,8 +255,9 @@ decoding.pre_REM_decoded_position=pre_REM_decoded_position;
 
 decoding.decoding_error=decoding_error;
 decoding.abs_decoding_error=abs_decoding_error;
+decoding.mean_decoding_error=mean_decoding_error;
+decoding.mean_decoding_error_shuffle=mean_decoding_error_shuffle;
 decoding.Avg_total_shuffle_error=Avg_total_shuffle_error;
-decoding.whole_shuffle_error=whole_shuffle_error;
 
 
  end
