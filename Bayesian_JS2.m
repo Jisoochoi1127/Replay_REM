@@ -186,6 +186,10 @@ end
 [max_shuffled_decoded_prob, shuffled_decoded_bin] = max(Shuffled_decoded_probabilities,[],1);
 decoded_position_shuffle = bin_centers_vector(shuffled_decoded_bin);
 
+shuffled_decoded_bin(isnan(max_shuffled_decoded_prob))=nan;
+decoded_position_shuffle(isnan(shuffled_decoded_bin))=nan;
+
+
 %% Remove training timestamps to assess decoding error rate
 shuffled_decoded_bin(~decoding_ts) = nan;
 decoded_position_shuffle(~decoding_ts) = nan;
@@ -259,6 +263,7 @@ decoding.mean_decoding_error=mean_decoding_error;
 decoding.mean_decoding_error_shuffle=mean_decoding_error_shuffle;
 decoding.Avg_total_shuffle_error=Avg_total_shuffle_error;
 
+decoding.info=info;
 
  end
 

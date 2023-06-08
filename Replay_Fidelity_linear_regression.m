@@ -4,45 +4,25 @@
 
 
 %% 1. Binning the time
-function [out]=Replay_Fidelity_linear_regression(decoding)
+function [out]=Replay_Fidelity_linear_regression(replay_dir, PARAMS,decoding);
 tic
 rng(PARAMS.rng, 'twister');
-%load decoding
-%load decoding_training90.mat
 
-
-%step_size ; overlapped portion. 
-%windowsize=duration of time window.
-
-%step_size=5;  %overlap 
- %windowsize=14; % duration for calculating R2
- step_size=10;
-  windowsize=29;
-  
-%   step_size=20;
-%   windowsize=59;
-%step_size=2;  %overlap 
-%windowsize=9; % duration for calculating R2
 inputDataTimeVec=1:length(decoding.REM_decoded_position);
-refTimeVec = 1:step_size:length(inputDataTimeVec);
+refTimeVec = 1:PARAMS.replay.step_size:length(inputDataTimeVec);
 windowStartPoints = dsearchn(inputDataTimeVec',refTimeVec');
 numWindows=length(windowStartPoints);
-
-
-numshuffles = 1000;
-sampling_threshold=0.7; %how many data points for each time window
-
 
 %% 2. Apply linear regression and calculate R square
 
 for window = 1:numWindows
     
-    if  windowStartPoints(window)<=(length(inputDataTimeVec)-windowsize);
+    if  windowStartPoints(window)<=(length(inputDataTimeVec)-PARAMS.replay.windowsize);
         
-        time= windowStartPoints(window):windowStartPoints(window)+windowsize;
+        time= windowStartPoints(window):windowStartPoints(window)+PARAMS.replay.windowsize;
         
         % if window size exceed the length of the inputdata
-    else windowStartPoints(window)>(length(inputDataTimeVec)-windowsize);
+    else windowStartPoints(window)>(length(inputDataTimeVec)-PARAMS.replay.windowsize);
         %time= windowStartPoints(window):inputDataTimeVec(end);
         time=[]; 
         
@@ -73,19 +53,6 @@ for window = 1:numWindows
     rsq(window) = 1 - SSresid/SStotal;
     Replay_score_actual=rsq;
     
-    %plotting (Comment off only to see few examples)
-%     bincenter=1:size(decoding.REM_decoded_probabilities,1);
-%     figure;
-%     scatter(time,decoding.REM_decoded_position(time));
-%     % imagesc(time,bincenter,decoding.REM_decoded_probabilities(:,time));
-%     caxis([0,0.3]);
-%     hold on;
-%     %plot(x,yfit,'r','LineWidth',2);
-%     plot(time,polyval(p,time),'r','LineWidth',2);
-%     xlabel('frames');
-%     ylabel('decoded position(cm)');
-%     title('linear fitting to decoded position during REM');
-%     
 end
 
 %plotting sampling percentage for each window time
@@ -105,16 +72,14 @@ ylabel('Frequency')
 box off
 %% Shuffling
 
-%input=decoding.REM_decoded_probabilities  ;
 input=decoding.REM_decoded_position;
 Replay_score_shuffle_position=[];
 Replay_score_shuffle_time=[];
-Shuffle_position_jumpiness=NaN(numshuffles,length(Replay_score_actual));
-Shuffle_time_jumpiness=NaN(numshuffles,length(Replay_score_actual));
+Shuffle_position_jumpiness=NaN(PARAMS.replay.numshuffles,length(Replay_score_actual));
+Shuffle_time_jumpiness=NaN(PARAMS.replay.numshuffles,length(Replay_score_actual));
 
 warning off
-rng(123,'twister')
-for k=1:numshuffles;
+for k=1:PARAMS.replay.numshuffles;
     tic
     % Use decoded probabilities - shuffle- get maximum value. 
     % 
@@ -129,6 +94,7 @@ for k=1:numshuffles;
       
     end
     
+    %REM max prob nan but it finds value in REM decoded bin...?
     [REM_max_prob, REM_decoded_bin] = max(Shuffled_decoded_prob,[],1);
     Shuffled_decoded_position = decoding.bin_centers_vector(REM_decoded_bin);
     
@@ -150,12 +116,12 @@ for k=1:numshuffles;
   
 for window = 1:numWindows
     
-    if  windowStartPoints(window)<=(length(inputDataTimeVec)-windowsize);
+    if  windowStartPoints(window)<=(length(inputDataTimeVec)-PARAMS.replay.windowsize);
         
-        time= windowStartPoints(window):windowStartPoints(window)+windowsize;
+        time= windowStartPoints(window):windowStartPoints(window)+PARAMS.replay.windowsize;
         
         % if window size exceed the length of the inputdata
-    else windowStartPoints(window)>(length(inputDataTimeVec)-windowsize);
+    else windowStartPoints(window)>(length(inputDataTimeVec)-PARAMS.replay.windowsize);
        % time= windowStartPoints(window):inputDataTimeVec(end); 
        time=[]; % if it's not emptied, it cause time shuffling problem that cause high score.
         
@@ -260,23 +226,11 @@ fprintf('Shuff #%0.0f  took ', k)
 toc
 fprintf('\n')
 end
-% figure;
-% scatter(rsq_shuffle_position, sampling_percentage_position,'*');
-% xlim([0 1]);
-% title('scatter plot of sampling percentage and replay score(shuffled position)');
-% xlabel('Replay score');
-% ylabel('sampling_percentage')
 
-% figure;
-% scatter(rsq_shuffle_time, sampling_percentage_time,'*');
-% xlim([0 1]);
-% title('scatter plot of sampling percentage and replay score (shuffled time)');
-% xlabel('Replay score');
-% ylabel('sampling_percentage')
 
 %% Selection of replay
 % Remove nan, inf, values less than sampling threshold.
-Selected_position=sampling_percentage_position>sampling_threshold;
+Selected_position=sampling_percentage_position>PARAMS.replay.sampling_threshold;
 Selected_position_shuffle=Replay_score_shuffle_position(Selected_position);
 Selected_position_jumpiness=Shuffle_position_jumpiness(Selected_position);
 Selected_position_slope=slope_position(Selected_position);
@@ -286,7 +240,7 @@ Selected_position_shuffle(nan_inf_position)=[];
 Selected_position_jumpiness(nan_inf_position)=[];
 Selected_position_slope(nan_inf_position)=[];
 
-Selected_time=sampling_percentage_time>sampling_threshold;
+Selected_time=sampling_percentage_time>PARAMS.replay.sampling_threshold;
 Selected_time_shuffle=Replay_score_shuffle_time(Selected_time);
 Selected_time_jumpiness=Shuffle_time_jumpiness(Selected_time);
 Selected_time_slope=slope_time(Selected_time);
@@ -310,7 +264,7 @@ shuffle_2_slope=Selected_time_slope;
 
 
 %%
-Selected_actual=sampling_percentage>sampling_threshold;
+Selected_actual=sampling_percentage>PARAMS.replay.sampling_threshold;
 actual=Replay_score_actual(Selected_actual);
 nan_inf_actual=~isfinite(actual);
 actual(nan_inf_actual)=[];
@@ -318,7 +272,7 @@ actual(nan_inf_actual)=[];
 % don't know why i added this but actual = Final_Replay_actual same.
 % for actual data
 Replay_actual=isfinite(Replay_score_actual); %1 - excluding nan, infinite values
-Selected_Replay_actual=find(Replay_actual==1 & sampling_percentage>sampling_threshold );
+Selected_Replay_actual=find(Replay_actual==1 & sampling_percentage>PARAMS.replay.sampling_threshold );
 % ( if slope has also threshold) abs(slope) >min_slope & abs(slope) < max_slope
 Final_Replay_actual=Replay_score_actual(Selected_Replay_actual);
 
@@ -438,7 +392,7 @@ Sig_location_95=[];
 
 for i=1:length(Significant_idx_95);
    
-    time= windowStartPoints(Significant_idx_95(i)):windowStartPoints(Significant_idx_95(i))+windowsize;
+    time= windowStartPoints(Significant_idx_95(i)):windowStartPoints(Significant_idx_95(i))+PARAMS.replay.windowsize;
    
     Sig_start_frame_95(i)=windowStartPoints(Significant_idx_95(i));
     y=decoding.REM_decoded_position(time);
@@ -457,7 +411,7 @@ Sig_location_99=[];
 
 for i=1:length(Significant_idx_99);
    
-    time= windowStartPoints(Significant_idx_99(i)):windowStartPoints(Significant_idx_99(i))+windowsize;
+    time= windowStartPoints(Significant_idx_99(i)):windowStartPoints(Significant_idx_99(i))+PARAMS.replay.windowsize;
    
     Sig_start_frame_99(i)=windowStartPoints(Significant_idx_99(i));
     y=decoding.REM_decoded_position(time);

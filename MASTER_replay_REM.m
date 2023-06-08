@@ -31,9 +31,15 @@
 % half left, right error with matching frames _ HAT..
 
 % for Replay script
-% step size etc put PARAMS.
+% DONE_step size, window size, threshold etc put PARAMS.
+% DONE_Check script with decoding data
+% DONE_Replay- info is not loaded. 
+% save all the variables from replay script for plotting figures
+% sampling_percentage_time ; less than threshold... - that cause error
+% jumpiness - parameter.
 % separate the selection part from replay
 % input jumpiness in replay script 
+% remove plotting from replay script.
 
 % etc
 % Add place cell script before decoding
@@ -109,12 +115,12 @@ PARAMS.decoding.training_set_creation_method = 'Block';
 %'quarter_portion'%'Non_overlapped';%divided ; quarter%'random'; % 'odd', odd timestamps; 'first_portion', first portion of the recording; 3, 'random' random frames
 PARAMS.decoding.training_set_portion = 1; % Portion of the recording used to train the decoder for method 2 and 3
 PARAMS.decoding.len = 10; % length of block frames(alternating training/decoding for this length of block)
-PARAMS.decoding.numshuffles = 1000; % calculate average decoding error with 1000 shuffled data
+PARAMS.decoding.numshuffles = 10; % calculate average decoding error with 1000 shuffled data
 
 % set the parameters for replay
-PARAMS.replay.step_size=10;
-PARAMS.replay.windowsize=29;
-PARAMS.replay.numshuffles = 1000; 
+PARAMS.replay.step_size=10; %step_size ; overlapped portion. 
+PARAMS.replay.windowsize=29; %windowsize=duration of time window.
+PARAMS.replay.numshuffles = 10; 
 PARAMS.replay.sampling_threshold=0.7;%how many data points for each time window
 %PARAMS.replay.slope
 PARAMS.replay.jumpiness=50;
@@ -165,14 +171,13 @@ for iF = 1:length(fnames)
     warning off
     load(fnames(iF).name)
     warning on
-    fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
+    fprintf('Generating TCs for: %s   %s....', decoding.info.subject, decoding.info.session)
     tic
    
-    [out]=Replay_Fidelity_linear_regression(decoding)
+    [out] = Replay_Fidelity_linear_regression(replay_dir, PARAMS,decoding);
     toc
     
-    % where and how do we save this decoding?
-    save([replay_dir filesep info.subject '_' info.session '_replay.mat'], 'out')
+    save([replay_dir filesep decoding.info.subject '_' decoding.info.session '_replay.mat'], 'out')
         
     
     fprintf('done\n')
@@ -293,7 +298,21 @@ ax2 = gca;
 linkaxes([ax1 ax2], 'x')
 
 
+% plotting for replay
+figure;
+scatter(sampling_percentage,Replay_score_actual,'*');
+ylim([0 1]);
+title('scatter plot of sampling percentage and replay score');
+xlabel('Sampling Percentage');
+ylabel('Replay score')
+xline(0.7,'r','LineWidth',2);
 
+%plotting slope histogram
+figure;
+histogram(slope, 'EdgeAlpha',0);
+xlabel('Slope')
+ylabel('Frequency')
+box off
 
 
 % script for Fig 1
