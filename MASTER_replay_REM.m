@@ -34,11 +34,10 @@
 % DONE_step size, window size, threshold etc put PARAMS.
 % DONE_Check script with decoding data
 % DONE_Replay- info is not loaded. 
+% separate the selection part from replay - from line 227
 % save all the variables from replay script for plotting figures
 % sampling_percentage_time ; less than threshold... - that cause error
 % jumpiness - parameter.
-% separate the selection part from replay
-% input jumpiness in replay script 
 % remove plotting from replay script.
 
 % etc
@@ -115,12 +114,12 @@ PARAMS.decoding.training_set_creation_method = 'Block';
 %'quarter_portion'%'Non_overlapped';%divided ; quarter%'random'; % 'odd', odd timestamps; 'first_portion', first portion of the recording; 3, 'random' random frames
 PARAMS.decoding.training_set_portion = 1; % Portion of the recording used to train the decoder for method 2 and 3
 PARAMS.decoding.len = 10; % length of block frames(alternating training/decoding for this length of block)
-PARAMS.decoding.numshuffles = 10; % calculate average decoding error with 1000 shuffled data
+PARAMS.decoding.numshuffles = 100; % calculate average decoding error with 1000 shuffled data
 
 % set the parameters for replay
 PARAMS.replay.step_size=10; %step_size ; overlapped portion. 
 PARAMS.replay.windowsize=29; %windowsize=duration of time window.
-PARAMS.replay.numshuffles = 10; 
+PARAMS.replay.numshuffles = 100; 
 PARAMS.replay.sampling_threshold=0.7;%how many data points for each time window
 %PARAMS.replay.slope
 PARAMS.replay.jumpiness=50;
@@ -313,6 +312,8 @@ histogram(slope, 'EdgeAlpha',0);
 xlabel('Slope')
 ylabel('Frequency')
 box off
+
+
 
 
 % script for Fig 1
