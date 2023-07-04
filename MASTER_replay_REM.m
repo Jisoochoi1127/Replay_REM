@@ -34,19 +34,23 @@
 % DONE_step size, window size, threshold etc put PARAMS.
 % DONE_Check script with decoding data
 % DONE_Replay- info is not loaded. 
-% separate the selection part from replay - from line 227
-% save all the variables from replay script for plotting figures
+% DONE_separate the selection part from replay - from line 227
+% DONE_save all the variables from replay script for plotting figures
+% check params is loaded???- no ; should save in decoding.PARAMS
+
+% for slection script
+% DONE_Include selection script in the master Monday
+% DONE_include slope threshold
+% DONE_remove plotting from replay script.
+% Line 202_pass workspace varialbes to function?
+% Run selction script through master script
 % sampling_percentage_time ; less than threshold... - that cause error
-% jumpiness - parameter.
-% remove plotting from replay script.
 
 % etc
 % Add place cell script before decoding
 % Add theta amplitude/frequency during replay script
 % Add Bias index script 
 % Check the selction of replay _by slope/ jumpiness
-%% something to discuss
-
 
 
 %% set path for data
@@ -57,8 +61,8 @@ decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo
 mkdir(decoding_dir);
 replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
 mkdir(replay_dir);
-
-
+selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+mkdir(selection_dir);
 %% collect data and generate intermediate files.
 
 cd(data_dir)
@@ -123,6 +127,8 @@ PARAMS.replay.numshuffles = 100;
 PARAMS.replay.sampling_threshold=0.7;%how many data points for each time window
 %PARAMS.replay.slope
 PARAMS.replay.jumpiness=50;
+PARAMS.replay.min_slope=1;
+PARAMS.replay.max_slope=10;
 
 % style parameters for figures
 
@@ -173,15 +179,34 @@ for iF = 1:length(fnames)
     fprintf('Generating TCs for: %s   %s....', decoding.info.subject, decoding.info.session)
     tic
    
-    [out] = Replay_Fidelity_linear_regression(replay_dir, PARAMS,decoding);
+    [out] = Replay_Fidelity_linear_regression(replay_dir,decoding.PARAMS,decoding);
     toc
-    
-    save([replay_dir filesep decoding.info.subject '_' decoding.info.session '_replay.mat'], 'out')
-        
+            
     
     fprintf('done\n')
 end
 
+
+
+%% Replay selection
+
+cd(replay_dir);
+fnames = dir('*_replay_out.mat');
+for iF = 1:length(fnames)
+    warning off
+    load(fnames(iF).name)
+    warning on
+    fprintf('Generating TCs for: %s   %s....', decoding.info.subject, decoding.info.session)
+    tic
+   
+    [Selected_replay]=Replay_selection(out)
+    toc
+    
+    save([selection_dir filesep decoding.info.subject '_' decoding.info.session '_selected_replay.mat'], 'Selected_replay')
+        
+    
+    fprintf('done\n')
+end
 
 
 
@@ -315,7 +340,53 @@ box off
 
 
 
+%% plotting CI95, 99
+% Getting confidence Intervals using position shuffle 
+x1=shuffle_1;
+figure;
+histogram(x1);
+CIFcn = @(x1,p)prctile(x1,abs([0,100]-(100-p)/2));
+CI_95_Shuffle_position = CIFcn(x1,95); 
+arrayfun(@(x1)xline(x1,'-m','95 prctile'),CI_95_Shuffle_position(2));
+xlabel('Replay score')
+ylabel('Frequency')
+legend('Position shuffle');
+box off
 
+% Getting confidence Intervals using time shuffle
+x2=shuffle_2;
+figure;
+histogram(x2);
+CIFcn = @(x2,p)prctile(x2,abs([0,100]-(100-p)/2)); % this doesn't need to be normal disgtribution
+CI_95_Shuffle_time = CIFcn(x2,95); 
+arrayfun(@(x2)xline(x2,'-m','95 prctile'),CI_95_Shuffle_time(2));
+xlabel('Replay score')
+ylabel('Frequency')
+legend('Time shuffle');
+box off
+
+x1=shuffle_1;
+figure;
+histogram(x1);
+CIFcn = @(x1,p)prctile(x1,abs([0,100]-(100-p)/2));
+CI_99_Shuffle_position = CIFcn(x1,99); 
+arrayfun(@(x1)xline(x1,'-m','99 prctile'),CI_99_Shuffle_position(2));
+xlabel('Replay score')
+ylabel('Frequency')
+legend('Position shuffle');
+
+box off
+% Getting confidence Intervals using time shuffle
+x2=shuffle_2;
+figure;
+histogram(x2);
+CIFcn = @(x2,p)prctile(x2,abs([0,100]-(100-p)/2)); % this doesn't need to be normal disgtribution
+CI_99_Shuffle_time = CIFcn(x2,99); 
+arrayfun(@(x2)xline(x2,'-m','99 prctile'),CI_99_Shuffle_time(2));
+xlabel('Replay score')
+ylabel('Frequency')
+legend('Time shuffle');
+box off
 % script for Fig 1
 
 

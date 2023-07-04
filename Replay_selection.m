@@ -1,6 +1,13 @@
-function [Selected_replay]=Replay_selection(PARAMS,out_replay)
 
-tic
+%% Things i need to fix
+
+% DoneSlope ; threshold?
+% input, output ??? ????
+
+%%
+function [Selected_replay]=Replay_selection
+
+
 %Selection of replay events with sampling threshold, jumpiness, and slope.
 %% Selection of replay using shuffled data
 % Remove nan, inf, values less than sampling threshold.
@@ -35,8 +42,6 @@ shuffle_2_jumpiness=Selected_time_jumpiness;
 shuffle_2_slope=Selected_time_slope;
 
 
-
-
 %% Selection of replay using actual data
 
 Selected_actual=sampling_percentage>PARAMS.replay.sampling_threshold;
@@ -54,53 +59,16 @@ Final_Replay_actual=Replay_score_actual(Selected_Replay_actual);
 
 
 %% calculate pvalue 
-
-% Getting confidence Intervals using position shuffle 
 x1=shuffle_1;
-figure;
-histogram(x1);
 CIFcn = @(x1,p)prctile(x1,abs([0,100]-(100-p)/2));
 CI_95_Shuffle_position = CIFcn(x1,95); 
-arrayfun(@(x1)xline(x1,'-m','95 prctile'),CI_95_Shuffle_position(2));
-xlabel('Replay score')
-ylabel('Frequency')
-legend('Position shuffle');
-box off
+CI_99_Shuffle_position = CIFcn(x1,99); 
 
-% Getting confidence Intervals using time shuffle
 x2=shuffle_2;
-figure;
-histogram(x2);
 CIFcn = @(x2,p)prctile(x2,abs([0,100]-(100-p)/2)); % this doesn't need to be normal disgtribution
 CI_95_Shuffle_time = CIFcn(x2,95); 
-arrayfun(@(x2)xline(x2,'-m','95 prctile'),CI_95_Shuffle_time(2));
-xlabel('Replay score')
-ylabel('Frequency')
-legend('Time shuffle');
-box off
-
-x1=shuffle_1;
-figure;
-histogram(x1);
-CIFcn = @(x1,p)prctile(x1,abs([0,100]-(100-p)/2));
-CI_99_Shuffle_position = CIFcn(x1,99); 
-arrayfun(@(x1)xline(x1,'-m','99 prctile'),CI_99_Shuffle_position(2));
-xlabel('Replay score')
-ylabel('Frequency')
-legend('Position shuffle');
-
-box off
-% Getting confidence Intervals using time shuffle
-x2=shuffle_2;
-figure;
-histogram(x2);
-CIFcn = @(x2,p)prctile(x2,abs([0,100]-(100-p)/2)); % this doesn't need to be normal disgtribution
 CI_99_Shuffle_time = CIFcn(x2,99); 
-arrayfun(@(x2)xline(x2,'-m','99 prctile'),CI_99_Shuffle_time(2));
-xlabel('Replay score')
-ylabel('Frequency')
-legend('Time shuffle');
-box off
+
 
 %% Find significant replay using 95 percentile 
 %significant_idx_95; which window has significant replay events 
@@ -112,8 +80,9 @@ Significant_idx_99=Selected_Replay_actual(Significant_99);% now we can find whic
 
 
 %% for shuffle
-Final_shuffle_position_idx=find(shuffle_1_jumpiness<50 & abs(shuffle_1_slope)>1 & abs(shuffle_1_slope)<10 );
-Final_shuffle_time_idx=find(shuffle_2_jumpiness<50 & abs(shuffle_2_slope)>1 & abs(shuffle_2_slope)<10 );
+
+Final_shuffle_position_idx=find(shuffle_1_jumpiness<PARAMS.replay.jumpiness & abs(shuffle_1_slope)>PARAMS.replay.min_slope & abs(shuffle_1_slope)<PARAMS.replay.max_slope );
+Final_shuffle_time_idx=find(shuffle_2_jumpiness<PARAMS.replay.jumpiness & abs(shuffle_2_slope)>PARAMS.replay.min_slope  & abs(shuffle_2_slope)<PARAMS.replay.max_slope );
 
 % Score that satisfy jumpiness<50, 1<slope<10 & exceed 99% of shuffle
 Final_shuffle_1=shuffle_1(Final_shuffle_position_idx);
@@ -185,7 +154,7 @@ for i=1:length(Significant_idx_99);
 end
 
 %% Selection - Threshold for jumpiness, slope for final replay events.
-Final_Replay_idx=find(Sig_max_jumpiness_99 <50 & abs(Sig_slope_99)>1 & abs(Sig_slope_99)<10)
+Final_Replay_idx=find(Sig_max_jumpiness_99 <PARAMS.replay.jumpiness & abs(Sig_slope_99)>PARAMS.replay.min_slope & abs(Sig_slope_99)<PARAMS.replay.max_slope)
 Final_start_frame=Sig_start_frame_99(Final_Replay_idx);
 Final_Replay_score=Sig_replay_score_99(Final_Replay_idx);
 Final_Replay_slope=Sig_slope_99(Final_Replay_idx);
@@ -199,9 +168,10 @@ end
 
 
 %% Calculate ratio
-out.sig_shuff1=length(Numb_shuffle_1_sig)/length(shuffle_1)*100;
-out.sig_shuff2=length(Numb_shuffle_2_sig)/length(shuffle_2)*100;
-out.sig_actual=length(Final_Replay_score)/length(Final_Replay_actual)*100;
+sig_shuff1=length(Numb_shuffle_1_sig)/length(shuffle_1)*100;
+sig_shuff2=length(Numb_shuffle_2_sig)/length(shuffle_2)*100;
+sig_actual=length(Final_Replay_score)/length(Final_Replay_actual)*100;
 
-toc
+%% save all the variables
+save([selection_dir filesep decoding.info.subject '_' decoding.info.session '_selected_replay.mat'])
 end

@@ -233,7 +233,7 @@ pre_REM_decoded_position(isnan(pre_REM_decoded_bin)) = nan;
  
 
 %% Save the output of decoded results
-
+decoding.PARAMS=PARAMS;
 decoding.tuning_curve_data=tuning_curve_data;
 decoding.Velocity_bin=Velocity_bin;
 decoding.confusion_matrix=confusion_matrix;

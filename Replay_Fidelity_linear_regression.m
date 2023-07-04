@@ -4,9 +4,9 @@
 
 
 %% 1. Binning the time
-function [out]=Replay_Fidelity_linear_regression(replay_dir, PARAMS,decoding);
+function [out]=Replay_Fidelity_linear_regression(replay_dir, decoding.PARAMS,decoding);
 tic
-rng(PARAMS.rng, 'twister');
+rng(decoding.PARAMS.rng, 'twister');
 
 inputDataTimeVec=1:length(decoding.REM_decoded_position);
 refTimeVec = 1:PARAMS.replay.step_size:length(inputDataTimeVec);
