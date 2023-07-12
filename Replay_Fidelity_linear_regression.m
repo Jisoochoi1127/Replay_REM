@@ -207,7 +207,7 @@ toc
 fprintf('\n')
 end
 
-save([replay_dir filesep decoding.info.subject '_' decoding.info.session '_replay_out.mat'])
+
 
 toc
 end
