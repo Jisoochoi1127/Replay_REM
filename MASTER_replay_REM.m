@@ -182,7 +182,7 @@ for iF = 1:length(fnames)
     [out] = Replay_Fidelity_linear_regression(replay_dir,decoding.PARAMS,decoding);
     toc
             
-    
+    %save [out] =
     fprintf('done\n')
 end
 

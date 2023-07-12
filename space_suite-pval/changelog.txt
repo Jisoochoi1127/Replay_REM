@@ -1,0 +1,10 @@
+24-01-20
+
+Changes:
+
+Implemented pvalues
+Increased # of shuffling
+Changed shuffling method to circular
+Changed vector function to get indices and laps
+Computed trace matrices for laps
+Changed plotting function
