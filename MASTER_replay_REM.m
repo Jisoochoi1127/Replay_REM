@@ -54,15 +54,12 @@
 
 
 %% set path for data
-data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
-inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
-mkdir(inter_dir);
-decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
-mkdir(decoding_dir);
-replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
-mkdir(replay_dir);
-selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
-mkdir(selection_dir);
+data_dir = '/Users/guillaumeetter/Documents/datasets/REM_data';
+inter_dir = '/Users/guillaumeetter/Documents/output/Jisoo_results/inter';
+decoding_dir = '/Users/guillaumeetter/Documents/output/Jisoo_results/decoding';
+replay_dir = '/Users/guillaumeetter/Documents/output/Jisoo_results/replay';
+selection_dir='/Users/guillaumeetter/Documents/output/Jisoo_results/selection';
+
 %% collect data and generate intermediate files.
 
 cd(data_dir)
