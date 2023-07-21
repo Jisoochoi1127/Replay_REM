@@ -127,14 +127,12 @@ PARAMS.decoding.numshuffles = 100; % calculate average decoding error with 1000 
 % set the parameters for replay
 PARAMS.replay.step_size=10; %step_size ; overlapped portion. 
 PARAMS.replay.windowsize=29; %windowsize=duration of time window.
-PARAMS.replay.numshuffles = 100; 
+PARAMS.replay.numshuffles = 10; 
 PARAMS.replay.sampling_threshold=0.7;%how many data points for each time window
-%PARAMS.replay.slope
 PARAMS.replay.jumpiness=50;
 PARAMS.replay.min_slope=1;
 PARAMS.replay.max_slope=10;
 
-% style parameters for figures
 
 %% Place cell script here
 
@@ -184,7 +182,7 @@ for iF = 1:length(fnames)
     
     tic
    
-    [out] = Replay_Fidelity_linear_regression(PARAMS,replay_dir,decoding);
+    [Replay] = Replay_Fidelity_linear_regression(PARAMS,replay_dir,decoding);
     toc
             
  
@@ -202,6 +200,7 @@ end
 cd(replay_dir);
 fnames = dir('*_Replay.mat');
 for iF = 1:length(fnames)
+
     warning off
     load(fnames(iF).name)
     warning on
@@ -210,6 +209,7 @@ for iF = 1:length(fnames)
    
     [Selected_replay]=Replay_selection(PARAMS, selection_dir, Replay)
     toc
+
     
     save([selection_dir filesep Replay.info.subject '_' Replay.info.session '_selected_replay.mat'], 'Selected_replay')
         

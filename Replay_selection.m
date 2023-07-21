@@ -1,11 +1,5 @@
 
 
-% check Replay.PARAMS.replay.sampling_threshold;
-%DONE change variables matched with linear regression script
-% Do we need Final_Replay_actual ? or just actual? - maybe remove actual
-% and just use final_replay_actual
-%maybe remove 95% because we only use 99%
-
 %% Selecting replay with parameters
 
 function [Selected_replay]=Replay_selection(PARAMS,selection_dir, Replay)
@@ -13,7 +7,7 @@ function [Selected_replay]=Replay_selection(PARAMS,selection_dir, Replay)
 %Selection of replay events with sampling threshold, jumpiness, and slope.
 %% Selection of replay using shuffled data
 % Remove nan, inf, values less than sampling threshold.
-Selected_position=Replay.sampling_percentage_position>Replay.PARAMS.replay.sampling_threshold;
+Selected_position=Replay.sampling_percentage_position>PARAMS.replay.sampling_threshold;
 Selected_position_shuffle=Replay.score_shuffle_position(Selected_position);
 Selected_position_jumpiness=Replay.Shuffle_position_jumpiness(Selected_position);
 Selected_position_slope=Replay.slope_position(Selected_position);
@@ -23,7 +17,7 @@ Selected_position_shuffle(nan_inf_position)=[];
 Selected_position_jumpiness(nan_inf_position)=[];
 Selected_position_slope(nan_inf_position)=[];
 
-Selected_time=Replay.sampling_percentage_time>Replay.PARAMS.replay.sampling_threshold;
+Selected_time=Replay.sampling_percentage_time>PARAMS.replay.sampling_threshold;
 Selected_time_shuffle=Replay.score_shuffle_time(Selected_time);
 Selected_time_jumpiness=Replay.Shuffle_time_jumpiness(Selected_time);
 Selected_time_slope=Replay.slope_time(Selected_time);
@@ -46,7 +40,7 @@ shuffle_t_slope=Selected_time_slope;
 
 %% Selection of replay using actual data
 
-Selected_actual=Replay.sampling_per_actual>Replay.PARAMS.replay.sampling_threshold;
+Selected_actual=Replay.sampling_per_actual>PARAMS.replay.sampling_threshold;
 actual=Replay.Replay_score_actual(Selected_actual);
 nan_inf_actual=~isfinite(actual);
 actual(nan_inf_actual)=[];
@@ -54,7 +48,7 @@ actual(nan_inf_actual)=[];
 % don't know why i added this but actual = Final_Replay_actual same.
 % for actual data
 Replay_actual=isfinite(Replay.Replay_score_actual); % excluding nan, infinite values
-Selected_Replay_actual=find(Replay_actual==1 & Replay.sampling_per_actual>Replay.PARAMS.replay.sampling_threshold );
+Selected_Replay_actual=find(Replay_actual==1 & Replay.sampling_per_actual>PARAMS.replay.sampling_threshold);
 Final_Replay_actual=Replay.Replay_score_actual(Selected_Replay_actual);
 
 
@@ -98,16 +92,16 @@ Numb_shuffle_t_sig=find(Final_shuffle_p>CI_99_Shuffle_position(2) &Final_shuffle
 
 %for 95% CI
 Sig_num_replay_95=length(Significant_idx_95);
-Sig_replay_score_95=Replay_score_actual(Significant_idx_95);
+Sig_replay_score_95=Replay.Replay_score_actual(Significant_idx_95);
 Sig_avg_replay_score_95=mean(Sig_replay_score_95)
-Sig_slope_95=slope(Significant_idx_95);
+Sig_slope_95=Replay.Replay_slope_actual(Significant_idx_95);
 Sig_avg_slope_95=mean(Sig_slope_95);
 
 %for 99% CI
 Sig_num_replay_99=length(Significant_idx_99);
-Sig_replay_score_99=Replay_score_actual(Significant_idx_99);
+Sig_replay_score_99=Replay.Replay_score_actual(Significant_idx_99);
 Sig_avg_replay_score_99=mean(Sig_replay_score_99)
-Sig_slope_99=slope(Significant_idx_99);
+Sig_slope_99=Replay.Replay_slope_actual(Significant_idx_99);
 Sig_avg_slope_99=mean(Sig_slope_99);
 
 
@@ -118,10 +112,10 @@ Sig_location_95=[];
 
 for i=1:length(Significant_idx_95);
    
-    time= windowStartPoints(Significant_idx_95(i)):windowStartPoints(Significant_idx_95(i))+PARAMS.replay.windowsize;
+    time= Replay.windowStartPoints(Significant_idx_95(i)):Replay.windowStartPoints(Significant_idx_95(i))+PARAMS.replay.windowsize;
    
-    Sig_start_frame_95(i)=windowStartPoints(Significant_idx_95(i));
-    y=decoding.REM_decoded_position(time);
+    Sig_start_frame_95(i)=Replay.windowStartPoints(Significant_idx_95(i));
+    y=Replay.decoding.REM_decoded_position(time);
     y(find(isnan(y)))=[];
     
     Sig_extent_95(i)= abs(y(end)-y(1)); 
@@ -137,10 +131,10 @@ Sig_location_99=[];
 
 for i=1:length(Significant_idx_99);
    
-    time= windowStartPoints(Significant_idx_99(i)):windowStartPoints(Significant_idx_99(i))+PARAMS.replay.windowsize;
+    time= Replay.windowStartPoints(Significant_idx_99(i)):Replay.windowStartPoints(Significant_idx_99(i))+PARAMS.replay.windowsize;
    
-    Sig_start_frame_99(i)=windowStartPoints(Significant_idx_99(i));
-    y=decoding.REM_decoded_position(time);
+    Sig_start_frame_99(i)=Replay.windowStartPoints(Significant_idx_99(i));
+    y=Replay.decoding.REM_decoded_position(time);
     y(find(isnan(y)))=[];
     
     Sig_extent_99(i)= abs(y(end)-y(1)); % can't work if nan is at the end.
@@ -177,7 +171,6 @@ sig_actual=length(Final_Replay_score)/length(Final_Replay_actual)*100;
 
 %check which variable i need for plotting and further analysis.
 Selected_replay.Final_Replay_actual=Final_Replay_actual;
-
 Selected_replay.Final_start_frame=Final_start_frame;
 Selected_replay.Final_Replay_score=Final_Replay_score;
 Selected_replay.Final_Replay_slope=Final_Replay_slope;
