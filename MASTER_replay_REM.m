@@ -36,13 +36,16 @@
 % DONE_Replay- info is not loaded. 
 % DONE_separate the selection part from replay - from line 227
 % DONE_save all the variables from replay script for plotting figures
-% check params is loaded???- no ; should save in decoding.PARAMS
+% DONE_check params is loaded???- no ; should save in decoding.PARAMS
+% DONE_ treaming script - save only necessary variables.
+% check jumpiness - what happens with nan (mas(diff(abs..)
+%check decoding.PARAMS woudl be ideal? 
+% check actual jumpiness part (newly added)
 
 % for slection script
 % DONE_Include selection script in the master Monday
 % DONE_include slope threshold
 % DONE_remove plotting from replay script.
-% Line 202_pass workspace varialbes to function?
 % Run selction script through master script
 % sampling_percentage_time ; less than threshold... - that cause error
 
@@ -52,6 +55,7 @@
 % Add Bias index script 
 % Check the selction of replay _by slope/ jumpiness
 
+% add plotting repaly script
 
 %% set path for data
 data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
@@ -132,6 +136,8 @@ PARAMS.replay.max_slope=10;
 
 % style parameters for figures
 
+%% Place cell script here
+
 %% Decoding
 cd(inter_dir);
 
@@ -153,10 +159,8 @@ for iF = 1:length(fnames)
     [decoding] = Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM);
     toc
     
-    % where and how do we save this decoding?
     save([decoding_dir filesep info.subject '_' info.session '_decoding.mat'], 'decoding')
-    
-    
+  
     clear decoding ms behav info all_binary_pre_REM all_binary_pre_SW all_binary_post_REM all_binary_post_SW
     
     
@@ -177,12 +181,17 @@ for iF = 1:length(fnames)
     load(fnames(iF).name)
     warning on
     fprintf('Generating TCs for: %s   %s....', decoding.info.subject, decoding.info.session)
+    
     tic
    
-    [out] = Replay_Fidelity_linear_regression(replay_dir,decoding.PARAMS,decoding);
+    [out] = Replay_Fidelity_linear_regression(PARAMS,replay_dir,decoding);
     toc
             
-    %save [out] =
+ 
+    save([replay_dir filesep Replay.info.subject '_' Replay.info.session '_Replay.mat'], 'Replay')
+  
+    clear decoding 
+    
     fprintf('done\n')
 end
 
@@ -191,20 +200,21 @@ end
 %% Replay selection
 
 cd(replay_dir);
-fnames = dir('*_replay_out.mat');
+fnames = dir('*_Replay.mat');
 for iF = 1:length(fnames)
     warning off
     load(fnames(iF).name)
     warning on
-    fprintf('Generating TCs for: %s   %s....', decoding.info.subject, decoding.info.session)
+    fprintf('Generating TCs for: %s   %s....', Replay.info.subject, Replay.info.session)
     tic
    
-    [Selected_replay]=Replay_selection(out)
+    [Selected_replay]=Replay_selection(PARAMS, selection_dir, Replay)
     toc
     
-    save([selection_dir filesep decoding.info.subject '_' decoding.info.session '_selected_replay.mat'], 'Selected_replay')
+    save([selection_dir filesep Replay.info.subject '_' Replay.info.session '_selected_replay.mat'], 'Selected_replay')
         
-    
+     clear Replay
+     
     fprintf('done\n')
 end
 
@@ -322,9 +332,10 @@ ax2 = gca;
 linkaxes([ax1 ax2], 'x')
 
 
-% plotting for replay
+%% plotting for replay
+
 figure;
-scatter(sampling_percentage,Replay_score_actual,'*');
+scatter(Replay.sampling_per_actual,Replay.Replay_score_actual,'*');
 ylim([0 1]);
 title('scatter plot of sampling percentage and replay score');
 xlabel('Sampling Percentage');
@@ -333,7 +344,7 @@ xline(0.7,'r','LineWidth',2);
 
 %plotting slope histogram
 figure;
-histogram(slope, 'EdgeAlpha',0);
+histogram(Replay.Replay_slope_actual, 'EdgeAlpha',0);
 xlabel('Slope')
 ylabel('Frequency')
 box off
@@ -365,7 +376,7 @@ ylabel('Frequency')
 legend('Time shuffle');
 box off
 
-x1=shuffle_1;
+x1=shuffle_p_score;
 figure;
 histogram(x1);
 CIFcn = @(x1,p)prctile(x1,abs([0,100]-(100-p)/2));
@@ -377,7 +388,7 @@ legend('Position shuffle');
 
 box off
 % Getting confidence Intervals using time shuffle
-x2=shuffle_2;
+x2=shuffle_t_score;
 figure;
 histogram(x2);
 CIFcn = @(x2,p)prctile(x2,abs([0,100]-(100-p)/2)); % this doesn't need to be normal disgtribution

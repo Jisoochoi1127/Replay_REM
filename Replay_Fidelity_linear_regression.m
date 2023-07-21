@@ -1,15 +1,12 @@
                                                                                %% calculating replay fidelity using linear regression
-%Made by jisoo
-%April,22 2021
-
-
+% check decoding.PARAMS. 
 %% 1. Binning the time
-function [out]=Replay_Fidelity_linear_regression(replay_dir, decoding.PARAMS,decoding);
-tic
+function [out]=Replay_Fidelity_linear_regression(PARAMS,replay_dir,decoding);
+
 rng(decoding.PARAMS.rng, 'twister');
 
 inputDataTimeVec=1:length(decoding.REM_decoded_position);
-refTimeVec = 1:PARAMS.replay.step_size:length(inputDataTimeVec);
+refTimeVec = 1:decoding.PARAMS.replay.step_size:length(inputDataTimeVec);
 windowStartPoints = dsearchn(inputDataTimeVec',refTimeVec');
 numWindows=length(windowStartPoints);
 
@@ -17,12 +14,12 @@ numWindows=length(windowStartPoints);
 
 for window = 1:numWindows
     
-    if  windowStartPoints(window)<=(length(inputDataTimeVec)-PARAMS.replay.windowsize);
+    if  windowStartPoints(window)<=(length(inputDataTimeVec)-decoding.PARAMS.replay.windowsize);
         
-        time= windowStartPoints(window):windowStartPoints(window)+PARAMS.replay.windowsize;
+        time= windowStartPoints(window):windowStartPoints(window)+decoding.PARAMS.replay.windowsize;
         
         % if window size exceed the length of the inputdata
-    else windowStartPoints(window)>(length(inputDataTimeVec)-PARAMS.replay.windowsize);
+    else windowStartPoints(window)>(length(inputDataTimeVec)-decoding.PARAMS.replay.windowsize);
         %time= windowStartPoints(window):inputDataTimeVec(end);
         time=[]; 
         
@@ -30,7 +27,6 @@ for window = 1:numWindows
     
     x=time;
     y=decoding.REM_decoded_position(time);
-    %y=decoded_position(time);
     
     %Ignoring nan values
     nanIndex=isnan(y);
@@ -53,6 +49,9 @@ for window = 1:numWindows
     rsq(window) = 1 - SSresid/SStotal;
     Replay_score_actual=rsq;
     
+    if ~isempty(abs(diff(y)))
+        actual_jumpiness(window)=max(abs(diff(y)));
+        end
 end
 
 
@@ -61,11 +60,11 @@ end
 input=decoding.REM_decoded_position;
 Replay_score_shuffle_position=[];
 Replay_score_shuffle_time=[];
-Shuffle_position_jumpiness=NaN(PARAMS.replay.numshuffles,length(Replay_score_actual));
-Shuffle_time_jumpiness=NaN(PARAMS.replay.numshuffles,length(Replay_score_actual));
+Shuffle_position_jumpiness=NaN(decoding.PARAMS.replay.numshuffles,length(Replay_score_actual));
+Shuffle_time_jumpiness=NaN(decoding.PARAMS.replay.numshuffles,length(Replay_score_actual));
 
 warning off
-for k=1:PARAMS.replay.numshuffles;
+for k=1:decoding.PARAMS.replay.numshuffles;
     tic
     % Use decoded probabilities - shuffle- get maximum value. 
     % 
@@ -102,12 +101,12 @@ for k=1:PARAMS.replay.numshuffles;
   
 for window = 1:numWindows
     
-    if  windowStartPoints(window)<=(length(inputDataTimeVec)-PARAMS.replay.windowsize);
+    if  windowStartPoints(window)<=(length(inputDataTimeVec)-decoding.PARAMS.PARAMS.replay.windowsize);
         
-        time= windowStartPoints(window):windowStartPoints(window)+PARAMS.replay.windowsize;
+        time= windowStartPoints(window):windowStartPoints(window)+decoding.PARAMS.PARAMS.replay.windowsize;
         
         % if window size exceed the length of the inputdata
-    else windowStartPoints(window)>(length(inputDataTimeVec)-PARAMS.replay.windowsize);
+    else windowStartPoints(window)>(length(inputDataTimeVec)-decoding.PARAMS.PARAMS.replay.windowsize);
        % time= windowStartPoints(window):inputDataTimeVec(end); 
        time=[]; % if it's not emptied, it cause time shuffling problem that cause high score.
         
@@ -197,17 +196,40 @@ for window = 1:numWindows
     
 end
 
-%Caculate replay score (R2) using position shuffle
-
+%Caculate replay score(R2), slope, jumpiness, sampling perc using position, time shuffle
 Replay_score_shuffle_position=rsq_shuffle_position;
-%Caculate replay score (R2) using time shuffle
 Replay_score_shuffle_time=rsq_shuffle_time;
+Replay_slope_shuffle_position=slope_position;
+Replay_jumpiness_shuffle_position=Shuffle_position_jumpiness;
+Replay_slope_shuffle_time=slope_time;
+Replay_jumpiness_shuffle_position=Shuffle_time_jumpiness;
+sampling_per_shuffle_positon=sampling_percentage_position;
+sampling_per_shuffle_time=sampling_percentage_time;
+
 fprintf('Shuff #%0.0f  took ', k)
 toc
 fprintf('\n')
 end
 
+%Save variables
+Replay.PARAMS=decoding.PARAMS;
+Replay.info=decoding.info;
+Replay.windowStartPoints=windowStartPoints;
+Replay.numWindows=numWindows;
 
+Replay.sampling_per_actual=sampling_percentage;
+Replay.Replay_score_actual=Replay_score_actual;
+Replay.Replay_slope_actual=slope;
+Replay.actual_jumpiness=actual_jumpiness;
 
-toc
+Replay.sampling_percentage_position=sampling_percentage_position;
+Replay.score_shuffle_position=rsq_shuffle_position;
+Replay.slope_position=slope_position;
+Replay.Shuffle_position_jumpiness=Shuffle_position_jumpiness;
+
+Replay.sampling_percentage_time=sampling_percentage_time;
+Replay.score_shuffle_time=rsq_shuffle_time;
+Replay.slope_time=slope_time;
+Replay.Shuffle_time_jumpiness=Shuffle_time_jumpiness;
+
 end
