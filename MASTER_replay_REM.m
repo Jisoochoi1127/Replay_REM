@@ -71,13 +71,13 @@
 % Path for Comp Canada
 
 data_dir = '/lustre06/project/6064766/datasets/Jisoo/data';
-inter_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter';
+inter_dir = '/lustre06/project/6064766/datasets/Jisoo/inter';
 mkdir(inter_dir);
-decoding_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/decoding';
+decoding_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/decoding';
 mkdir(decoding_dir);
-replay_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/replay';
+replay_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/replay';
 mkdir(replay_dir);
-selection_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/selection/replay';
+selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
 mkdir(selection_dir);
 
 addpath('/home/ecar/Github/Replay_REM')
