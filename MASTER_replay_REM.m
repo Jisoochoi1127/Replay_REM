@@ -58,15 +58,29 @@
 % add plotting repaly script
 
 %% set path for data
-data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
-inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
+% data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
+% inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
+% mkdir(inter_dir);
+% decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
+% mkdir(decoding_dir);
+% replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+% mkdir(replay_dir);
+% selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+% mkdir(selection_dir);
+
+% Path for Comp Canada
+
+data_dir = '/lustre06/project/6064766/datasets/Jisoo/data';
+inter_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter';
 mkdir(inter_dir);
-decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
+decoding_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/decoding';
 mkdir(decoding_dir);
-replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+replay_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/replay';
 mkdir(replay_dir);
-selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+selection_dir = '/home/ecar/projects/def-wilsyl/ecar/Jisoo_inter/selection/replay';
 mkdir(selection_dir);
+
+addpath('/home/ecar/Github/Replay_REM')
 %% collect data and generate intermediate files.
 
 cd(data_dir)
@@ -207,7 +221,7 @@ for iF = 1:length(fnames)
     fprintf('Generating TCs for: %s   %s....', Replay.info.subject, Replay.info.session)
     tic
    
-    [Selected_replay]=Replay_selection(PARAMS, selection_dir, Replay)
+    [Selected_replay]=Replay_selection(PARAMS, [], Replay)
     toc
 
     
