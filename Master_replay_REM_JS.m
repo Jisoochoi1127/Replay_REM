@@ -402,6 +402,3 @@ box off
 
 
 % script for fig 2
-
-
-
