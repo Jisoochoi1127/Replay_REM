@@ -167,13 +167,10 @@ for iF = 1:length(fnames)
     PARAMS.data.behav_vec=behav.position(:,1);
     PARAMS.data.num_surrogates=1000;
     
-    [PC_properties] = extract_place_cells(decoding_dir, info, PARAMS, ms, behav);
+    [PCs_properties] = extract_place_cells(decoding_dir, info, PARAMS, ms, behav);
     toc
     
-    save([decoding_dir filesep info.subject '_' info.session '_decoding.mat'], 'decoding')
-  
-    clear decoding ms behav info all_binary_pre_REM all_binary_pre_SW all_binary_post_REM all_binary_post_SW
-    
+    save([decoding_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
     
     fprintf('done\n')
 end
