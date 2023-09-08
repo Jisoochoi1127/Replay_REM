@@ -58,15 +58,29 @@
 % add plotting repaly script
 
 %% set path for data
-data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
-inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
+% data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
+% inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
+% mkdir(inter_dir);
+% decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
+% mkdir(decoding_dir);
+% replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+% mkdir(replay_dir);
+% selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+% mkdir(selection_dir);
+
+% Path for Comp Canada
+
+data_dir = '/lustre06/project/6064766/datasets/Jisoo/data';
+inter_dir = '/lustre06/project/6064766/datasets/Jisoo/inter';
 mkdir(inter_dir);
-decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
+decoding_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/decoding';
 mkdir(decoding_dir);
-replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+replay_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/replay';
 mkdir(replay_dir);
-selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
 mkdir(selection_dir);
+
+addpath('/home/ecar/Github/Replay_REM')
 %% collect data and generate intermediate files.
 
 cd(data_dir)
@@ -135,6 +149,33 @@ PARAMS.replay.max_slope=10;
 
 
 %% Place cell script here
+cd(inter_dir);
+
+fnames = dir('*_data.mat');
+
+for iF = 1:length(fnames)
+    warning off
+    load(fnames(iF).name)
+    warning on
+    fprintf('Extracting place cells for: %s   %s....', info.subject, info.session)
+    tic
+    
+    % set the parameters for data
+    PARAMS.data.ca_time= ms.time/1000;
+    PARAMS.data.ca_data=ms.RawTraces ;
+    PARAMS.data.behav_time=behav.time/1000;
+    PARAMS.data.behav_vec=behav.position(:,1);
+    PARAMS.data.num_surrogates=1000;
+    
+    [PCs_properties] = extract_place_cells(decoding_dir, info, PARAMS, ms, behav);
+    toc
+    
+    save([decoding_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
+    
+    fprintf('done\n')
+end
+
+
 
 %% Decoding
 cd(inter_dir);
@@ -207,7 +248,7 @@ for iF = 1:length(fnames)
     fprintf('Generating TCs for: %s   %s....', Replay.info.subject, Replay.info.session)
     tic
    
-    [Selected_replay]=Replay_selection(PARAMS, selection_dir, Replay)
+    [Selected_replay]=Replay_selection(PARAMS, [], Replay)
     toc
 
     
