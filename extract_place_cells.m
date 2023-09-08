@@ -19,7 +19,7 @@ running_ts = velocity > PARAMS.decoding.min_speed_threshold;
 %% Compute occupancy and joint probabilities
 % Make sure that your binning vector includes every data point of
 % interp_behav_vec using the min/max function:
-bin_vector = min(interp_behav_vec):PARAMS.decoding.bin_size:max(interp_behav_vec)+PARAMS.decoding.bin_size; % start : bin_size : end
+bin_vector = 0:PARAMS.decoding.bin_size:100+PARAMS.decoding.bin_size; % start : bin_size : end
 bin_centers_vector = bin_vector + PARAMS.decoding.bin_size/2;
 bin_centers_vector(end) = [];
 
