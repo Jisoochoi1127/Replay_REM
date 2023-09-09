@@ -34,7 +34,7 @@ numShuffles=PARAMS.data.num_surrogates
 p_value_threshold = 0.05 % Threshold to be considered a place cell. TODO move to params
 
 for cell_i = 1:size(binarized_data,2)
-    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, training_ts);
+    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, logical(ones(size(binarized_data,1),1)));
     PC_properties.peak_rate(cell_i), PC_properties.peak_loc(cell_i) = max(tuning_curve_data(:,cell_i))
 
     PC_properties.isPC(cell_i) = 1 % By default, neuron will be a place cell unless does not pass significance test

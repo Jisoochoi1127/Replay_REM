@@ -56,31 +56,39 @@
 % Check the selction of replay _by slope/ jumpiness
 
 % add plotting repaly script
+%2023.09.08
+% DONE_modify decoding binning - using absolute value
+% DONE_place cell script - change training_ts to whole frames
+% cell_used ; include place cell only, non place cell only
+%include place cell output in decoding part - line 194
+%Decoding error in hat- match sampling between closed and open arms
+
 
 %% set path for data
-% data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
-% inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
-% mkdir(inter_dir);
-% decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
-% mkdir(decoding_dir);
-% replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
-% mkdir(replay_dir);
-% selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
-% mkdir(selection_dir);
+data_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/Data';
+inter_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/inter_data';
+mkdir(inter_dir);
+decoding_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/decoding';
+mkdir(decoding_dir);
+replay_dir = '/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/replay';
+mkdir(replay_dir);
+selection_dir='/Users/jisoo/Williams Lab Dropbox/Williams Lab Team Folder/Jisoo/Manuscript/inter/selection_replay';
+mkdir(selection_dir);
+
 
 % Path for Comp Canada
 
-data_dir = '/lustre06/project/6064766/datasets/Jisoo/data';
-inter_dir = '/lustre06/project/6064766/datasets/Jisoo/inter';
-mkdir(inter_dir);
-decoding_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/decoding';
-mkdir(decoding_dir);
-replay_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/replay';
-mkdir(replay_dir);
-selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
-mkdir(selection_dir);
-
-addpath('/home/ecar/Github/Replay_REM')
+% data_dir = '/lustre06/project/6064766/datasets/Jisoo/data';
+% inter_dir = '/lustre06/project/6064766/datasets/Jisoo/inter';
+% mkdir(inter_dir);
+% decoding_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/decoding';
+% mkdir(decoding_dir);
+% replay_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/replay';
+% mkdir(replay_dir);
+% selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
+% mkdir(selection_dir);
+% 
+% addpath('/home/ecar/Github/Replay_REM')
 %% collect data and generate intermediate files.
 
 cd(data_dir)
@@ -161,6 +169,7 @@ for iF = 1:length(fnames)
     tic
     
     % set the parameters for data
+
     PARAMS.data.ca_time= ms.time/1000;
     PARAMS.data.ca_data=ms.RawTraces ;
     PARAMS.data.behav_time=behav.time/1000;
@@ -185,6 +194,7 @@ fnames = dir('*_data.mat');
 for iF = 1:length(fnames)
     warning off
     load(fnames(iF).name)
+    %load place cell output here
     warning on
     fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
     tic
