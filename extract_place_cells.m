@@ -1,4 +1,4 @@
-function [PC_properties]= Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav)
+function [PC_properties]= Bayesian_JS2(inter_dir, info, PARAMS, ms, behav)
 rng(PARAMS.rng, 'twister'); 
 
 %% Interpolate behav and calcium

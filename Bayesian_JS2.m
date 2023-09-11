@@ -1,6 +1,6 @@
 %add Params. input 
 
-function [decoding]= Bayesian_JS2(decoding_dir, info,PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM)
+function [decoding]= Bayesian_JS2(decoding_dir, info,PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM, PCs_properties)
 rng(PARAMS.rng, 'twister'); 
 %% Interpolate behav and calcium
 
@@ -75,16 +75,18 @@ if PARAMS.decoding.cell_used == 'Whole_cell'; %Whole_cell, Place_cell, Non_Place
     PARAMS.decoding.cell_used=logical(ones(size(PARAMS.data.ca_data,2),1)); % Use every cell
     
 end
-% else if PARAMS.decoding.cell_used = 'Place_cell'
-%         PARAMS.decoding.cell_used= 
-%         
-%     end
-% 
-% else if PARAMS.decoding.cell_used = 'Non_Place_cell'
-%         PARAMS.decoding.cell_used=
-%         
-%     end
-% end
+
+elseif PARAMS.decoding.cell_used = 'Place_cell'
+        PARAMS.decoding.cell_used= find(PC_properties.isPC>0)
+        
+    end
+
+    elseif PARAMS.decoding.cell_used = 'Non_Place_cell'
+        PARAMS.decoding.cell_used= find(PC_properties.isPC=0)
+        
+    end
+end
+
 [WAKE_decoded_probabilities] = bayesian_decode1D(binarized_data, occupancy_vector, prob_being_active, tuning_curve_data, PARAMS.decoding.cell_used);
 
 [max_decoded_prob, decoded_bin] = max(WAKE_decoded_probabilities,[],1);

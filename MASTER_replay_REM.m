@@ -59,9 +59,13 @@
 %2023.09.08
 % DONE_modify decoding binning - using absolute value
 % DONE_place cell script - change training_ts to whole frames
-% cell_used ; include place cell only, non place cell only
-%include place cell output in decoding part - line 194
+% DONE cell_used ; include place cell only, non place cell only
+% DONE include place cell output in decoding part - line 194
 %Decoding error in hat- match sampling between closed and open arms
+
+%2023.09.11
+% check fnames, fnames_PC works in the master script
+% Bayesian_JS2 - check if place cell, non place cells _ cell used works
 
 
 %% set path for data
@@ -161,6 +165,7 @@ cd(inter_dir);
 
 fnames = dir('*_data.mat');
 
+
 for iF = 1:length(fnames)
     warning off
     load(fnames(iF).name)
@@ -176,10 +181,10 @@ for iF = 1:length(fnames)
     PARAMS.data.behav_vec=behav.position(:,1);
     PARAMS.data.num_surrogates=1000;
     
-    [PCs_properties] = extract_place_cells(decoding_dir, info, PARAMS, ms, behav);
+    [PCs_properties] = extract_place_cells(inter_dir, info, PARAMS, ms, behav);
     toc
     
-    save([decoding_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
+    save([inter_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
     
     fprintf('done\n')
 end
@@ -190,10 +195,14 @@ end
 cd(inter_dir);
 
 fnames = dir('*_data.mat');
+fnames_PC=dir('*_PCs.mat');
+
 
 for iF = 1:length(fnames)
     warning off
     load(fnames(iF).name)
+    load(fnames_PC(iF).name)
+    
     %load place cell output here
     warning on
     fprintf('Generating TCs for: %s   %s....', info.subject, info.session)
@@ -205,7 +214,7 @@ for iF = 1:length(fnames)
     PARAMS.data.behav_time=behav.time/1000;
     PARAMS.data.behav_vec=behav.position(:,1);
     
-    [decoding] = Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM);
+    [decoding] = Bayesian_JS2(decoding_dir, info, PARAMS, ms, behav, all_binary_pre_REM, all_binary_post_REM,PCs_properties);
     toc
     
     save([decoding_dir filesep info.subject '_' info.session '_decoding.mat'], 'decoding')
