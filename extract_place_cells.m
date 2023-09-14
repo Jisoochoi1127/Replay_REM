@@ -34,14 +34,17 @@ numShuffles=PARAMS.data.num_surrogates
 p_value_threshold = 0.05 % Threshold to be considered a place cell. TODO move to params
 
 for cell_i = 1:size(binarized_data,2)
-    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, logical(ones(size(binarized_data,1),1)));
-    PC_properties.peak_rate(cell_i), PC_properties.peak_loc(cell_i) = max(tuning_curve_data(:,cell_i))
-
+    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, running_ts);
+    [PC_properties.peak_rate(cell_i), peak_loc] = max(tuning_curve_data(:,cell_i))
+    
     PC_properties.isPC(cell_i) = 1 % By default, neuron will be a place cell unless does not pass significance test
-
+    PC_properties.peak_loc(cell_i)=bin_centers_vector(peak_loc); % convert to bin center location
+    
+    
     % Shuffle
     shuffled_MIs = zeros(numShuffles);
     num_shuffled_above_actual = 0
+    binarized_trace=binarized_data(:,cell_i);
 
     for k = 1:numShuffles
         random_ts = ceil(rand*length(PARAMS.data.ca_time));
@@ -51,9 +54,10 @@ for cell_i = 1:size(binarized_data,2)
         shuffled_binarized(1:random_ts) = binarized_trace(end-random_ts+1:end);
         shuffled_binarized(random_ts+1:end) = binarized_trace(1:end-random_ts);
         
+      
         % Compute tuning curve
         [shuffled_MI, ~, ~, ~, ~] = extract_1D_information(shuffled_binarized, interp_behav_vec, bin_vector, running_ts);
-        if shuffled_MI>MI(cell_i)
+        if shuffled_MI>PC_properties.MI(cell_i)
             num_shuffled_above_actual = num_shuffled_above_actual+1
         end
 

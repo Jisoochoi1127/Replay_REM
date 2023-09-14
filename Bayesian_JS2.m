@@ -74,18 +74,16 @@ if PARAMS.decoding.cell_used == 'Whole_cell'; %Whole_cell, Place_cell, Non_Place
     
     PARAMS.decoding.cell_used=logical(ones(size(PARAMS.data.ca_data,2),1)); % Use every cell
     
-end
 
-elseif PARAMS.decoding.cell_used = 'Place_cell'
+elseif PARAMS.decoding.cell_used == 'Place_cell'
         PARAMS.decoding.cell_used= find(PC_properties.isPC>0)
+       
+
+    elseif PARAMS.decoding.cell_used == 'Non_Place_cell'
+        PARAMS.decoding.cell_used= find(PC_properties.isPC==0)
         
     end
 
-    elseif PARAMS.decoding.cell_used = 'Non_Place_cell'
-        PARAMS.decoding.cell_used= find(PC_properties.isPC=0)
-        
-    end
-end
 
 [WAKE_decoded_probabilities] = bayesian_decode1D(binarized_data, occupancy_vector, prob_being_active, tuning_curve_data, PARAMS.decoding.cell_used);
 
