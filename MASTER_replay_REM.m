@@ -92,7 +92,9 @@ mkdir(replay_dir);
 selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
 mkdir(selection_dir);
 
-addpath('/home/ecar/Github/Replay_REM')
+usr = getenv('USER');
+addpath(genpath(['/home/' usr '/Github/Replay_REM']))
+    
 %% collect data and generate intermediate files.
 
 cd(data_dir)
@@ -100,7 +102,7 @@ sub_list = dir('pv*');
 
 for iSub = length(sub_list):-1:1
     cd([data_dir filesep sub_list(iSub).name]);
-    
+    res
     
     LT_list = dir('*LTD*');
     HAT_list= dir('*HATD*');
