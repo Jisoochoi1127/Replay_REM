@@ -98,7 +98,7 @@ full_position = LT_data['position'][LT_data['running_ts']]
 full_time = LT_data['caTime'][LT_data['running_ts']]
 
 #%% First, extract putative sequences during REMpre
-W_REM_pre_train, H_REMpre_train, _, _, _ = seqnmf(
+W_REMpre_train, H_REMpre_train, _, _, _ = seqnmf(
     REMpre_train_data.T,
     K=K,
     L=L,
@@ -107,9 +107,9 @@ W_REM_pre_train, H_REMpre_train, _, _, _ = seqnmf(
     )
 
 #%% Find what each neuron belongs to what sequence
-sorting_index = np.argsort(np.argmax(np.concatenate((W_REMpre_train[:,0,:],W[:,1,:]),axis=1),axis=1))
+sorting_index = np.argsort(np.argmax(np.concatenate((W_REMpre_train[:,0,:],W_REMpre_train[:,1,:]),axis=1),axis=1))
 
-#%% Extract H given X and W
+#%% Custom function to extract H given X and W
 def extract_H(W,data):
     H = np.zeros((W.shape[1], data.shape[0]),dtype='float')
     for l in range(W.shape[2]):
@@ -118,58 +118,38 @@ def extract_H(W,data):
     return H
 
 #%% extract H on test data
-H_REM = extract_H(W,full_REM_data)
+H_REMpost_from_pre = extract_H(W_REMpre_train, full_REMpost_data)
 
 #%% Plot resulting sequences
 plt.figure(figsize=(7,3))
 plt.subplot(232)
-plt.imshow(wake_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.5)
+plt.imshow(REMpre_train_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.5)
 plt.axis('off')
-plt.title('Wakefulness')
+plt.title('Pre-task REM')
 
 plt.subplot(233)
-plt.imshow(full_REM_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.5)
+plt.imshow(full_REMpost_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.5)
 plt.axis('off')
-plt.title('REM')
+plt.title('Post-task REM')
 
 plt.subplot(4,3,8)
-plt.plot(H_wake[0],label='S1',color='C0')
-plt.plot(H_wake[1],label='S2',color='C6')
-plt.xlim(0,len(H_wake[0]))
+plt.plot(H_REMpre_train[0],label='S1',color='C0')
+plt.plot(H_REMpre_train[1],label='S2',color='C6')
+plt.xlim(0,len(H_REMpre_train[0]))
 plt.xticks([])
 plt.yticks([])
 
 plt.legend(bbox_to_anchor=(0, 1), loc='upper right', borderaxespad=0)
 
 plt.subplot(4,3,9)
-plt.plot(H_REM[0],label='S1',color='C0')
-plt.plot(H_REM[1],label='S2',color='C6')
-plt.xlim(0,len(H_REM[0]))
+plt.plot(H_REMpost_from_pre[0],label='S1',color='C0')
+plt.plot(H_REMpost_from_pre[1],label='S2',color='C6')
+plt.xlim(0,len(H_REMpost_from_pre[0]))
 plt.xticks([])
 plt.yticks([])
 
-
-plt.subplot(4,3,11)
-plt.plot(full_position[:,0],color='k')
-plt.xticks([0,len(H_wake[0])],[0,5])
-plt.xlim(0,len(H_wake[0]))
-plt.xlabel('Time (min)')
-plt.ylabel('Position (cm)')
-
-plt.subplot(2,24,7)
-plt.imshow(W[sorting_index,0,:],cmap='magma',aspect='auto',interpolation='none',vmax=.5)
-plt.xticks([])
-plt.yticks([0,numNeurons])
-plt.ylabel('Neuron ID')
-plt.title('S1')
-
-plt.subplot(2,24,8)
-plt.imshow(W[sorting_index,1,:],cmap='magma',aspect='auto',interpolation='none',vmax=.5)
-plt.axis('off')
-plt.title('S2')
-
 plt.tight_layout()
-plt.savefig('../../../Desktop/seq_replay_PV1069.pdf')
+#plt.savefig('../../../Desktop/seq_replay_PV1069.pdf')
 
 #%% Get skewness value in test data
 actual_wake_skew_vals = skew(H_wake,axis=1)
