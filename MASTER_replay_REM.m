@@ -118,6 +118,7 @@ mkdir(replay_dir);
 selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
 mkdir(selection_dir);
 
+
 addpath('/lustre06/project/6064766/datasets/Jisoo//code/Replay_REM')
 
 
@@ -127,6 +128,18 @@ if strcmpi(overwrite_flag, 'hard')
     
     cd(data_dir)
     sub_list = dir('pv*');
+
+usr = getenv('USER');
+addpath(genpath(['/home/' usr '/Github/Replay_REM']))
+    
+%% collect data and generate intermediate files.
+
+cd(data_dir)
+sub_list = dir('pv*');
+
+for iSub = length(sub_list):-1:1
+    cd([data_dir filesep sub_list(iSub).name]);
+    
     
     for iSub = length(sub_list):-1:1
         cd([data_dir filesep sub_list(iSub).name]);

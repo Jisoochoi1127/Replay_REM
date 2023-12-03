@@ -118,6 +118,7 @@ mkdir(replay_dir);
 selection_dir = '/lustre06/project/6064766/datasets/Jisoo/inter/selection_replay';
 mkdir(selection_dir);
 
+
 addpath('/lustre06/project/6064766/datasets/Jisoo//code/Replay_REM')
 
 
@@ -127,6 +128,18 @@ if strcmpi(overwrite_flag, 'hard')
     
     cd(data_dir)
     sub_list = dir('pv*');
+
+usr = getenv('USER');
+addpath(genpath(['/home/' usr '/Github/Replay_REM']))
+    
+%% collect data and generate intermediate files.
+
+cd(data_dir)
+sub_list = dir('pv*');
+
+for iSub = length(sub_list):-1:1
+    cd([data_dir filesep sub_list(iSub).name]);
+    
     
     for iSub = length(sub_list):-1:1
         cd([data_dir filesep sub_list(iSub).name]);
@@ -199,27 +212,35 @@ if contains(overwrite_flag, {'Hard', 'Place'})
     
     fnames = dir('*_data.mat');
     
+        p = gcp('nocreate');
+
+    if isempty(p)
+        n_cores = feature('numcores');
+        parpool(parcluster('local'), n_cores - 1, 'IdleTimeout', inf)
+    end
     
-    for iF = 1:length(fnames)
+    parfor iF = 1:length(fnames)
         warning off
-        load(fnames(iF).name)
-        warning on
-        fprintf('Extracting place cells for: %s   %s....', info.subject, info.session)
+%         load(fnames(iF).name)
+%         warning on
+                fprintf('Generating PCs for: %s   ....\n', fnames(iF).name)
+
         tic
-        
-        % set the parameters for data
-        
-        PARAMS.data.ca_time= ms.time/1000;
-        PARAMS.data.ca_data=ms.RawTraces ;
-        PARAMS.data.behav_time=behav.time/1000;
-        PARAMS.data.behav_vec=behav.position(:,1);
-        PARAMS.data.num_surrogates=1000;
-        
-        [PCs_properties] = extract_place_cells(inter_dir, info, PARAMS, ms, behav);
-        toc
-        
-        save([inter_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
-        
+        Place_batch(PARAMS, fnames(iF).name, inter_dir); 
+%         
+%         % set the parameters for data
+%         
+%         PARAMS.data.ca_time= ms.time/1000;
+%         PARAMS.data.ca_data=ms.RawTraces ;
+%         PARAMS.data.behav_time=behav.time/1000;
+%         PARAMS.data.behav_vec=behav.position(:,1);
+%         PARAMS.data.num_surrogates=1000;
+%         
+%         [PCs_properties] = extract_place_cells(inter_dir, info, PARAMS, ms, behav);
+%         toc
+%         
+%         save([inter_dir filesep info.subject '_' info.session '_PCs.mat'], 'PCs_properties')
+%         
         fprintf('done\n')
     end
 end
@@ -233,8 +254,12 @@ if contains(overwrite_flag, {'Hard','Place', 'Decoding'})
     fnames = dir('*_data.mat');
     fnames_PC=dir('*_PCs.mat');
     
-    n_cores = feature('numcores'); 
-    parpool(parcluster('local'), n_cores - 1, 'IdleTimeout', inf)
+    % check for existing parallel pools. 
+    p = gcp('nocreate');
+    if isempty(p)
+        n_cores = feature('numcores');
+        parpool(parcluster('local'), n_cores - 1, 'IdleTimeout', inf)
+    end
     parfor iF = 1:length(fnames)
                 fprintf('Generating TCs for: %s   ....\n', fnames(iF).name)
 
