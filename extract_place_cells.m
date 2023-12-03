@@ -30,20 +30,20 @@ for cell_i = 1:size(PARAMS.data.ca_data,2)
 end
 
 %% Shuffle and establish place cells
-numShuffles=PARAMS.data.num_surrogates
-p_value_threshold = 0.05 % Threshold to be considered a place cell. TODO move to params
+numShuffles=PARAMS.data.num_surrogates;
+p_value_threshold = 0.05; % Threshold to be considered a place cell. TODO move to params
 
-for cell_i = 1:size(binarized_data,2)
-    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, running_ts);
-    [PC_properties.peak_rate(cell_i), peak_loc] = max(tuning_curve_data(:,cell_i))
+for cell_i = size(binarized_data,2):-1:1
+    [PC_properties.MI(cell_i), ~, ~, PC_properties.marginal_likelihood(cell_i), PC_properties.tuning_curve_data(:,cell_i) ] = extract_1D_information(binarized_data(:,cell_i), interp_behav_vec, bin_vector, running_ts);
+    [PC_properties.peak_rate(cell_i), peak_loc] = max(PC_properties.tuning_curve_data(:,cell_i));
     
-    PC_properties.isPC(cell_i) = 1 % By default, neuron will be a place cell unless does not pass significance test
+    PC_properties.isPC(cell_i) = 1; % By default, neuron will be a place cell unless does not pass significance test
     PC_properties.peak_loc(cell_i)=bin_centers_vector(peak_loc); % convert to bin center location
     
     
     % Shuffle
     shuffled_MIs = zeros(numShuffles);
-    num_shuffled_above_actual = 0
+    num_shuffled_above_actual = 0;
     binarized_trace=binarized_data(:,cell_i);
 
     for k = 1:numShuffles
@@ -58,11 +58,11 @@ for cell_i = 1:size(binarized_data,2)
         % Compute tuning curve
         [shuffled_MI, ~, ~, ~, ~] = extract_1D_information(shuffled_binarized, interp_behav_vec, bin_vector, running_ts);
         if shuffled_MI>PC_properties.MI(cell_i)
-            num_shuffled_above_actual = num_shuffled_above_actual+1
+            num_shuffled_above_actual = num_shuffled_above_actual+1;
         end
 
         if num_shuffled_above_actual/numShuffles > p_value_threshold
-            PC_properties.isPC(cell_i) = 0 % Too many surrogates outperformed actual data. This is not a place cell
+            PC_properties.isPC(cell_i) = 0;% Too many surrogates outperformed actual data. This is not a place cell
             break % Since this is likely not a place cell, no need to shuffle further
         end
     end 
