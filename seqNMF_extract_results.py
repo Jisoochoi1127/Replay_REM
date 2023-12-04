@@ -1,15 +1,12 @@
 #%% Imports
 import numpy as np
 from seqnmf import seqnmf
-#from utils.utils import test_significance
 import os
 from scipy.stats import skew
 from tqdm import tqdm
 import pandas as pd
 import itertools
 
-import matplotlib.pyplot as plt
-plt.style.use('plot_style.mplstyle')
 import scipy.io as sio
 import yaml
 import h5py
