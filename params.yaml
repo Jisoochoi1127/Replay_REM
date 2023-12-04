@@ -1,0 +1,7 @@
+numShuffles: 1000
+L: 150 # 5s @ 30fps
+K: 2
+numNeurons: 128
+maxIters: 50
+Lambda: 0.0001
+speed_threshold: 5

@@ -15,18 +15,9 @@ import h5py
 from pycaan.functions.dataloaders import load_data
 from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_data
 
-#%%
-with open('../../output/results_CA1/params.yaml','r') as file:
+#%% Load parameters
+with open('params.yaml','r') as file:
     params = yaml.full_load(file)
-
-params['speed_threshold'] = 5
-#%% Setting seqNMF params
-numShuffles=1000
-L = 5*30 # 5s, @ 30fps
-K=2
-numNeurons = 128
-maxIters = 50
-Lambda = 0.0001
 
 #%% Load awake data
 LT_data={}
