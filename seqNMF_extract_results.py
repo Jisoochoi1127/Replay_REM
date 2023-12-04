@@ -105,11 +105,15 @@ def extract_seq_score(data, params):
         seq_shuffled_score[shuffle_i,:] = skew(shuffled_test_H,axis=1)
 
     seq_zscore = np.zeros(params['K']) # zscore for each sequences
+    seq_pvalue = np.zeros(params['K']) # zscore for each sequences
     for k in range(params['K']):
+        # Z-score
         seq_zscore[k] = (seq_score[k]-np.mean(seq_shuffled_score[:,k]))/np.std(seq_shuffled_score[:,k])
 
-    #TODO add non-parametric pvalue
-    return seq_score, seq_shuffled_score, seq_zscore
+        # p-value
+        seq_pvalue[k] = sum(seq_shuffled_score[:,k]>seq_score[k])/params['numShuffles']
+    
+    return seq_score, seq_shuffled_score, seq_zscore ,seq_pvalue
 
 def extract_seqReplay_score(data_ref, data_pred, params):
 
@@ -138,11 +142,16 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         seq_shuffled_score[shuffle_i,:] = skew(shuffled_pred_H,axis=1)
 
     seqReplay_zscore = np.zeros(params['K']) # zscore for each sequences
+    seqReplay_pvalue = np.zeros(params['K']) # zscore for each sequences
     for k in range(params['K']):
+        # Z-score
         seqReplay_zscore[k] = (seqReplay_score[k]-np.mean(seqReplay_shuffled_score[:,k]))/np.std(seqReplay_shuffled_score[:,k])
 
+        # p-value
+        seqReplay_pvalue[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_score[k])/params['numShuffles']
+
     #TODO add non-parametric pvalue
-    return seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore
+    return seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore, seqReplay_pvalue
 
 #%% First, measure 'sequenceness' in each individuate session
 seqScore_list = []
@@ -154,7 +163,7 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
     data = load_data(mouse, condition, state, params)
 
     # Extract seq score
-    seq_score, seq_shuffled_score, seq_zscore = extract_seq_score(data, params)
+    seq_score, seq_shuffled_score, seq_zscore, seq_pvalue = extract_seq_score(data, params)
 
     seqScore_list.append(
         {
@@ -165,7 +174,6 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
         'max_seq_zscore': np.max(seq_zscore)
     })
 
-#%%
 df=pd.DataFrame(seqScore_list)
 df.to_csv(os.path.join(params['path_to_output'],'seqScores.csv'))
 
@@ -182,7 +190,7 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
     data_pred = load_data(mouse, condition, state_pred, params)
 
     # Extract seq score
-    seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore = extract_seqReplay_score(data_ref, data_pred, params)
+    seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore, seqReplay_pvalue = extract_seqReplay_score(data_ref, data_pred, params)
 
     seqReplayScore_list.append(
         {
