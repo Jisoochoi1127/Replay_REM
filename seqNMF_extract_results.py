@@ -98,7 +98,7 @@ def extract_seq_score(data, params):
             shuffled_W[neuron,:,:] = np.roll(W_train[neuron,:,:],shift=np.random.randint(W_train.shape[2]),axis=1)
         
         shuffled_test_H = extract_H(shuffled_W,test_data)
-        seq_shuffled_score[shuffle_i,:] = skew(shuffled_H_wake,axis=1)
+        seq_shuffled_score[shuffle_i,:] = skew(shuffled_test_H,axis=1)
 
     seq_zscore = np.zeros(params['K']) # zscore for each sequences
     for k in range(params['K']):
