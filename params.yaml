@@ -8,3 +8,4 @@ Lambda: 0.0001
 speed_threshold: 5
 samplingFrequency: 30
 train_test_ratio: .5
+path_to_output: '../../output_REM'

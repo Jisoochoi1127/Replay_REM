@@ -7,14 +7,14 @@ from scipy.signal import find_peaks
 from scipy.stats import skew
 from tqdm import tqdm
 import pandas as pd
+import itertools
 
 import matplotlib.pyplot as plt
 plt.style.use('plot_style.mplstyle')
 import scipy.io as sio
 import yaml
 import h5py
-from pycaan.functions.dataloaders import load_data
-from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_data
+from pycaan.functions.signal_processing import binarize_ca_traces
 
 #%% Load parameters
 with open('params.yaml','r') as file:
@@ -108,34 +108,31 @@ def extract_seq_score(data, params):
     return seq_score, seq_shuffled_score, seq_zscore
 
 #%% Define conditions, dataset
-seqScore_dict = {}
+seqScore_list = []
 states_list = ['REMpre', 'wake', 'REMpost']
 condition_list = ['LTD1','LTD5','HATD5']
 mouse_list = ['pv1060', 'pv1254', 'pv1069']
 
 #%% First, measure 'sequenceness' in each individuate session
-for condition in condition_list:
-    for mouse in mouse_list:
-        for state in states_list:
-            print(f'Processing {condition}, {mouse}, {state}...')
-            # Load data
-            data = load_data(mouse, condition, state, params)
+for condition, mouse, state in tqdm(list(itertools.product(condition_list, mouse_list, states_list)), total=len(condition_list)*len(mouse_list)*len(states_list)):
+    # Load data
+    data = load_data(mouse, condition, state, params)
 
-            # Extract seq score
-            seq_score, seq_shuffled_score, seq_zscore = extract_seq_score(data, params)
+    # Extract seq score
+    seq_score, seq_shuffled_score, seq_zscore = extract_seq_score(data, params)
 
-            seqScore_dict.update(
-                {
-                'mouse':mouse,
-                'condition':condition,
-                'state':state,
-                'max_seq_score': np.max(seq_score), # Take max possible score
-                'max_seq_zscore': np.max(seq_zscore)
-            }
-            )
+    seqScore_list.append(
+        {
+        'mouse':mouse,
+        'condition':condition,
+        'state':state,
+        'max_seq_score': np.max(seq_score), # Take max possible score
+        'max_seq_zscore': np.max(seq_zscore)
+    })
 
-#%% Save results
-
+#%%
+df=pd.DataFrame(seqScore_list)
+df.to_csv(os.path.join(params['path_to_output'],'seqScores.csv'))
 
 #%% Imagine matrix w/ 3 d.o.f.: pre, wake, post REM
 # For each mouse/condition what is the seqReplay score across all states?
