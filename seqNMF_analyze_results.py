@@ -22,4 +22,16 @@ sns.barplot(
 plt.ylabel('Seq. score (z)')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 
+#%%
+sns.barplot(
+    data=df,
+    y='max_seq_score',
+    x='condition',
+    hue='state',
+    palette=['C0','C6','C1'],
+    errorbar='se'
+)
+plt.ylabel('Seq. score')
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+
 #%% STATS
