@@ -92,7 +92,7 @@ def extract_seq_score(data, params):
 
     # Shuffle
     seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
-    for shuffle_i in tqdm(range(params['numShuffles'])):
+    for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_train.shape)
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_train[neuron,:,:],shift=np.random.randint(W_train.shape[2]),axis=1)
