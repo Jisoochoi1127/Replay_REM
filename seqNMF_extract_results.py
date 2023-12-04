@@ -3,7 +3,6 @@ import numpy as np
 from seqnmf import seqnmf
 #from utils.utils import test_significance
 import os
-from scipy.signal import find_peaks
 from scipy.stats import skew
 from tqdm import tqdm
 import pandas as pd
@@ -19,6 +18,11 @@ from pycaan.functions.signal_processing import binarize_ca_traces
 #%% Load parameters
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
+
+#%% Define conditions, dataset
+states_list = ['REMpre', 'wake', 'REMpost']
+condition_list = ['LTD1','LTD5','HATD5']
+mouse_list = ['pv1060', 'pv1254', 'pv1069']
 
 #%% Custom functions
 def open_file(path, filename):
@@ -107,14 +111,45 @@ def extract_seq_score(data, params):
     #TODO add non-parametric pvalue
     return seq_score, seq_shuffled_score, seq_zscore
 
-#%% Define conditions, dataset
-seqScore_list = []
-states_list = ['REMpre', 'wake', 'REMpost']
-condition_list = ['LTD1','LTD5','HATD5']
-mouse_list = ['pv1060', 'pv1254', 'pv1069']
+def extract_seqReplay_score(data_ref, data_pred, params):
+
+    # Extract sequences
+    W_ref, H_ref, _, _, _ = seqnmf(
+        data_ref.T,
+        K=params['K'],
+        L=params['L'],
+        Lambda=params['Lambda'],
+        max_iter=params['maxIters']
+        )
+
+    # Extract sequences on predicted data set
+    H_pred = extract_H(W_ref, data_pred)
+    # output will have d dimensions corresponding to each sequence template
+    seqReplay_score = skew(H_pred,axis=1) 
+
+    # Shuffle
+    seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
+    for shuffle_i in range(params['numShuffles']):
+        shuffled_W = np.zeros(W_ref.shape)
+        for neuron in range(params['numNeurons']):
+            shuffled_W[neuron,:,:] = np.roll(W_ref[neuron,:,:],shift=np.random.randint(W_ref.shape[2]),axis=1)
+        
+        shuffled_pred_H = extract_H(shuffled_W,data_pred)
+        seq_shuffled_score[shuffle_i,:] = skew(shuffled_pred_H,axis=1)
+
+    seqReplay_zscore = np.zeros(params['K']) # zscore for each sequences
+    for k in range(params['K']):
+        seqReplay_zscore[k] = (seqReplay_score[k]-np.mean(seqReplay_shuffled_score[:,k]))/np.std(seqReplay_shuffled_score[:,k])
+
+    #TODO add non-parametric pvalue
+    return seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore
 
 #%% First, measure 'sequenceness' in each individuate session
-for condition, mouse, state in tqdm(list(itertools.product(condition_list, mouse_list, states_list)), total=len(condition_list)*len(mouse_list)*len(states_list)):
+seqScore_list = []
+for condition, mouse, state in tqdm(list(itertools.product(condition_list,
+                                                           mouse_list,
+                                                           states_list)),
+                                                           total=len(condition_list)*len(mouse_list)*len(states_list)):
     # Load data
     data = load_data(mouse, condition, state, params)
 
@@ -134,20 +169,32 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list, mouse
 df=pd.DataFrame(seqScore_list)
 df.to_csv(os.path.join(params['path_to_output'],'seqScores.csv'))
 
-#%% Imagine matrix w/ 3 d.o.f.: pre, wake, post REM
-# For each mouse/condition what is the seqReplay score across all states?
-# How deos it compare to shuffled data?
+#%% Same but look at replay between conditions
+seqReplayScore_list = []
+for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condition_list,
+                                                           mouse_list,
+                                                           states_list,
+                                                           states_list)),
+                                                           total=len(condition_list)*len(mouse_list)*len(states_list)*len(states_list)):
 
+    # Load data for both states
+    data_ref = load_data(mouse, condition, state_ref, params)
+    data_pred = load_data(mouse, condition, state_pred, params)
 
+    # Extract seq score
+    seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore = extract_seqReplay_score(data_ref, data_pred, params)
 
-#%%
-for condition in condition_list:
-    for ref_state in states_list:
-        for target_state in states_list:
-            for mouse in mouse_list:
-                # Load data
-                # Preprocess and binarize
-                seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore = extract_seqReplay_score()
+    seqReplayScore_list.append(
+        {
+        'mouse':mouse,
+        'condition':condition,
+        'state_ref':state_ref,
+        'state_pred':state_pred,
+        'max_seq_score': np.max(seqReplay_score), # Take max possible score
+        'mean_seqReplay_shuffled_score': np.mean(seqReplay_shuffled_score), # Take max possible score
+        'max_seqReplay_zscore': np.max(seqReplay_zscore)
+    })
 
-#%% Save results
-pd.to_h5()
+df_replay=pd.DataFrame(seqReplayScore_list)
+df_replay.to_csv(os.path.join(params['path_to_output'],'seqReplayScores.csv'))
+
