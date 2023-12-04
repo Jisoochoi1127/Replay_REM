@@ -91,7 +91,7 @@ def extract_seq_score(data, params):
     seq_score = skew(H_test,axis=1) 
 
     # Shuffle
-    seq_shuffled_score = np.zeros((numShuffles, params['K']))
+    seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
     for shuffle_i in tqdm(range(params['numShuffles'])):
         shuffled_W = np.zeros(W.shape)
         for neuron in range(params['numNeurons']):
@@ -104,6 +104,7 @@ def extract_seq_score(data, params):
     for k in range(params['K']):
         seq_zscore[k] = (seq_score[k]-np.mean(seq_shuffled_score[:,k]))/np.std(seq_shuffled_score[:,k])
 
+    #TODO add non-parametric pvalue
     return seq_score, seq_shuffled_score, seq_zscore
 
 #%% Define conditions, dataset
