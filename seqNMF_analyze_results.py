@@ -19,6 +19,43 @@ from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_da
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
+#%%
+results_dict = {}
+states_list = ['REM-pre', 'wake', 'REM-post']
+condition_list = ['LTD1','LTD5','HATD5']
+mouse_list = ['pv1060', 'pv1254', 'pv1252', 'pv1069']
+
+#%% First, measure 'sequenceness' in each individuate session
+for condition in condition_list:
+    for state in states_list:
+        for mouse in mouse_list:
+            # Load data
+            # Preprocess and binarize
+            seq_score, seq_shuffled_score, seq_zscore = extract_seq_score()
+
+#%% Save results
+
+#%% Imagine matrix w/ 3 d.o.f.: pre, wake, post REM
+# For each mouse/condition what is the seqReplay score across all states?
+# How deos it compare to shuffled data?
+
+
+
+#%%
+for condition in condition_list:
+    for ref_state in states_list:
+        for target_state in states_list:
+            for mouse in mouse_list:
+                # Load data
+                # Preprocess and binarize
+                seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore = extract_seqReplay_score()
+
+#%% Save results
+
+
+
+
+
 #%% Load awake data
 LT_data={}
 path = '../../datasets/REM_data/pv1069/LTD1'
