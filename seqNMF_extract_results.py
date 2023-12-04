@@ -6,6 +6,7 @@ import os
 from scipy.signal import find_peaks
 from scipy.stats import skew
 from tqdm import tqdm
+import pandas as pd
 
 import matplotlib.pyplot as plt
 plt.style.use('plot_style.mplstyle')
@@ -21,19 +22,81 @@ with open('params.yaml','r') as file:
 
 #%%
 results_dict = {}
-states_list = ['REM-pre', 'wake', 'REM-post']
+states_list = ['REMpre', 'wake', 'REMpost']
 condition_list = ['LTD1','LTD5','HATD5']
-mouse_list = ['pv1060', 'pv1254', 'pv1252', 'pv1069']
+mouse_list = ['pv1060', 'pv1254', 'pv1069']
+
+#%% Custom functions
+def open_file(path, filename):
+    data={}
+    try:
+        f = h5py.File(os.path.join(path,filename)+'.mat', 'r')
+        data.update(
+        {
+        'rawData':f[filename][()].T
+        }
+        )
+    except:
+        f = sio.loadmat(path+'/ms.mat')
+        data.update(
+        {
+        'rawData':f['ms']['RawTraces'][0][0] 
+        }
+        )
+    return data
+
+
+def load_data(mouse, condition, state, params):
+    path=os.path.join(params['path_to_dataset'], mouse, condition)
+    if 'pre' in state: 
+        filename='all_binary_pre_REM'
+        data = open_file(path, filename)
+
+    elif 'post' in state:
+        filename='all_binary_post_REM'
+        data = open_file(path, filename)
+
+    else: # Then, must be wake data in old mat format
+        filename='ms'
+        data = open_file(path, filename)
+
+    data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
+    data = data['binaryData'][:,0:params['numNeurons']]
+    
+    return data
+
+def extract_seq_score(data)
+    trainingFrames = np.zeros(len(full_REMpre_data), dtype=bool)
+    trainingFrames[0:int(params['train_test_ratio']*len(full_REMpre_data))] = True
+    testingFrames = ~REMpre_trainingFrames
+
+    REMpre_train_data = full_REMpre_data[REMpre_trainingFrames]
+    REMpre_test_data = full_REMpre_data[REMpre_testingFrames]
+
+
+    W_REMpre_train, H_REMpre_train, _, _, _ = seqnmf(
+        REMpre_train_data.T,
+        K=K,
+        L=L,
+        Lambda=Lambda,
+        max_iter=maxIters
+        )
+
+
+    return seq_score, seq_shuffled_score, seq_zscore
 
 #%% First, measure 'sequenceness' in each individuate session
 for condition in condition_list:
     for state in states_list:
         for mouse in mouse_list:
             # Load data
-            # Preprocess and binarize
-            seq_score, seq_shuffled_score, seq_zscore = extract_seq_score()
+            data = load_data(data, params)
+
+            # Extract seq score
+            seq_score, seq_shuffled_score, seq_zscore = extract_seq_score(data, params)
 
 #%% Save results
+
 
 #%% Imagine matrix w/ 3 d.o.f.: pre, wake, post REM
 # For each mouse/condition what is the seqReplay score across all states?
@@ -51,91 +114,9 @@ for condition in condition_list:
                 seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore = extract_seqReplay_score()
 
 #%% Save results
+pd.to_h5()
 
 
-
-
-
-#%% Load awake data
-LT_data={}
-path = '../../datasets/REM_data/pv1069/LTD1'
-f = sio.loadmat(path + '/ms.mat')
-LT_data.update(
-    {
-    'caTime':f['ms']['time'][0][0].T[0]/1000, # convert ms->s
-    'rawData':f['ms']['RawTraces'][0][0] 
-    }
-    )
-
-f = sio.loadmat(path + '/behav.mat')
-LT_data.update(
-    { # Note that older files do not have background/tones
-    'position':f['behav']['position'][0][0],
-    'behavTime':f['behav']['time'][0][0].T[0]/1000,
-    }
-    )
-LT_data['task'] = 'LT'
-LT_data = preprocess_data(LT_data, params)
-
-LT_data['binaryData'], neural_data = binarize_ca_traces(LT_data['rawData'], 2, 30)
-
-#%% Load post-LT REM data
-REMpost_data={}
-f = h5py.File(path + '/all_binary_post_REM.mat','r')
-REMpost_data.update(
-    {
-    'rawData':f['all_binary_post_REM'][()].T
-    }
-    )
-
-REMpost_data['binaryData'], _ = binarize_ca_traces(REMpost_data['rawData'], 2, 30)
-full_REMpost_data = REMpost_data['binaryData'][:,0:numNeurons]
-
-#%% Load pre-LT REM data
-REMpre_data={}
-f = h5py.File(path + '/all_binary_pre_REM.mat','r')
-REMpre_data.update(
-    {
-    'rawData':f['all_binary_pre_REM'][()].T
-    }
-    )
-
-REMpre_data['binaryData'], _ = binarize_ca_traces(REMpre_data['rawData'], 2, 30)
-full_REMpre_data = REMpre_data['binaryData'][:,0:numNeurons]
-
-#%% Establishing train/test portions
-# REM-pre
-REMpre_trainingFrames = np.zeros(len(full_REMpre_data), dtype=bool)
-REMpre_trainingFrames[0:int(.5*len(full_REMpre_data))] = True
-REMpre_testingFrames = ~REMpre_trainingFrames
-
-REMpre_train_data = full_REMpre_data[REMpre_trainingFrames]
-REMpre_test_data = full_REMpre_data[REMpre_testingFrames]
-
-# REM-post
-REMpost_trainingFrames = np.zeros(len(full_REMpost_data), dtype=bool)
-REMpost_trainingFrames[0:int(.5*len(full_REMpost_data))] = True
-REMpost_testingFrames = ~REMpost_trainingFrames
-
-REMpost_train_data = full_REMpost_data[REMpost_trainingFrames]
-REMpost_test_data = full_REMpost_data[REMpost_testingFrames]
-
-# For awake data, further refine into running epochs
-RUN_data = LT_data['binaryData'][LT_data['running_ts'],0:numNeurons]
-full_position = LT_data['position'][LT_data['running_ts']]
-full_time = LT_data['caTime'][LT_data['running_ts']]
-
-#%% First, extract putative sequences during REMpre
-W_REMpre_train, H_REMpre_train, _, _, _ = seqnmf(
-    REMpre_train_data.T,
-    K=K,
-    L=L,
-    Lambda=Lambda,
-    max_iter=maxIters
-    )
-
-#%% Find what each neuron belongs to what sequence
-sorting_index = np.argsort(np.argmax(np.concatenate((W_REMpre_train[:,0,:],W_REMpre_train[:,1,:]),axis=1),axis=1))
 
 #%% Custom function to extract H given X and W
 def extract_H(W,data):
