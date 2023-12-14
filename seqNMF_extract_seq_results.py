@@ -6,9 +6,8 @@ from scipy.stats import skew
 from tqdm import tqdm
 import pandas as pd
 import itertools
-from scipy.signal import find_peaks
-
 import scipy.io as sio
+from scipy.signal import find_peaks
 import yaml
 import h5py
 from pycaan.functions.signal_processing import binarize_ca_traces

@@ -8,6 +8,7 @@ import pandas as pd
 import itertools
 
 import scipy.io as sio
+from scipy.signal import find_peaks
 import yaml
 import h5py
 from pycaan.functions.signal_processing import binarize_ca_traces
@@ -70,7 +71,7 @@ def extract_H(W,data):
 def extract_seqReplay_score(data_ref, data_pred, params):
 
     # Extract sequences
-    W_ref, H_ref, _, _, _ = seqnmf(
+    W_ref, _, _, _, _ = seqnmf(
         data_ref.T,
         K=params['K'],
         L=params['L'],
@@ -81,10 +82,12 @@ def extract_seqReplay_score(data_ref, data_pred, params):
     # Extract sequences on predicted data set
     H_pred = extract_H(W_ref, data_pred)
     # output will have d dimensions corresponding to each sequence template
-    seqReplay_score = skew(H_pred,axis=1) 
+    seqReplay_scores = skew(H_pred,axis=1) 
 
     # Shuffle
     seqReplay_shuffled_score = np.zeros((params['numShuffles'], params['K']))
+    shuffled_test_H = np.zeros((params['numShuffles'], len(data_pred)))
+
     for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_ref.shape)
         for neuron in range(params['numNeurons']):
@@ -93,17 +96,31 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         shuffled_pred_H = extract_H(shuffled_W,data_pred)
         seqReplay_shuffled_score[shuffle_i,:] = skew(shuffled_pred_H,axis=1)
 
-    seqReplay_zscore = np.zeros(params['K']) # zscore for each sequences
-    seqReplay_pvalue = np.zeros(params['K']) # zscore for each sequences
+    seqReplay_pvalues = np.zeros(params['K']) # zscore for each sequences
+    H_pred_pvalue = np.zeros((params['K'],len(data_pred)))
+    zscored_H = np.zeros((params['K'],len(data_pred)))
+    H_pred_confidence = np.zeros((params['K'],len(data_pred)))
+    seqReplay_locs = {}
+
     for k in range(params['K']):
-        # Z-score
-        seqReplay_zscore[k] = (seqReplay_score[k]-np.mean(seqReplay_shuffled_score[:,k]))/np.std(seqReplay_shuffled_score[:,k])
+        # z-score actual H to extract signal-to-noise:
+        zscored_H[k,:] = (H_pred[k,:]-np.mean(H_pred[k,:]))/np.std(H_pred[k,:])
+        for i in range(len(data_pred)):
+            H_pred_pvalue[k,i] = sum(shuffled_test_H[:,k,i]>H_pred[k,i])/params['numShuffles']
+        
+        H_pred_confidence[k,:] = 1-H_pred_pvalue[k,:]
+        H_pred_confidence[k,zscored_H[k,:]<2] = 0
 
-        # p-value
+        peaks, _ = find_peaks(H_pred_confidence[k], 
+                        height=(1,None), # Only include peaks for confidence==1
+                        distance=params['L'])
+        seqReplay_locs.update({
+            k:peaks
+        })
+
         seqReplay_pvalue[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_score[k])/params['numShuffles']
-
-    #TODO add non-parametric pvalue
-    return seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore, seqReplay_pvalue
+    
+    return seqReplay_scores, seqReplay_pvalues, seqReplay_locs
 
 #%% Same but look at replay between conditions
 seqReplayScore_list = []
