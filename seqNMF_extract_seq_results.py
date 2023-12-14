@@ -79,7 +79,7 @@ def extract_seq_score(data, params):
     test_data = data[testingFrames]
 
     # Extract sequences
-    W_train, H_train, _, _, _ = seqnmf(
+    W_train, _, _, _, _ = seqnmf(
         train_data.T,
         K=params['K'],
         L=params['L'],
@@ -90,11 +90,12 @@ def extract_seq_score(data, params):
     # Extract sequences on test set
     H_test = extract_H(W_train, test_data)
     # output will have d dimensions corresponding to each sequence template
-    seq_score = skew(H_test,axis=1) 
+    seq_scores = skew(H_test,axis=1) 
 
     # Shuffle
     seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
     shuffled_test_H = np.zeros((params['numShuffles'], len(testingFrames)))
+
     for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_train.shape)
         for neuron in range(params['numNeurons']):
@@ -103,16 +104,31 @@ def extract_seq_score(data, params):
         shuffled_test_H[shuffle_i,:,:] = extract_H(shuffled_W,test_data)
         seq_shuffled_score[shuffle_i,:] = skew(shuffled_test_H,axis=1)
 
-    seq_zscore = np.zeros(params['K']) # zscore for each sequences
-    seq_pvalue = np.zeros(params['K']) # zscore for each sequences
-    for k in range(params['K']):
-        # Z-score
-        seq_zscore[k] = (seq_score[k]-np.mean(seq_shuffled_score[:,k]))/np.std(seq_shuffled_score[:,k])
+    seq_pvalues = np.zeros(params['K']) # zscore for each sequences
+    H_test_pvalue = np.zeros((params['K'],len(test_data)))
+    zscored_H = np.zeros((params['K'],len(test_data)))
+    H_test_confidence = np.zeros((params['K'],len(test_data)))
+    seq_locs = {}
 
-        # p-value
-        seq_pvalue[k] = sum(seq_shuffled_score[:,k]>seq_score[k])/params['numShuffles']
+    for k in range(params['K']):
+        # z-score actual H to extract signal-to-noise:
+        zscored_H[k,:] = (H_test[k,:]-np.mean(H_test[k,:]))/np.std(H_test[k,:])
+        for i in range(len(test_data)):
+            H_test_pvalue[k,i] = sum(shuffled_test_H[:,k,i]>H_test[k,i])/params['numShuffles']
+        
+        H_test_confidence[k,:] = 1-H_test_pvalue[k,:]
+        H_test_confidence[k,zscored_H[k,:]<2] = 0
+
+        peaks, _ = find_peaks(H_test_confidence[k], 
+                        height=(1,None), # Only include peaks for confidence==1
+                        distance=params['L'])
+        seq_locs.update({
+            k:peaks
+        })
+
+        seq_pvalues[k] = sum(seq_shuffled_score[:,k]>seq_scores[k])/params['numShuffles']
     
-    return seq_score, seq_shuffled_score, seq_zscore, seq_pvalue, seq_loc
+    return seq_scores, seq_pvalues, seq_locs
 
 #%% First, measure 'sequenceness' in each individuate session
 seqScore_list = []
@@ -124,15 +140,19 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
     data = load_data(mouse, condition, state, params)
 
     # Extract seq score
-    seq_score, seq_shuffled_score, seq_zscore, seq_pvalue = extract_seq_score(data, params)
+    seq_scores, seq_pvalues, seq_locs = extract_seq_score(data, params)
 
     seqScore_list.append(
         {
         'mouse':mouse,
         'condition':condition,
         'state':state,
-        'max_seq_score': np.max(seq_score), # Take max possible score
-        'max_seq_zscore': np.max(seq_zscore)
+        'S1_score': seq_scores[0],
+        'S2_score': seq_scores[1],
+        'S1_pvalue': seq_pvalues[0],
+        'S2_pvalue': seq_pvalues[1],
+        'S1_numSeqs': len(seq_locs[0]),
+        'S2_numSeqs': len(seq_locs[1])
     })
 
 df=pd.DataFrame(seqScore_list)

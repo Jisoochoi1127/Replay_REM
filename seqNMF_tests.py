@@ -21,14 +21,22 @@ with open('params.yaml','r') as file:
 
 #%% Load awake data
 data={}
-path = '../../datasets/calcium_imaging/CA1/M246/M246_LT_6'
-f = h5py.File(path + '/ms.mat','r')
-data.update({
-            'caTime':np.array(f.get('ms/time'))[0]/1000, # convert ms->s
-            'rawData':np.array(f.get('ms/RawTraces')).T})
-data['task'] = 'LT'
-params['z_threshold'] = 2
-params['sampling_frequency'] = 30
+path = '../../datasets/REM_data/pv1069/LTD1'
+f = sio.loadmat(path + '/ms.mat')
+data.update(
+    {
+    'caTime':f['ms']['time'][0][0].T[0]/1000, # convert ms->s
+    'rawData':f['ms']['RawTraces'][0][0] 
+    }
+    )
+
+f = sio.loadmat(path + '/behav.mat')
+data.update(
+    { # Note that older files do not have background/tones
+    'position':f['behav']['position'][0][0],
+    'behavTime':f['behav']['time'][0][0].T[0]/1000,
+    }
+    )
 
 LT_data, _ = binarize_ca_traces(data['rawData'], 2, 30)
 LT_data = LT_data[:,0:params['numNeurons']]
@@ -81,12 +89,12 @@ for shuffle_i in tqdm(range(params['numShuffles'])):
     
     shuffled_test_H[shuffle_i,:,:] = extract_H(shuffled_W,test_data)
 
-#%%
 #%% Compute p-value
 # Define confidence as 1-p_value
-H_test_pvalue = np.zeros((params['K'],len(test_data)))
-zscored_H = np.zeros((params['K'],len(test_data)))
-H_test_confidence = np.zeros((params['K'],len(test_data)))
+    H_test_pvalue = np.zeros((params['K'],len(test_data)))
+    zscored_H = np.zeros((params['K'],len(test_data)))
+    H_test_confidence = np.zeros((params['K'],len(test_data)))
+    seq_locs = {}
 
 for k in range(params['K']):
     zscored_H[k,:] = (H_test[k,:]-np.mean(H_test[k,:]))/np.std(H_test[k,:])
@@ -96,46 +104,10 @@ for k in range(params['K']):
     H_test_confidence[k,:] = 1-H_test_pvalue[k,:]
     H_test_confidence[k,zscored_H[k,:]<2] = 0
 
+    peaks, _ = find_peaks(H_test_confidence[k], 
+                      height=(1,None), # Only include peaks for confidence==1
+                      distance=params['L'])
+    seq_locs.update({
+        k:peaks
+    })
 #%% Find peaks
-
-
-#%% Plot histogram of shuffles
-plt.figure(figsize=(.75,.75))
-plt.hist(shuffled_wake_skew_vals[:,0], histtype='stepfilled',alpha=.5,color='k',label='Shuffled')
-plt.plot([actual_wake_skew_vals[0],actual_wake_skew_vals[0]],[0,200],color='C0',label='Actual')
-plt.title('Wake, S1')
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../../Desktop/PV1069_awake_S1_hist.pdf')
-
-plt.figure(figsize=(.75,.75))
-plt.hist(shuffled_wake_skew_vals[:,1], histtype='stepfilled',alpha=.5,color='k',label='Shuffled')
-plt.plot([actual_wake_skew_vals[1],actual_wake_skew_vals[1]],[0,200],color='C6',label='Actual')
-plt.title('Wake, S2')
-plt.xlabel('Sequence distribution\nskewness')
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../../Desktop/PV1069_awake_S2_hist.pdf')
-
-#%% Plot histogram of shuffles
-plt.figure(figsize=(.75,.75))
-plt.hist(shuffled_REM_skew_vals[:,0], histtype='stepfilled',alpha=.5,color='k',label='Shuffled')
-plt.plot([actual_REM_skew_vals[0],actual_REM_skew_vals[0]],[0,200],color='C0',label='Actual')
-plt.title('REM, S1')
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../../Desktop/PV1069_REM_S1_hist.pdf')
-
-plt.figure(figsize=(.75,.75))
-plt.hist(shuffled_REM_skew_vals[:,1], histtype='stepfilled',alpha=.5,color='k',label='Shuffled')
-plt.plot([actual_REM_skew_vals[1],actual_REM_skew_vals[1]],[0,200],color='C6',label='Actual')
-plt.title('REM, S2')
-plt.xlabel('Sequence distribution\nskewness')
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../../Desktop/PV1069_REM_S2_hist.pdf')
-
-#%% Wake
-print(f'S1 pvalue: p = {sum(shuffled_wake_skew_vals[:,0]>actual_wake_skew_vals[0])/numShuffles}')
-print(f'S2 pvalue: p = {sum(shuffled_wake_skew_vals[:,1]>actual_wake_skew_vals[1])/numShuffles}')
-
-#%% REM
-print(f'S1 pvalue: p = {sum(shuffled_REM_skew_vals[:,0]>actual_REM_skew_vals[0])/numShuffles}')
-print(f'S2 pvalue: p = {sum(shuffled_REM_skew_vals[:,1]>actual_REM_skew_vals[1])/numShuffles}')
-# %%
