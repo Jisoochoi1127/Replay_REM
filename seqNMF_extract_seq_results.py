@@ -93,15 +93,16 @@ def extract_seq_score(data, params):
 
     # Shuffle
     seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
-    shuffled_test_H = np.zeros((params['numShuffles'], len(testingFrames)))
+    shuffled_test_H = np.zeros((params['numShuffles'], params['K'],len(test_data)))
 
     for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_train.shape)
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_train[neuron,:,:],shift=np.random.randint(W_train.shape[2]),axis=1)
         
-        shuffled_test_H[shuffle_i,:,:] = extract_H(shuffled_W,test_data)
-        seq_shuffled_score[shuffle_i,:] = skew(shuffled_test_H,axis=1)
+        temp = extract_H(shuffled_W,test_data)
+        shuffled_test_H[shuffle_i,:,:] = temp
+        seq_shuffled_score[shuffle_i,:] = skew(temp,axis=1)
 
     seq_pvalues = np.zeros(params['K']) # zscore for each sequences
     H_test_pvalue = np.zeros((params['K'],len(test_data)))
@@ -130,29 +131,25 @@ def extract_seq_score(data, params):
     return seq_scores, seq_pvalues, seq_locs
 
 #%% First, measure 'sequenceness' in each individuate session
-seqScore_list = []
 for condition, mouse, state in tqdm(list(itertools.product(condition_list,
                                                            mouse_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)):
-    # Load data
-    data = load_data(mouse, condition, state, params)
+    
+    if not os.path.exists(os.path.join(params['path_to_output'],'seqResults',condition,mouse,state,'.h5')):
+        # Load data
+        data = load_data(mouse, condition, state, params)
 
-    # Extract seq score
-    seq_scores, seq_pvalues, seq_locs = extract_seq_score(data, params)
+        # Extract seq score
+        seq_scores, seq_pvalues, seq_locs = extract_seq_score(data, params)
 
-    seqScore_list.append(
-        {
-        'mouse':mouse,
-        'condition':condition,
-        'state':state,
-        'S1_score': seq_scores[0],
-        'S2_score': seq_scores[1],
-        'S1_pvalue': seq_pvalues[0],
-        'S2_pvalue': seq_pvalues[1],
-        'S1_numSeqs': len(seq_locs[0]),
-        'S2_numSeqs': len(seq_locs[1])
-    })
-
-df=pd.DataFrame(seqScore_list)
-df.to_csv(os.path.join(params['path_to_output'],'seqScores.csv'))
+        with h5py.File(os.path.join(params['path_to_output'],'seqResults',condition,mouse,state,'.h5'),'w') as f:
+            f.create_dataset('mouse', data=mouse)
+            f.create_dataset('condition', data=condition)
+            f.create_dataset('state', data=state)
+            f.create_dataset('S1_score', data=seq_scores[0])
+            f.create_dataset('S2_score', data=seq_scores[1])
+            f.create_dataset('S1_pvalue', data=seq_pvalues[0])
+            f.create_dataset('S2_pvalue', data=seq_pvalues[1])
+            f.create_dataset('S1_numSeqs', data=len(seq_locs[0]))
+            f.create_dataset('S2_numSeqs', data=len(seq_locs[1]))

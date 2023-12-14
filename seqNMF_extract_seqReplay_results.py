@@ -86,14 +86,15 @@ def extract_seqReplay_score(data_ref, data_pred, params):
 
     # Shuffle
     seqReplay_shuffled_score = np.zeros((params['numShuffles'], params['K']))
-    shuffled_test_H = np.zeros((params['numShuffles'], len(data_pred)))
+    shuffled_pred_H = np.zeros((params['numShuffles'], params['K'],len(data_pred)))
 
     for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_ref.shape)
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_ref[neuron,:,:],shift=np.random.randint(W_ref.shape[2]),axis=1)
         
-        shuffled_pred_H = extract_H(shuffled_W,data_pred)
+        temp = extract_H(shuffled_W,data_pred)
+        shuffled_pred_H[shuffle_i,:,:] = temp
         seqReplay_shuffled_score[shuffle_i,:] = skew(shuffled_pred_H,axis=1)
 
     seqReplay_pvalues = np.zeros(params['K']) # zscore for each sequences
@@ -106,7 +107,7 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         # z-score actual H to extract signal-to-noise:
         zscored_H[k,:] = (H_pred[k,:]-np.mean(H_pred[k,:]))/np.std(H_pred[k,:])
         for i in range(len(data_pred)):
-            H_pred_pvalue[k,i] = sum(shuffled_test_H[:,k,i]>H_pred[k,i])/params['numShuffles']
+            H_pred_pvalue[k,i] = sum(shuffled_pred_H[:,k,i]>H_pred[k,i])/params['numShuffles']
         
         H_pred_confidence[k,:] = 1-H_pred_pvalue[k,:]
         H_pred_confidence[k,zscored_H[k,:]<2] = 0
@@ -118,7 +119,7 @@ def extract_seqReplay_score(data_ref, data_pred, params):
             k:peaks
         })
 
-        seqReplay_pvalue[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_score[k])/params['numShuffles']
+        seqReplay_pvalues[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_scores[k])/params['numShuffles']
     
     return seqReplay_scores, seqReplay_pvalues, seqReplay_locs
 
@@ -129,24 +130,22 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                                                            states_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)*len(states_list)):
+    if not os.path.exists(os.path.join(params['path_to_output'],'seqReplayResults',condition,mouse,state_ref,state_pred,'.h5')):
+        # Load data for both states
+        data_ref = load_data(mouse, condition, state_ref, params)
+        data_pred = load_data(mouse, condition, state_pred, params)
 
-    # Load data for both states
-    data_ref = load_data(mouse, condition, state_ref, params)
-    data_pred = load_data(mouse, condition, state_pred, params)
+        # Extract seq score
+        seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_ref, data_pred, params)
 
-    # Extract seq score
-    seqReplay_score, seqReplay_shuffled_score, seqReplay_zscore, seqReplay_pvalue = extract_seqReplay_score(data_ref, data_pred, params)
-
-    seqReplayScore_list.append(
-        {
-        'mouse':mouse,
-        'condition':condition,
-        'state_ref':state_ref,
-        'state_pred':state_pred,
-        'max_seq_score': np.max(seqReplay_score), # Take max possible score
-        'mean_seqReplay_shuffled_score': np.mean(seqReplay_shuffled_score), # Take max possible score
-        'max_seqReplay_zscore': np.max(seqReplay_zscore)
-    })
-
-df_replay=pd.DataFrame(seqReplayScore_list)
-df_replay.to_csv(os.path.join(params['path_to_output'],'seqReplayScores.csv'))
+        with h5py.File(os.path.join(params['path_to_output'],'seqResults',condition,mouse,state_ref,state_pred,'.h5'),'w') as f:
+            f.create_dataset('mouse', data=mouse)
+            f.create_dataset('condition', data=condition)
+            f.create_dataset('state_ref', data=state_ref)
+            f.create_dataset('state_pred', data=state_pred)
+            f.create_dataset('S1_score', data=seqReplay_scores[0])
+            f.create_dataset('S2_score', data=seqReplay_scores[1])
+            f.create_dataset('S1_pvalue', data=seqReplay_pvalues[0])
+            f.create_dataset('S2_pvalue', data=seqReplay_pvalues[1])
+            f.create_dataset('S1_numSeqs', data=len(seqReplay_locs[0]))
+            f.create_dataset('S2_numSeqs', data=len(seqReplay_locs[1]))
