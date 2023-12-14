@@ -6,6 +6,7 @@ from scipy.stats import skew
 from tqdm import tqdm
 import pandas as pd
 import itertools
+from scipy.signal import find_peaks
 
 import scipy.io as sio
 import yaml
@@ -93,12 +94,13 @@ def extract_seq_score(data, params):
 
     # Shuffle
     seq_shuffled_score = np.zeros((params['numShuffles'], params['K']))
+    shuffled_test_H = np.zeros((params['numShuffles'], len(testingFrames)))
     for shuffle_i in range(params['numShuffles']):
         shuffled_W = np.zeros(W_train.shape)
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_train[neuron,:,:],shift=np.random.randint(W_train.shape[2]),axis=1)
         
-        shuffled_test_H = extract_H(shuffled_W,test_data)
+        shuffled_test_H[shuffle_i,:,:] = extract_H(shuffled_W,test_data)
         seq_shuffled_score[shuffle_i,:] = skew(shuffled_test_H,axis=1)
 
     seq_zscore = np.zeros(params['K']) # zscore for each sequences
@@ -110,7 +112,7 @@ def extract_seq_score(data, params):
         # p-value
         seq_pvalue[k] = sum(seq_shuffled_score[:,k]>seq_score[k])/params['numShuffles']
     
-    return seq_score, seq_shuffled_score, seq_zscore ,seq_pvalue
+    return seq_score, seq_shuffled_score, seq_zscore, seq_pvalue, seq_loc
 
 #%% First, measure 'sequenceness' in each individuate session
 seqScore_list = []
