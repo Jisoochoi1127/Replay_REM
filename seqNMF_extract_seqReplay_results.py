@@ -130,7 +130,7 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                                                            states_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)*len(states_list)):
-    if not os.path.exists(os.path.join(params['path_to_output'],'seqReplayResults',condition,mouse,state_ref,state_pred,'.h5')):
+    if not os.path.exists(os.path.join(params['path_to_output'],f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5')):
         # Load data for both states
         data_ref = load_data(mouse, condition, state_ref, params)
         data_pred = load_data(mouse, condition, state_pred, params)
@@ -138,7 +138,7 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
         # Extract seq score
         seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_ref, data_pred, params)
 
-        with h5py.File(os.path.join(params['path_to_output'],'seqResults',condition,mouse,state_ref,state_pred,'.h5'),'w') as f:
+        with h5py.File(os.path.join(params['path_to_output'],f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5'),'w') as f:
             f.create_dataset('mouse', data=mouse)
             f.create_dataset('condition', data=condition)
             f.create_dataset('state_ref', data=state_ref)
