@@ -93,9 +93,10 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_ref[neuron,:,:],shift=np.random.randint(W_ref.shape[2]),axis=1)
         
+        
         temp = extract_H(shuffled_W,data_pred)
         shuffled_pred_H[shuffle_i,:,:] = temp
-        seqReplay_shuffled_score[shuffle_i,:] = skew(shuffled_pred_H,axis=1)
+        seqReplay_shuffled_score[shuffle_i,:] = skew(temp,axis=1)
 
     seqReplay_pvalues = np.zeros(params['K']) # zscore for each sequences
     H_pred_pvalue = np.zeros((params['K'],len(data_pred)))
