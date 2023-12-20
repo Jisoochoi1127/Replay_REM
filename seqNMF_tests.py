@@ -21,7 +21,10 @@ with open('params.yaml','r') as file:
 
 #%% Load awake data
 data={}
-path = '../../datasets/REM_data/pv1069/LTD1'
+path = '../../datasets/calcium_imaging/CA1/M246/M246_LT_6'
+data = load_data(path)
+
+#%%
 f = sio.loadmat(path + '/ms.mat')
 data.update(
     {
@@ -38,6 +41,7 @@ data.update(
     }
     )
 
+#%%
 LT_data, _ = binarize_ca_traces(data['rawData'], 2, 30)
 LT_data = LT_data[:,0:params['numNeurons']]
 
@@ -77,7 +81,8 @@ def extract_H(W,data):
 H_test = extract_H(W_train, test_data)
 
 #%% Plot resulting sequences
-plt.imshow(test_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.5)
+plt.figure(figsize=(3,1))
+plt.imshow(LT_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.1)
 
 #%%
 # Shuffle
@@ -91,10 +96,10 @@ for shuffle_i in tqdm(range(params['numShuffles'])):
 
 #%% Compute p-value
 # Define confidence as 1-p_value
-    H_test_pvalue = np.zeros((params['K'],len(test_data)))
-    zscored_H = np.zeros((params['K'],len(test_data)))
-    H_test_confidence = np.zeros((params['K'],len(test_data)))
-    seq_locs = {}
+H_test_pvalue = np.zeros((params['K'],len(test_data)))
+zscored_H = np.zeros((params['K'],len(test_data)))
+H_test_confidence = np.zeros((params['K'],len(test_data)))
+seq_locs = {}
 
 for k in range(params['K']):
     zscored_H[k,:] = (H_test[k,:]-np.mean(H_test[k,:]))/np.std(H_test[k,:])
@@ -111,3 +116,22 @@ for k in range(params['K']):
         k:peaks
     })
 #%% Find peaks
+#plt.figure(figsize=(3,1))
+
+plt.subplot(311)
+plt.title('Sequence #1')
+plt.imshow(test_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.1)
+plt.axis('off')
+plt.subplot(312)
+plt.plot(np.arange(len(H_test[0])), H_test[0])
+plt.fill_between(np.arange(len(H_test[0])),
+                 np.min(shuffled_test_H[:,0,:],axis=0),
+                 np.max(shuffled_test_H[:,0,:],axis=0),
+                 color='r',
+                 alpha=.2)
+plt.axis('off')
+plt.subplot(313)
+plt.plot(H_test_confidence[0])
+plt.xlabel('Frames')
+plt.ylabel('Confidence')
+# %%
