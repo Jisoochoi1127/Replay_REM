@@ -63,7 +63,7 @@ W_train, H_train, _, _, _ = seqnmf(
     K=params['K'],
     L=params['L'],
     Lambda=params['Lambda'],
-    max_iter=params['maxIters']
+    max_iter=5
     )
 
 #%% Find what each neuron belongs to what sequence
@@ -116,8 +116,6 @@ for k in range(params['K']):
         k:peaks
     })
 #%% Find peaks
-#plt.figure(figsize=(3,1))
-
 plt.subplot(311)
 plt.title('Sequence #1')
 plt.imshow(test_data[:,sorting_index].T,aspect='auto',cmap='magma',vmax=.1)
@@ -132,6 +130,8 @@ plt.fill_between(np.arange(len(H_test[0])),
 plt.axis('off')
 plt.subplot(313)
 plt.plot(H_test_confidence[0])
-plt.xlabel('Frames')
+plt.xticks([0,10000],[0,5])
+plt.xlabel('Time (min)')
 plt.ylabel('Confidence')
+plt.savefig('../../output_REM/seqNMF_method.pdf')
 # %%

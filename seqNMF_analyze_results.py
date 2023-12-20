@@ -49,7 +49,7 @@ sns.barplot(
     x='condition',
     hue='state',
     hue_order=['REMpre','wake','REMpost'],
-    palette=['C0','C6','C1'],
+    palette=['C1','C4','C2'],
     errorbar='se',
     capsize=.2
 )
@@ -58,17 +58,17 @@ sns.stripplot(
     y='numSeqs',
     x='condition',
     hue='state',
-    palette=['C0','C6','C1'],
+    palette=['C1','C4','C2'],
     hue_order=['REMpre','wake','REMpost'],
     size=2,
     dodge=True,
     legend=False
 )
 plt.xticks([0,1,2],['Novel', 'Fam.', 'Anxiety'])
-plt.ylabel('Num. sig.\nsequences')
+plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/numSigSequences.png')
+plt.savefig('../../output_REM/numSigSequences.pdf')
 
 #%%STATS
 
