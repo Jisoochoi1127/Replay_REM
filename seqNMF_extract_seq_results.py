@@ -45,16 +45,18 @@ def load_data(mouse, condition, state, params):
     if 'pre' in state: 
         filename='all_binary_pre_REM'
         data = open_file(path, filename)
+        data['binaryData'] = data['rawData']
 
     elif 'post' in state:
         filename='all_binary_post_REM'
         data = open_file(path, filename)
+        data['binaryData'] = data['rawData']
 
     else: # Then, must be wake data in old mat format
         filename='ms'
         data = open_file(path, filename)
-
-    data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
+        data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
+    
     data = data['binaryData'][:,0:params['numNeurons']]
     
     return data
