@@ -47,7 +47,6 @@ def load_data(mouse, condition, state, params):
         filename='all_binary_pre_REM'
         data = open_file(path, filename)
         data['binaryData'] = data['rawData']
-        data['doubleBinarized'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
 
     elif 'post' in state:
         filename='all_binary_post_REM'
@@ -63,7 +62,7 @@ def load_data(mouse, condition, state, params):
 
 #%% TEMP TEST
 mouse='pv1060'
-condition='LTD1'
+condition='LTD5'
 state='REMpre'
 data = load_data(mouse, condition, state, params)
 
@@ -189,4 +188,3 @@ sns.kdeplot(y=normal_data['LT_position'],
 plt.xticks([0,.025],[0,.025])
 plt.yticks([])
 plt.savefig('../../output_REM/normal_behavior.pdf')
-# %%
