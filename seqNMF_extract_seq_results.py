@@ -16,6 +16,8 @@ from pycaan.functions.signal_processing import binarize_ca_traces
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
+np.random.seed(params['seed'])
+
 #%% Define conditions, dataset
 states_list = ['REMpre', 'wake', 'REMpost']
 condition_list = ['LTD1','LTD5','HATD5']

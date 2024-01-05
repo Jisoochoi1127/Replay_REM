@@ -1,0 +1,2 @@
+python3 seqNMF_extract_seq_results.py
+python3 seqNMF_extract_seqReplay_results.py
