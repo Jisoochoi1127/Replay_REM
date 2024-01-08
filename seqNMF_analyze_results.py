@@ -104,7 +104,7 @@ df_replay_stats.loc[df_replay_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
 df_replay_stats.loc[df_replay_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
 df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
 #%%
-sns.heatmap(data=df_replay_stats.query("condition=='LTD1' and seqType=='S2_numSeqs'").pivot_table(index='state_ref', 
+sns.heatmap(data=df_replay_stats.query("condition=='LTD1'").pivot_table(index='state_ref', 
                                 columns='state_pred', 
                                 values='numSeqs'),
                                 cmap='magma',
@@ -116,89 +116,59 @@ sns.heatmap(data=df_replay_stats.query("condition=='LTD1' and seqType=='S2_numSe
 plt.title('Novelty')
 plt.xlabel('Reference')
 plt.ylabel('Target')
-plt.savefig('../../output_REM/num_replayed_seqs_novelty.png')
+plt.savefig('../../output_REM/numSeqs_novelty_heatmap.pdf')
 # %%
-sns.heatmap(data=df_replay.query("condition=='LTD5'").pivot_table(index='state_ref', 
+sns.heatmap(data=df_replay_stats.query("condition=='LTD5'").pivot_table(index='state_ref', 
                                 columns='state_pred', 
-                                values='max_seqReplay_zscore'),
+                                values='numSeqs'),
                                 cmap='magma',
-                                vmin=2,
-                                vmax=4,
                                 rasterized=True,
-                                cbar_kws={'label':'Seq. replay\nscore (z)'}
+                                cbar_kws={'label':'Num. replayed\nsequences'}
 )
 #plt.xticks([])
 #plt.yticks([])
 plt.title('Familiarity')
 plt.xlabel('Reference')
 plt.ylabel('Target')
-plt.savefig('../../output_REM/replay_familiar.png')
+plt.savefig('../../output_REM/numSeqs_familiar_heatmap.pdf')
 # %%
-sns.heatmap(data=df_replay.query("condition=='HATD5'").pivot_table(index='state_ref', 
+sns.heatmap(data=df_replay_stats.query("condition=='HATD5'").pivot_table(index='state_ref', 
                                 columns='state_pred', 
-                                values='max_seqReplay_zscore'),
+                                values='numSeqs'),
                                 cmap='magma',
-                                vmin=2,
-                                vmax=4,
                                 rasterized=True,
-                                cbar_kws={'label':'Seq. replay\nscore (z)'}
+                                cbar_kws={'label':'Num. replayed\nsequences'}
 )
 #plt.xticks([])
 #plt.yticks([])
-plt.title('Anxiety')
+plt.title('Novel anxiety')
 plt.xlabel('Reference')
 plt.ylabel('Target')
-plt.savefig('../../output_REM/replay_anxiety.png')
+plt.savefig('../../output_REM/numSeqs_novelAnxiety_heatmap.pdf')
 # %% Pre-play only
+plt.figure(figsize=(1,1))
 sns.barplot(
-    data=df_replay.query("state_ref=='REMpre' and state_pred != 'REMpre'"),
-    y='max_seqReplay_zscore',
-    x='condition',
-    hue='state_pred',
-    palette=['C0','C6','C1'],
+    data=df_replay_stats.query("state_ref=='wake' and state_pred == 'REMpost'"),
+    y='numSeqs',
+    hue='condition',
+    x='seqType',
+    palette=['C4','C0','C1'],
     errorbar='se',
-    capsize=.2
+    capsize=.2,
 )
 sns.stripplot(
-    data=df_replay.query("state_ref=='REMpre' and state_pred != 'REMpre'"),
-    y='max_seqReplay_zscore',
-    x='condition',
-    hue='state_pred',
-    palette=['C0','C6','C1'],
+    data=df_replay_stats.query("state_ref=='wake' and state_pred == 'REMpost'"),
+    y='numSeqs',
+    hue='condition',
+    x='seqType',
+    palette=['C4','C0','C1'],
     size=2,
     dodge=True,
     legend=False
 )
-plt.plot([-0.5,2.5],[2,2],'k:')
-plt.xticks([0,1,2],['Novel', 'Fam.', 'Anxiety'])
-plt.ylabel('Seq. preplay\nscore (z)')
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/preplay_by_condition.png')
 
-# %%
-sns.barplot(
-    data=df_replay.query("state_ref=='wake' and state_pred != 'wake'"),
-    y='max_seqReplay_zscore',
-    x='condition',
-    hue='state_pred',
-    palette=['C0','C6','C1'],
-    errorbar='se',
-    capsize=.2
-)
-sns.stripplot(
-    data=df_replay.query("state_ref=='wake' and state_pred != 'wake'"),
-    y='max_seqReplay_zscore',
-    x='condition',
-    hue='state_pred',
-    palette=['C0','C6','C1'],
-    size=2,
-    dodge=True,
-    legend=False
-)
-plt.plot([-0.5,2.5],[2,2],'k:')
-plt.xticks([0,1,2],['Novel', 'Fam.', 'Anxiety'])
-plt.ylabel('Seq. replay\nscore (z)')
+plt.xticks([0,1],['Seq. 1', 'Seq. 2'])
+plt.xlabel('Sequence type')
+plt.ylabel('Num. seq.\nreplayed')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/replay_by_condition.png')
-
-# %%
+plt.savefig('../../output_REM/replay_by_condition_and_seqType_bars.pdf')
