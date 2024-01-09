@@ -13,44 +13,34 @@ def open_file(path, filename):
         f = h5py.File(os.path.join(path,filename)+'.mat', 'r')
         data.update(
         {
-        'rawData':f[filename][()].T
+        'data':f[filename][()].T
         }
         )
     except:
-        f = sio.loadmat(path+'/ms.mat')
-        data.update(
-        {
-        'rawData':f['ms']['RawTraces'][0][0] 
-        }
-        )
+        f = sio.loadmat(os.path.join(path,filename)+'.mat')
+        try:
+            data.update({'data':f[filename]['RawTraces'][0][0]})
+        except:
+            data.update({'data':f[filename]})
     return data
 
 def load_data(mouse, condition, state, params):
     path=os.path.join(params['path_to_dataset'], mouse, condition)
-    if 'pre' in state: 
+    if 'pre' in state:
         filename='all_binary_pre_REM'
         data = open_file(path, filename)
-        if np.median(data['rawData'])==0 or np.median(data['rawData'])==1: # If data already binarized
-            data['binaryData'] = data['rawData']
-        else:
-            data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
+        data['binaryData'] = data['data']
 
     elif 'post' in state:
         filename='all_binary_post_REM'
         data = open_file(path, filename)
-        if np.median(data['rawData'])==0 or np.median(data['rawData'])==1: # If data already binarized
-            data['binaryData'] = data['rawData']
-        else:
-            data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
+        data['binaryData'] = data['data']
 
     else: # Then, must be wake data in old mat format
         filename='ms'
         data = open_file(path, filename)
-        if np.median(data['rawData'])==0 or np.median(data['rawData'])==1: # If data already binarized
-            data['binaryData'] = data['rawData']
-        else:
-            data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
-    
+        data['binaryData'], _ = binarize_ca_traces(data['data'], 2, params['samplingFrequency'])
+
     data = data['binaryData'][:,0:params['numNeurons']]
     
     return data
