@@ -172,3 +172,4 @@ plt.xlabel('Sequence type')
 plt.ylabel('Num. seq.\nreplayed')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/replay_by_condition_and_seqType_bars.pdf')
+# %%
