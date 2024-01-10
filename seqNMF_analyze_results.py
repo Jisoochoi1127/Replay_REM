@@ -35,42 +35,78 @@ for file_name in resultsList:
 
 df = pd.DataFrame(data_list)
 
-
 df_stats = df
 df_stats.loc[df_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
 df_stats.loc[df_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
 
 #%%
-df_stats=df_stats.melt(id_vars=['state','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+df_numSeqs=df_stats.melt(id_vars=['state','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+df_seqScore=df.melt(id_vars=['state','mouse', 'condition'],value_name='seqScore',value_vars=['S1_score', 'S2_score'],var_name='seqType')
 # %%
 sns.barplot(
-    data=df_stats,
+    data=df_numSeqs,
     y='numSeqs',
     x='condition',
     hue='state',
+    order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
     hue_order=['REMpre','wake','REMpost'],
     palette=['C1','C4','C2'],
     errorbar='se',
     capsize=.2
 )
 sns.stripplot(
-    data=df_stats,
+    data=df_numSeqs,
     y='numSeqs',
     x='condition',
     hue='state',
-    palette=['C1','C4','C2'],
+    #palette=['C1','C4','C2'],
+    color='k',
+    order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
     hue_order=['REMpre','wake','REMpost'],
     size=2,
     dodge=True,
     legend=False
 )
-plt.xticks([0,1,2],['Novel', 'Fam.', 'Anxiety'])
+plt.xticks([0,1,2,3],['Novel', 'Fam.', 'Anxiety D1', 'Anxiety D5'],rotation=90)
 plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/numSigSequences.pdf')
 
 #%%STATS
+
+#%% Sequence score
+sns.barplot(
+    data=df_seqScore,
+    y='seqScore',
+    x='condition',
+    hue='state',
+    order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
+    hue_order=['REMpre','wake','REMpost'],
+    palette=['C1','C4','C2'],
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_seqScore,
+    y='seqScore',
+    x='condition',
+    hue='state',
+    #palette=['C1','C4','C2'],
+    color='k',
+    order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
+    hue_order=['REMpre','wake','REMpost'],
+    size=2,
+    dodge=True,
+    legend=False
+)
+plt.xticks([0,1,2,3],['Novel', 'Fam.', 'Anxiety D1', 'Anxiety D5'],rotation=90)
+plt.ylabel('Num. significant \nsequences')
+plt.xlabel('')
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/seqScores.pdf')
+
+#%% STATS
 
 
 #%% Replay analysis
