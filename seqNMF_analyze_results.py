@@ -59,11 +59,11 @@ sns.stripplot(
     y='numSeqs',
     x='condition',
     hue='state',
-    #palette=['C1','C4','C2'],
-    color='k',
+    palette=['C1','C4','C2'],
+    # color='k',
     order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
     hue_order=['REMpre','wake','REMpost'],
-    size=2,
+    size=1,
     dodge=True,
     legend=False
 )
@@ -92,11 +92,10 @@ sns.stripplot(
     y='seqScore',
     x='condition',
     hue='state',
-    #palette=['C1','C4','C2'],
-    color='k',
+    palette=['C1','C4','C2'],
     order=['LTD1', 'LTD5', 'HATD1', 'HATD5'],
     hue_order=['REMpre','wake','REMpost'],
-    size=2,
+    size=1,
     dodge=True,
     legend=False
 )
@@ -168,7 +167,7 @@ plt.xlabel('Reference')
 plt.ylabel('Target')
 plt.savefig('../../output_REM/numSeqs_familiar_heatmap.pdf')
 # %%
-sns.heatmap(data=df_replay_stats.query("condition=='HATD5'").pivot_table(index='state_ref', 
+sns.heatmap(data=df_replay_stats.query("condition=='HATD1'").pivot_table(index='state_ref', 
                                 columns='state_pred', 
                                 values='numSeqs'),
                                 cmap='magma',
@@ -181,6 +180,25 @@ plt.title('Novel anxiety')
 plt.xlabel('Reference')
 plt.ylabel('Target')
 plt.savefig('../../output_REM/numSeqs_novelAnxiety_heatmap.pdf')
+
+# %%
+sns.heatmap(data=df_replay_stats.query("condition=='HATD5'").pivot_table(index='state_ref', 
+                                columns='state_pred', 
+                                values='numSeqs'),
+                                cmap='magma',
+                                rasterized=True,
+                                cbar_kws={'label':'Num. replayed\nsequences'}
+)
+#plt.xticks([])
+#plt.yticks([])
+plt.title('Familiar anxiety')
+plt.xlabel('Reference')
+plt.ylabel('Target')
+plt.savefig('../../output_REM/numSeqs_familiarAnxiety_heatmap.pdf')
+
+
+
+
 # %% Pre-play only
 plt.figure(figsize=(1,1))
 sns.barplot(
@@ -188,7 +206,7 @@ sns.barplot(
     y='numSeqs',
     hue='condition',
     x='seqType',
-    palette=['C4','C0','C1'],
+    palette=['C4','C3','C1','C0'],
     errorbar='se',
     capsize=.2,
 )
@@ -197,8 +215,8 @@ sns.stripplot(
     y='numSeqs',
     hue='condition',
     x='seqType',
-    palette=['C4','C0','C1'],
-    size=2,
+    palette=['C4','C3','C1','C0'],
+    size=1,
     dodge=True,
     legend=False
 )
