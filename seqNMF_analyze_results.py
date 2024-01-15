@@ -105,9 +105,38 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/numSeqPreplay_LT.pdf')
 
 #%% Effect of conditions
-
-
-
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_replay_stats.query("state_ref == 'wake' and \
+                                state_pred == 'REMpost' and \
+                               condition != 'HATD1'"),
+    x='condition',
+    y='numSeqs',
+    hue='seqType',
+    palette=(['C0','C4']),
+    color='C1',
+    errorbar='se',
+    capsize=.2,
+)
+sns.stripplot(
+    data=df_replay_stats.query("state_ref == 'wake' and \
+                                state_pred == 'REMpost' and \
+                               condition != 'HATD1'"),
+    x='condition',
+    y='numSeqs',
+    hue='seqType',
+    # color='C0',
+    palette=(['C0','C4']),
+    size=2,
+    dodge=True,
+    legend=False
+)
+#plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Num. significant \nsequences')
+plt.xlabel('')
+plt.xticks([0,1,2],['Anxiety','Novelty','Familiarity'],rotation=90)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/numSeqPreplay_conditions.pdf')
 
 
 #%%
