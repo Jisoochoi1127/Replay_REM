@@ -32,6 +32,5 @@ for condition, mouse in tqdm(list(itertools.product(condition_list,
 
     except:
         print('Missing session')
-        plt.axis('off') 
     
 # %%
