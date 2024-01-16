@@ -5,7 +5,7 @@ from scipy.stats import skew
 import h5py
 import scipy.io as sio
 from scipy.signal import find_peaks
-from pycaan.functions.signal_processing import binarize_ca_traces
+from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_data
 from .dataloaders import load_data as pycaan_load
 
 def open_file(path, filename):
@@ -34,10 +34,7 @@ def load_data(mouse, condition, state, params):
         data['binaryData'] = data['data']
 
     elif state=='wake': # Then, must be wake data in old mat format
-        data = pycaan_load(path)
-        data['binaryData'], _ = binarize_ca_traces(data['rawData'], 2, params['samplingFrequency'])
-
-    data['binaryData'] = data['binaryData'][:,0:params['numNeurons']]
+        data = preprocess_data(pycaan_load(path),params)
     
     return data
 
