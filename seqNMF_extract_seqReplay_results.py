@@ -1,4 +1,5 @@
 #%% Imports
+import numpy as np
 import os
 from tqdm import tqdm
 import itertools
@@ -27,8 +28,15 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
             data_ref = load_data(mouse, condition, state_ref, params)
             data_pred = load_data(mouse, condition, state_pred, params)
 
+# Load selected neurons
+            try:
+                with h5py.File(os.path.join(params['path_to_output'],f'selected_neurons_{condition}_{mouse}.h5'),'w') as f:
+                    selected_neurons = f['selected_neurons'][()]
+            except:
+                selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
+
             # Extract seq score
-            seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_ref['binaryData'], data_pred['binaryData'], params)
+            seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_ref['binaryData'][:,selected_neurons], data_pred['binaryData'][:,selected_neurons], params)
 
             with h5py.File(os.path.join(params['path_to_output'],f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5'),'w') as f:
                 f.create_dataset('mouse', data=mouse)
