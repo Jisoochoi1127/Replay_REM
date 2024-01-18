@@ -47,27 +47,30 @@ df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 
 #%% Plot number of wake sequences replayed during REMpost
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost' and condition == 'LTD5'"),
-    x='mouse',
+    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    # hue='seqType',
     y='numSeqs',
-    color='C0',
+    # palette=(['C0','C4']),
     errorbar='se',
     capsize=.2
 )
+
 sns.stripplot(
-    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost' and condition == 'LTD5'"),
-    x='mouse',
+    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
     y='numSeqs',
-    hue='seqType',
-    # color='C0',
-    palette=(['C3','C4']),
+    # hue='seqType',
+    # palette=(['C0','C4']),
     size=2,
     #dodge=True,
     legend=True
 )
+
 #plt.xticks([0,1],['S1', 'S2'])
 plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/numSeqReplay.pdf')
+# %%
