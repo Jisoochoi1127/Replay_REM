@@ -11,6 +11,8 @@ import h5py
 import yaml
 from tqdm import tqdm
 
+#%%
+h5_file = h5py.File('../../output_REM/neuron_selection/selected_neurons_HATD1_pv1060.h5', 'r')
 
 #%%
 results_dir = '../../output_REM/'
@@ -73,6 +75,5 @@ plt.scatter(data=df,
 plt.plot([0,.5],[.05,.05],'C4:')
 plt.xlabel('Info.')
 plt.ylabel('p value')
-
 
 #%%

@@ -6,7 +6,7 @@ import yaml
 from tqdm import tqdm
 
 #%%
-results_dir = '../../output_REM/'
+results_dir = '../../output_REM/tuning'
 resultsList=os.listdir(results_dir)
 
 #%% Load parameters
@@ -25,30 +25,29 @@ for file_name in tqdm(resultsList):
         indices = np.arange(len(p_values))
         
         sig_info = h5_file['info'][p_values<0.05]
-        nonSig_info = h5_file['info'][p_values>0.05]
         sig_indices = indices[p_values<0.05]
         nonSig_indices = indices[p_values>0.05]
 
         # Sort neurons to get top-k neurons
         sorted_sig_info = np.argsort(sig_info*-1) #-1 to find descending idx, instead of ascending
-        sorted_nonSig_info = np.argsort(nonSig_info) # Find the worst neurons in terms of info
+        sorted_info = np.argsort(h5_file['info']) # find ascending idx, for worst place cells
         sorted_activity = np.argsort(marginal_likelihood*-1) # Find the most active neurons
         r_sorted_activity = np.argsort(marginal_likelihood) # Find the least active neurons 
         
         # Save selected neurons
         try:
             place_cells = sig_indices[sorted_sig_info][0:params['numNeurons']]
-            non_place_cells = nonSig_indices[sorted_nonSig_info][0:params['numNeurons']]
+            non_place_cells = indices[sorted_info][0:params['numNeurons']]
             most_active = indices[sorted_activity][0:params['numNeurons']]
             least_active = indices[r_sorted_activity][0:params['numNeurons']]
 
-            with h5py.File(os.path.join(params['path_to_output'],f'selected_neurons_{condition}_{mouse}.h5'),'w') as f2:
+            with h5py.File(os.path.join(params['path_to_output'],'neuron_selection',f'selected_neurons_{condition}_{mouse}.h5'),'w') as f2:
                 f2.create_dataset('mouse', data=mouse)
                 f2.create_dataset('condition', data=condition)
                 f2.create_dataset('place_cells', data=place_cells)
                 f2.create_dataset('non_place_cells', data=non_place_cells)
                 f2.create_dataset('most_active', data=most_active)
-                f2.create_dataset('most_active', data=least_active)
+                f2.create_dataset('least_active', data=least_active)
         except:
             print('There might not be enough selected neurons. Try reducing the number in params')
 
