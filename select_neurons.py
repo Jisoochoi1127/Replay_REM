@@ -18,26 +18,39 @@ for file_name in tqdm(resultsList):
         h5_file = h5py.File(os.path.join(results_dir,file_name))
         mouse = h5_file['mouse'][()].decode("utf-8")
         condition = h5_file['condition'][()].decode("utf-8")
+        marginal_likelihood = h5_file['marginal_likelihood'][()] 
         
         # Select significant neurons
         p_values = h5_file['p_value'][()]
         indices = np.arange(len(p_values))
         
         sig_info = h5_file['info'][p_values<0.05]
+        nonSig_info = h5_file['info'][p_values>0.05]
         sig_indices = indices[p_values<0.05]
+        nonSig_indices = indices[p_values>0.05]
 
         # Sort neurons to get top-k neurons
-        sorted_info = np.argsort(sig_info*-1) #-1 to find descending idx, instead of ascending
-
+        sorted_sig_info = np.argsort(sig_info*-1) #-1 to find descending idx, instead of ascending
+        sorted_nonSig_info = np.argsort(nonSig_info) # Find the worst neurons in terms of info
+        sorted_activity = np.argsort(marginal_likelihood*-1) # Find the most active neurons
+        r_sorted_activity = np.argsort(marginal_likelihood) # Find the least active neurons 
+        
         # Save selected neurons
         try:
-            selected_neurons = sig_indices[sorted_info][0:params['numNeurons']]
+            place_cells = sig_indices[sorted_sig_info][0:params['numNeurons']]
+            non_place_cells = nonSig_indices[sorted_nonSig_info][0:params['numNeurons']]
+            most_active = indices[sorted_activity][0:params['numNeurons']]
+            least_active = indices[r_sorted_activity][0:params['numNeurons']]
+
             with h5py.File(os.path.join(params['path_to_output'],f'selected_neurons_{condition}_{mouse}.h5'),'w') as f2:
                 f2.create_dataset('mouse', data=mouse)
                 f2.create_dataset('condition', data=condition)
-                f2.create_dataset('selected_neurons', data=selected_neurons)
+                f2.create_dataset('place_cells', data=place_cells)
+                f2.create_dataset('non_place_cells', data=non_place_cells)
+                f2.create_dataset('most_active', data=most_active)
+                f2.create_dataset('most_active', data=least_active)
         except:
-            print('There might not be enough significant neurons. Try reducing the number in params')
+            print('There might not be enough selected neurons. Try reducing the number in params')
 
         # Close files
         h5_file.close()
