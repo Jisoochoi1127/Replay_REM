@@ -11,11 +11,6 @@ plt.style.use("plot_style.mplstyle")
 plt.ion()
 
 # %%
-h5_file = h5py.File(
-    "../../output_REM/neuron_selection/selected_neurons_HATD1_pv1060.h5", "r"
-)
-
-# %%
 results_dir = "../../output_REM/tuning"
 resultsList = os.listdir(results_dir)
 
@@ -86,7 +81,3 @@ plt.plot([0, 0.5], [0.05, 0.05], "C4:")
 plt.xlabel("Info.")
 plt.ylabel("p value")
 plt.show()
-# %%
-# %%
-#
-# %%

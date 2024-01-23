@@ -29,21 +29,11 @@ for condition, mouse, state in tqdm(
     print(f"processing: {mouse},{condition},{state}")
     data = load_data(mouse, condition, state, params)
 
-# %%
-path = os.path.join(params["path_to_dataset"], "pv1060", "LTD1")
-# filename='all_binary_pre_REM'
-filename = "ms"
-# f = h5py.File(os.path.join(path,filename)+'.mat', 'r')
-f = sio.loadmat(os.path.join(path, filename) + ".mat")
-# load_data('pv1060','LTD5','REMpost', params)
-
 # %% First, plot SFPs
 mouse = "pv1060"
 condition = "LTD1"
 state = "wake"
 data = load_data(mouse, condition, state, params)
-# %%
-data = open_file(path, filename)
 # %%
 plt.figure()
 plt.imshow(np.max(data["SFPs"], axis=2), vmin=0, vmax=10, cmap="YlGnBu_r")
