@@ -31,7 +31,7 @@ for condition, mouse in tqdm(
 ):
     if (
         not os.path.exists(
-            os.path.join(params["path_to_output"], f"tuning_{condition}_{mouse}.h5")
+            os.path.join(params["path_to_output"], "tuning", f"tuning_{condition}_{mouse}.h5")
         )
         or params["overwrite_mode"] == "always"
     ):
