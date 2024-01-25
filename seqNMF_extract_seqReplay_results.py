@@ -22,7 +22,7 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                                                            states_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)*len(states_list)):
-    if not os.path.exists(os.path.join(params['path_to_output'],f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5')):
+    if not os.path.exists(os.path.join(params['path_to_output'],"place_cells", f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5')):
         try:
             # Load data for both states
             data_ref = load_data(mouse, condition, state_ref, params)
@@ -30,15 +30,15 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
 
 # Load selected neurons
             try:
-                with h5py.File(os.path.join(params['path_to_output'],f'selected_neurons_{condition}_{mouse}.h5'),'w') as f:
-                    selected_neurons = f['selected_neurons'][()]
+                with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'w') as f:
+                    selected_neurons = f['place_cells'][()]
             except:
                 selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
 
             # Extract seq score
             seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_ref['binaryData'][:,selected_neurons], data_pred['binaryData'][:,selected_neurons], params)
 
-            with h5py.File(os.path.join(params['path_to_output'],f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5'),'w') as f:
+            with h5py.File(os.path.join(params['path_to_output'],"place_cells", f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5'),'w') as f:
                 f.create_dataset('mouse', data=mouse)
                 f.create_dataset('condition', data=condition)
                 f.create_dataset('state_ref', data=state_ref)

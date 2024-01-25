@@ -17,4 +17,4 @@ z_threshold: 2
 numNeurons: 128
 spatialBinSize: 2.5 # cm
 
-overwrite_mode: 'never' # Set as 'always' or 'never'
+overwrite_mode: 'always' # Set as 'always' or 'never'
