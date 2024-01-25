@@ -12,6 +12,7 @@ from tqdm import tqdm
 from utils.helperFunctions import load_data
 
 plt.style.use("plot_style.mplstyle")
+plt.ion()
 
 # %% Load parameters
 with open("params.yaml", "r") as file:
@@ -23,14 +24,13 @@ np.random.seed(params["seed"])
 data = load_data(mouse="pv1069", condition="LTD1", state="wake", params=params)
 
 # %% Plot dist of time spent according to speed threshold
-plt.figure(figsize=(4,4))
-speed_list = [2,3,4,5,6,7,8,9,10]
+plt.figure(figsize=(4, 4))
+speed_list = [2, 3, 4, 5, 6, 7, 8, 9, 10]
 for i, speed_i in enumerate(speed_list):
-    plt.subplot(3,3,i+1)
-    plt.hist(data['position'][data['velocity']>speed_i,0],
-             rasterized=True)
+    plt.subplot(3, 3, i + 1)
+    plt.hist(data["position"][data["velocity"] > speed_i, 0], rasterized=True)
     plt.title(f"Thresh.: {speed_i} cm.s$^{-1}$")
-    plt.axis('off')
+    plt.axis("off")
 plt.savefig("../../output_REM/speed_threshold_optimization.pdf")
 # %%
 with h5py.File("../../output_REM/tuning/tuning_LTD1_pv1069.h5") as f:
@@ -52,25 +52,21 @@ for neuron_i in range(len(sorted_index)):
     )
 smoothed_curves /= np.max(smoothed_curves, axis=0)
 # %% Plot example exploration and activity
-plt.figure(figsize=(1, 3))
+plt.figure(figsize=(1, 2.5))
 plt.subplot(8, 1, 4)
 plt.plot(data["position"][:, 0], data["position"][:, 1], linewidth=0.3)
 # plt.axis('equal')
-plt.plot([70,90],[-3,-3],'k',linewidth=2)
-plt.text(80,
-         -10,
-         "20 cm",
-         horizontalalignment = "center"
-         )
+plt.plot([70, 90], [-3, -3], "k", linewidth=2)
+plt.text(80, -10, "20 cm", horizontalalignment="center")
 plt.xlim(0, 100)
 plt.axis("off")
 
 plt.subplot(212)
-cmap = matplotlib.cm.get_cmap("viridis")
+cmap = matplotlib.cm.get_cmap("plasma")
 for i in range(0, len(sorted_index)):
     color = cmap(i / (len(sorted_index) * 1.2))  # Factor to scale color range
-    plt.plot(smoothed_curves[i] * 20 + i * 1, c=color, linewidth=0.3, rasterized=True)
-plt.xlim(0,40)
+    plt.plot(smoothed_curves[i] * 20 + i * 1, c=color, linewidth=0.1, rasterized=True)
+plt.xlim(0, 40)
 plt.axis("off")
 plt.savefig("../../output_REM/example_place_fields.pdf")
 
@@ -115,32 +111,31 @@ tuning_curves = np.array(tuning_curves)
 sns.histplot(
     data=df.query("condition == 'LTD1' and p_value<0.05"),
     x="peak_loc",
-    # stat='density',
-    kde=True
+    color="C2",
+    stat="density",
+    # bins=10,
+    kde=True,
 )
 plt.title("Place cell centroid locations")
+plt.xticks([0, 20, 40], [0, 50, 100])
 plt.xlabel("Location (cm)")
+plt.savefig("../../output_REM/place_cell_centroids_loc.pdf")
+
 # %%
-plt.figure()
-sns.histplot(
-    data=df.query("p_value<0.05 and condition=='HATD1' or condition=='HATD5'"),
-    x="peak_loc",
-    y="peak_val",
-    cbar=True,
-    cbar_kws={"label": "Number of centroids"},
-)
-plt.show()
-# %%
-plt.figure()
-sns.histplot(data=df.query("p_value<0.05"), x="info")
-plt.show()
-# %%
-plt.figure()
+plt.figure(figsize=(1.5, 2))
+plt.subplot(412)
+plt.hist(data=df, x="info", bins="auto")
+plt.xlim(-0.1, 1)
+plt.ylabel("Count")
+plt.xlabel("")
+plt.xticks([])
+
+
+plt.subplot(212)
 plt.scatter(data=df, x="info", y="p_value")
-plt.plot([0, 0.5], [0.05, 0.05], "C4:")
+plt.plot([-0.1, 1], [0.05, 0.05], "C4:")
+plt.xlim(-0.1, 1)
 plt.xlabel("Info.")
 plt.ylabel("p value")
-plt.show()
-
-# %%
-
+plt.savefig("../../output_REM/info_distribution.pdf")
+plt.tight_layout()
