@@ -13,54 +13,67 @@ from utils.helperFunctions import load_data
 
 plt.style.use("plot_style.mplstyle")
 
-#%% Load parameters
-with open('params.yaml','r') as file:
+# %% Load parameters
+with open("params.yaml", "r") as file:
     params = yaml.full_load(file)
 
-np.random.seed(params['seed'])
+np.random.seed(params["seed"])
 
 # %% Load example statistics
-data = load_data(mouse='pv1069', condition='LTD1', state='wake',params=params)
+data = load_data(mouse="pv1069", condition="LTD1", state="wake", params=params)
 
+# %% Plot dist of time spent according to speed threshold
+plt.figure(figsize=(4,4))
+speed_list = [2,3,4,5,6,7,8,9,10]
+for i, speed_i in enumerate(speed_list):
+    plt.subplot(3,3,i+1)
+    plt.hist(data['position'][data['velocity']>speed_i,0],
+             rasterized=True)
+    plt.title(f"Thresh.: {speed_i} cm.s$^{-1}$")
+    plt.axis('off')
+plt.savefig("../../output_REM/speed_threshold_optimization.pdf")
 # %%
 with h5py.File("../../output_REM/tuning/tuning_LTD1_pv1069.h5") as f:
     info = f["info"][()]
     p_values = f["p_value"][()]
-    peak_loc = f["peak_loc"][()][:,0]
-    peak_val = f["peak_val"][()] 
+    peak_loc = f["peak_loc"][()][:, 0]
+    peak_val = f["peak_val"][()]
     tuning_curves = f["tuning_curves"][()]
 
 # %% Select high information neurons
-selected_neurons = np.where((p_values<.05) & (peak_val>.1))[0]
+selected_neurons = np.where((p_values < 0.05) & (peak_val > 0.1))[0]
 sorted_index = np.argsort(peak_loc[selected_neurons])
 
 # %% Filter traces
-smoothed_curves = np.zeros((len(sorted_index),tuning_curves.shape[1]))
+smoothed_curves = np.zeros((len(sorted_index), tuning_curves.shape[1]))
 for neuron_i in range(len(sorted_index)):
-    smoothed_curves[neuron_i,:] = gaussian_filter1d(tuning_curves[selected_neurons[sorted_index]][neuron_i],sigma=1.5)
-smoothed_curves /= np.max(smoothed_curves, axis=0) 
+    smoothed_curves[neuron_i, :] = gaussian_filter1d(
+        tuning_curves[selected_neurons[sorted_index]][neuron_i], sigma=1.5
+    )
+smoothed_curves /= np.max(smoothed_curves, axis=0)
 # %% Plot example exploration and activity
-plt.figure(figsize=(1,3))
-plt.subplot(16,1,8)
-plt.plot(data['position'][:,0],data['position'][:,1],
-         linewidth=.3) 
+plt.figure(figsize=(1, 3))
+plt.subplot(8, 1, 4)
+plt.plot(data["position"][:, 0], data["position"][:, 1], linewidth=0.3)
 # plt.axis('equal')
-plt.xlim(0,100)
-plt.axis('off')
+plt.plot([70,90],[-3,-3],'k',linewidth=2)
+plt.text(80,
+         -10,
+         "20 cm",
+         horizontalalignment = "center"
+         )
+plt.xlim(0, 100)
+plt.axis("off")
 
 plt.subplot(212)
-cmap = matplotlib.cm.get_cmap('viridis')
-for i in range(0,len(sorted_index)):
-    color = cmap(i/(len(sorted_index)*1.2)) # Factor to scale color range
-    plt.plot(smoothed_curves[i]*20+i/1,
-            c=color,
-            linewidth=.3, rasterized=True)
-plt.axis('off')
-# plt.imshow(smoothed_curves,
-#            aspect='auto',
-#            interpolation='none',
-        #    cmap='magma') 
-# %% Plot activity
+cmap = matplotlib.cm.get_cmap("viridis")
+for i in range(0, len(sorted_index)):
+    color = cmap(i / (len(sorted_index) * 1.2))  # Factor to scale color range
+    plt.plot(smoothed_curves[i] * 20 + i * 1, c=color, linewidth=0.3, rasterized=True)
+plt.xlim(0,40)
+plt.axis("off")
+plt.savefig("../../output_REM/example_place_fields.pdf")
+
 # %% Import place cell data
 results_dir = "../../output_REM/tuning"
 resultsList = os.listdir(results_dir)
@@ -100,16 +113,13 @@ df = pd.DataFrame(data_list)
 tuning_curves = np.array(tuning_curves)
 # %% Plot place cell properties
 sns.histplot(
-    data=df.query("p_value<0.05"),
+    data=df.query("condition == 'LTD1' and p_value<0.05"),
     x="peak_loc",
-    y="condition",
-    cbar=True,
-    cbar_kws={"label": "Number of centroids"},
-    cmap="magma",
+    # stat='density',
+    kde=True
 )
 plt.title("Place cell centroid locations")
 plt.xlabel("Location (cm)")
-plt.show()
 # %%
 plt.figure()
 sns.histplot(
@@ -133,3 +143,4 @@ plt.ylabel("p value")
 plt.show()
 
 # %%
+

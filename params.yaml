@@ -9,7 +9,7 @@ K: 2
 maxIters: 50
 Lambda: 0.0001
 
-speed_threshold: 5
+speed_threshold: 9
 sampling_frequency: 30
 train_test_ratio: .5
 seed: 42

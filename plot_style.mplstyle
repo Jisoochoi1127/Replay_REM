@@ -1,7 +1,6 @@
 # Figure size, resolution
 figure.figsize : 1.5, 1  # max width is 3.5 for single column
 figure.dpi: 300
-figure.facecolor: none # Remove background
 
 # Fonts
 font.family: sans
@@ -18,7 +17,6 @@ legend.fontsize: 7
 font.size: 7
 axes.spines.top: False
 axes.spines.right: False
-axes.facecolor: none
 
 # Lines and markers
 lines.linewidth : .5
@@ -26,7 +24,7 @@ lines.markersize : 1
 
 # Colors
 axes.prop_cycle: cycler(color=['002A5F', '437F97', '849323', 'FFB30D', 'FD161A'])
-image.cmap: viridis
+image.cmap: magma
 
 # Legend
 legend.loc: best
