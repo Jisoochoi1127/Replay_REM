@@ -26,16 +26,14 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)):
     
     if not os.path.exists(os.path.join(params['path_to_output'], "place_cells", f'seqResults_{condition}_{mouse}_{state}.h5')):
-        try:
+        try: #TODO remove try statement, instead parse existing sessions in advance!
             # Load data
             data = load_data(mouse, condition, state, params)
 
             # Load selected neurons
-            try:
-                with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
-                    selected_neurons = f['place_cells'][()]
-            except:
-                selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
+            with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
+                selected_neurons = f['place_cells'][()]
+            # selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
 
             # Extract seq score
             seq_scores, seq_pvalues, seq_locs = extract_seq_score(data['binaryData'][:,selected_neurons], params)
