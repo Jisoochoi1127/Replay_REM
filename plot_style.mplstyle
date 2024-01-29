@@ -17,7 +17,6 @@ legend.fontsize: 7
 font.size: 7
 axes.spines.top: False
 axes.spines.right: False
-bbox_inches='tight'
 
 # Lines and markers
 lines.linewidth : .5
