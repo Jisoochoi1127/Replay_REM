@@ -10,6 +10,7 @@ from scipy.ndimage import gaussian_filter1d
 import yaml
 from tqdm import tqdm
 from utils.helperFunctions import load_data
+from utils.helperFunctions import extract_seqReplay_score
 
 plt.style.use("plot_style.mplstyle")
 
@@ -140,7 +141,25 @@ plt.savefig("../../output_REM/info_distribution.pdf")
 plt.tight_layout()
 
 # %% Representative seqNMF replay example
-#TODO
+# Load LTD1 recording and REMpost for pv1069
+mouse = 'pv1069'
+condition = 'LTD1'
+data_LT = load_data(mouse=mouse,
+                    condition=condition,
+                    state='wake',
+                    params=params)
+data_REMpost = load_data(mouse=mouse,
+                    condition=condition,
+                    state='REMpost',
+                    params=params)
+
+with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
+    selected_neurons = f['place_cells'][()]
+# %% Run SeqNMF
+seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons], data_REMpost['binaryData'][:,selected_neurons], params)
+
+# %% Plot results (i.e. recording, with location of replayed sequences)
+# Plot additional stats (score, num. sig. sequences)
 
 # %% Extract replay statistics
 results_dir = '../../output_REM/place_cells'
@@ -176,11 +195,32 @@ df_replay_stats.loc[df_replay_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
 df_replay_stats.loc[df_replay_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
 df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
 
+# %% Plot seq score vs p_value
+plt.figure()
+sns.scatterplot(
+    data = df_replay,
+    x = 'S1_score',
+    y = 'S1_pvalue',
+    hue = 'S1_pvalue',
+    legend = False
+)
+sns.scatterplot(
+    data = df_replay,
+    x = 'S2_score',
+    y = 'S2_pvalue',
+    hue = 'S2_pvalue',
+    legend = False
+)
+plt.plot([5,5],[0,1],'k:')
+plt.xlabel('Seq. score (z)')
+plt.ylabel('p value')
+plt.savefig('../../output_REM/PCs_seqScore_vs_pvalue.pdf')
+
 # %% 
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='condition',
+    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='mouse',
     # hue='seqType',
     y='numSeqs',
     # palette=(['C0','C4']),
@@ -189,8 +229,8 @@ sns.barplot(
 )
 
 sns.stripplot(
-    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='condition',
+    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='mouse',
     y='numSeqs',
     # hue='seqType',
     # palette=(['C0','C4']),
@@ -202,6 +242,74 @@ sns.stripplot(
 #plt.xticks([0,1],['S1', 'S2'])
 plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
+plt.ylim(0,12)
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/numSeqReplay.pdf')
+plt.savefig('../../output_REM/PCs_numSeqReplay_LTD1.pdf')
+
+# %% Same but using any cell (instead of place cells)
+results_dir = '../../output_REM/any_neuron'
+resultsList=os.listdir(results_dir)
+
+data_list = []
+for file_name in resultsList:
+    if file_name.startswith('seqReplayResults_') and file_name.endswith('.h5'): # Only include seqResults, not replay results
+        h5_file = h5py.File(os.path.join(results_dir,file_name))
+        data_list.append( #This will create one list entry per cell
+                {
+                    'state_ref':h5_file['state_ref'][()].decode("utf-8"),
+                    'state_pred':h5_file['state_pred'][()].decode("utf-8"),
+                    'condition':h5_file['condition'][()].decode("utf-8"),
+                    'mouse':h5_file['mouse'][()].decode("utf-8"),
+                    'S1_numSeqs':h5_file['S1_numSeqs'][()],
+                    'S2_numSeqs':h5_file['S2_numSeqs'][()],
+                    'S1_score':h5_file['S1_score'][()],
+                    'S2_score':h5_file['S2_score'][()],
+                    'S1_pvalue':h5_file['S1_pvalue'][()],
+                    'S2_pvalue':h5_file['S2_pvalue'][()],
+                }
+            )
+
+        # Close files
+        h5_file.close()
+
+df_replay = pd.DataFrame(data_list)
+
+#%%
+df_replay_stats = df_replay
+df_replay_stats.loc[df_replay_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
+df_replay_stats.loc[df_replay_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
+df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+
+# %% 
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='mouse',
+    # hue='seqType',
+    y='numSeqs',
+    # palette=(['C0','C4']),
+    errorbar='se',
+    capsize=.2
+)
+
+sns.stripplot(
+    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='mouse',
+    y='numSeqs',
+    # hue='seqType',
+    # palette=(['C0','C4']),
+    size=2,
+    #dodge=True,
+    legend=True
+)
+
+#plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Num. significant \nsequences')
+plt.xlabel('')
+plt.ylim(0,12)
+plt.xticks(rotation=90)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anyCell_numSeqReplay_LTD1.pdf')
+
+# %%
