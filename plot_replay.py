@@ -159,6 +159,9 @@ with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selec
 seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons], data_REMpost['binaryData'][:,selected_neurons], params)
 
 # %% Plot results (i.e. recording, with location of replayed sequences)
+
+
+
 # Plot additional stats (score, num. sig. sequences)
 
 # %% Extract replay statistics
@@ -191,8 +194,6 @@ df_replay = pd.DataFrame(data_list)
 
 #%%
 df_replay_stats = df_replay
-df_replay_stats.loc[df_replay_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
-df_replay_stats.loc[df_replay_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
 df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
 
 # %% Plot seq score vs p_value
@@ -277,8 +278,6 @@ df_replay = pd.DataFrame(data_list)
 
 #%%
 df_replay_stats = df_replay
-df_replay_stats.loc[df_replay_stats['S1_pvalue']>0.05,'S1_numSeqs']=0
-df_replay_stats.loc[df_replay_stats['S2_pvalue']>0.05,'S2_numSeqs']=0
 df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
 
 # %% 

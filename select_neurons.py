@@ -41,7 +41,7 @@ for file_name in tqdm(resultsList):
             most_active = indices[sorted_activity][0:params['numNeurons']]
             least_active = indices[r_sorted_activity][0:params['numNeurons']]
 
-            with h5py.File(os.path.join(params['path_to_output'],'neuron_selection',f'selected_neurons_{condition}_{mouse}.h5'),'w') as f2:
+            with h5py.File(os.path.join(params['path_to_output'], 'neuron_selection', f'selected_neurons_{condition}_{mouse}.h5'),'w') as f2:
                 f2.create_dataset('mouse', data=mouse)
                 f2.create_dataset('condition', data=condition)
                 f2.create_dataset('place_cells', data=place_cells)

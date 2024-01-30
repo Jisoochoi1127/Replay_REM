@@ -28,9 +28,9 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
             data_ref = load_data(mouse, condition, state_ref, params)
             data_pred = load_data(mouse, condition, state_pred, params)
 
-# Load selected neurons
+    # Load selected neurons
             with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
-                    selected_neurons = f['place_cells'][()]
+                selected_neurons = f['place_cells'][()]
             
             #selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
 
