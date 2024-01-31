@@ -130,7 +130,6 @@ plt.ylabel("Count")
 plt.xlabel("")
 plt.xticks([])
 
-
 plt.subplot(212)
 plt.scatter(data=df, x="info", y="p_value")
 plt.plot([-0.1, 1], [0.05, 0.05], "C4:")
@@ -158,10 +157,107 @@ with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selec
 # %% Run SeqNMF
 seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons], data_REMpost['binaryData'][:,selected_neurons], params)
 
+# %% Focus on place cells, sort cells according to place field locations
+LT_PCs_data = data_LT['binaryData'][:,selected_neurons]
+REM_PCs_data = data_REMpost['binaryData'][:,selected_neurons]
+with h5py.File(os.path.join(params['path_to_output'],"tuning", f'tuning_{condition}_{mouse}.h5'),'r') as f:
+    placeFieldLocations = f['peak_loc'][()][:,0]
+placeFieldLocations = placeFieldLocations[selected_neurons]
+sortingIndex = np.argsort(placeFieldLocations)
+
+# Select running epochs only
+LT_PCs_data = LT_PCs_data[data_LT['running_ts']]
+LT_position = data_LT['position'][data_LT['running_ts'],0]
+
+# %% Select only replay epochs for display
+replayEvents = np.zeros((0,params['numNeurons']))
+for event in seqReplay_locs[0]:
+    replayEvents = np.append(replayEvents,
+                             REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
+                             axis=0)
+
+for event in seqReplay_locs[1]:
+    replayEvents = np.append(replayEvents,
+                             REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
+                             axis=0)
+
 # %% Plot results (i.e. recording, with location of replayed sequences)
+plt.figure(figsize=(3,1.33))
+plt.subplot(221)
+plt.imshow(LT_PCs_data[:,sortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r')
+plt.xticks([])
+plt.xlim(0,len(LT_PCs_data))
+plt.yticks([0,128],[128,0])
+plt.ylabel('Neuron ID')
+plt.title('Wakefulness')
 
+plt.subplot(222)
+plt.imshow(replayEvents[:,sortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r')
+plt.xlim(0,len(replayEvents))
+plt.xticks(np.arange(0,len(replayEvents),params['L']),[])
+plt.yticks([0,128],[])
+plt.plot([0,len(seqReplay_locs[0])*params['L']],
+         [0,0],
+         'C0',
+         linewidth=2)
+plt.plot([len(seqReplay_locs[0])*params['L'],len(replayEvents)],
+         [0,0],
+         'C4',
+         linewidth=2)
+plt.title('REM post')
+    
+plt.subplot(427)
+plt.plot(-LT_position)
+plt.xlim(0,len(LT_position))
+plt.yticks([-100,0],[0,100])
+plt.ylabel('Position (cm)')
+plt.title('Linear track (runs only)')
+plt.xticks([])
+plt.plot([2000,2600],[-120,-120],
+         'k',
+         linewidth=2)
+plt.text(2300,-180,'20 s',
+         horizontalalignment='center',
+         verticalalignment='bottom')
 
+plt.subplot(428)
+plt.imshow(REM_PCs_data[:,sortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r')
+for event in seqReplay_locs[0]:
+    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+            [params['numNeurons'],params['numNeurons']],
+            facecolor='C0',
+            alpha=.1,
+            )
+for event in seqReplay_locs[1]:
+    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+            [params['numNeurons'],params['numNeurons']],
+            facecolor='C4',
+            alpha=.1,
+            )
+plt.xlim(0,len(REM_PCs_data))
+plt.xticks([])
+plt.yticks([0,params['numNeurons']],[params['numNeurons'],0])
 
+plt.plot([6000,6600],[params['numNeurons'],params['numNeurons']],
+         'k',
+         linewidth=2)
+plt.text(6300,params['numNeurons']+80,'20 s',
+         horizontalalignment='center',
+         verticalalignment='bottom')
+
+plt.savefig('../../output_REM/example_replay_seqNMF.pdf')
+
+# plt.xlim(5000,6000)
+#%% Only plot replayed sequences
 # Plot additional stats (score, num. sig. sequences)
 
 # %% Extract replay statistics
@@ -222,28 +318,28 @@ plt.figure(figsize=(.75,1))
 sns.barplot(
     data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='mouse',
-    # hue='seqType',
+    hue='seqType',
     y='numSeqs',
-    # palette=(['C0','C4']),
+    palette=(['C0','C4']),
     errorbar='se',
     capsize=.2
 )
 
-sns.stripplot(
-    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='mouse',
-    y='numSeqs',
-    # hue='seqType',
-    # palette=(['C0','C4']),
-    size=2,
-    #dodge=True,
-    legend=True
-)
+# sns.stripplot(
+#     data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+#     x='mouse',
+#     y='numSeqs',
+#     # hue='seqType',
+#     # palette=(['C3','C4']),
+#     size=2,
+#     #dodge=True,
+#     legend=True
+# )
 
 #plt.xticks([0,1],['S1', 'S2'])
 plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
-plt.ylim(0,12)
+plt.ylim(0,22)
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/PCs_numSeqReplay_LTD1.pdf')
@@ -285,28 +381,28 @@ plt.figure(figsize=(.75,1))
 sns.barplot(
     data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='mouse',
-    # hue='seqType',
+    hue='seqType',
     y='numSeqs',
-    # palette=(['C0','C4']),
+    palette=(['C0','C4']),
     errorbar='se',
     capsize=.2
 )
 
-sns.stripplot(
-    data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='mouse',
-    y='numSeqs',
-    # hue='seqType',
-    # palette=(['C0','C4']),
-    size=2,
-    #dodge=True,
-    legend=True
-)
+# sns.stripplot(
+#     data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+#     x='mouse',
+#     y='numSeqs',
+#     # hue='seqType',
+#     # palette=(['C0','C4']),
+#     size=2,
+#     #dodge=True,
+#     legend=True
+# )
 
 #plt.xticks([0,1],['S1', 'S2'])
 plt.ylabel('Num. significant \nsequences')
 plt.xlabel('')
-plt.ylim(0,12)
+plt.ylim(0,22)
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/anyCell_numSeqReplay_LTD1.pdf')
