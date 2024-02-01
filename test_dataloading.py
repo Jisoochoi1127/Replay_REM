@@ -5,6 +5,7 @@ from tqdm import tqdm
 import itertools
 
 import yaml
+from scipy.io import loadmat
 import h5py
 from utils.helperFunctions import load_data
 import matplotlib.pyplot as plt
@@ -15,6 +16,10 @@ with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
 np.random.seed(params['seed'])
+
+# %% 
+test_data = loadmat('../../datasets/REM_data/pv1069/LTD1/ms.mat')
+
 
 #%%
 data = load_data(mouse='pv1043',condition='LTD1',state='wake', params=params)
