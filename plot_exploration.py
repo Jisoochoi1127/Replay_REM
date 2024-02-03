@@ -7,7 +7,6 @@ from utils.helperFunctions import load_data
 import matplotlib.pyplot as plt
 
 plt.style.use("plot_style.mplstyle")
-plt.ion()
 
 # %% Load parameters
 with open("params.yaml", "r") as file:
