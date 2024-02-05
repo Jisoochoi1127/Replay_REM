@@ -26,12 +26,12 @@ def load_data(mouse, condition, state, params):
     if 'pre' in state:
         filename='all_binary_pre_REM'
         data = open_file(path, filename)
-        data['binaryData'] = data['data']
+        data['binaryData'] = data['data'].astype('bool')
 
     elif 'post' in state:
         filename='all_binary_post_REM'
         data = open_file(path, filename)
-        data['binaryData'] = data['data']
+        data['binaryData'] = data['data'].astype('bool')
 
     elif state=='wake': # Then, must be wake data in old mat format
         data = preprocess_data(pycaan_load(path),params)
