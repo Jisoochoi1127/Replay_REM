@@ -1,0 +1,6 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "cSpell.enableFiletypes": [
+        "mojo"
+    ]
+}
