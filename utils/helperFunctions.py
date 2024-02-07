@@ -5,8 +5,10 @@ from scipy.stats import skew
 import h5py
 import scipy.io as sio
 from scipy.signal import find_peaks
+from scipy.ndimage.interpolation import zoom
 from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_data
 from .dataloaders import load_data as pycaan_load
+
 
 def open_file(path, filename):
     data={}
@@ -65,6 +67,10 @@ def extract_seq_score(data, params):
         max_iter=params['maxIters']
         )
 
+    # Optional expansion
+    if params['expansionFactor'] > 0 and params['expansionFactor'] != 1.0:
+        W_train = zoom(W_train,(1,1,params['expansionFactor']))
+
     # Extract sequences on test set
     H_test = extract_H(W_train, test_data)
     # output will have d dimensions corresponding to each sequence template
@@ -120,8 +126,13 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         max_iter=params['maxIters']
         )
 
+    # Optional expansion
+    if params['expansionFactor'] > 0 and params['expansionFactor'] != 1.0:
+        W_ref = zoom(W_ref,(1,1,params['expansionFactor']))
+
     # Extract sequences on predicted data set
     H_pred = extract_H(W_ref, data_pred)
+
     # output will have d dimensions corresponding to each sequence template
     seqReplay_scores = skew(H_pred,axis=1) 
 

@@ -1,6 +1,6 @@
 # I/O paths
 path_to_output: '../../output_REM'
-path_to_dataset: '/home/getter/projects/def-wilsyl/datasets/Jisoo/data'
+path_to_dataset: '../../datasets/REM_data'
 
 # Parameters
 numShuffles: 1000
@@ -8,6 +8,7 @@ L: 100 # 5s @ 30fps
 K: 2
 maxIters: 50
 Lambda: 0.0001
+expansionFactor: 1.0
 
 speed_threshold: 9
 sampling_frequency: 30
