@@ -22,7 +22,6 @@ np.random.seed(params["seed"])
 condition = "LTD1"
 mouse_list = ["pv1043", "pv1060", "pv1069", "pv1254"]
 L_list = [25, 50, 75, 125, 150, 175, 200, 225, 250, 300]
-L_scores = np.zeros((len(L_list), params["K"]))
 
 for mouse in mouse_list:
     data_LT = load_data(mouse=mouse, condition=condition, state="wake", params=params)
@@ -42,7 +41,7 @@ for mouse in mouse_list:
 
     PC_activity = data_LT["binaryData"][:, selected_neurons]
 
-    temp_L_scores = np.zeros((len(L_list), params["K"]))
+    L_scores = np.zeros((len(L_list), params["K"]))
     for i, L in enumerate(tqdm(L_list)):
         params["L"] = L  # Override parameters
         seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(
@@ -51,11 +50,10 @@ for mouse in mouse_list:
             params,
         )
 
-        temp_L_scores[i, 0] = len(seqReplay_locs[0])
-        temp_L_scores[i, 1] = len(seqReplay_locs[1])
+        L_scores[i, 0] = len(seqReplay_locs[0])
+        L_scores[i, 1] = len(seqReplay_locs[1])
 
-    L_scores = np.append(L_scores, temp_L_scores, axis=1)
 
-# %% Save data
-with h5py.File(os.path.join(params["path_to_output"], "optimal_L.h5"), "w") as f:
-    f.create_dataset("L_scores", data=L_scores)
+    # %% Save data
+    with h5py.File(os.path.join(params["path_to_output"], f"{mouse}_optimal_L.h5"), "w") as f:
+        f.create_dataset("L_scores", data=L_scores)
