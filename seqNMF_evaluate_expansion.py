@@ -78,4 +78,20 @@ for i, factor in enumerate(tqdm(expansionFactorList)):
     expansion_scores[i] = (seqReplay_scores[0]+seqReplay_scores[1])/2
     expansion_numSeqs[i] = (len(seqReplay_locs[0])+len(seqReplay_locs[1]))/2
 
-# %% Compute
+# %% Save!
+with h5py.File(os.path.join(params["path_to_output"], f"sequence_expansion.h5"), "w") as f:
+    f.create_dataset("expansion_scores", data=expansion_scores)
+    f.create_dataset("expansion_numSeqs", data=expansion_numSeqs)
+    
+# %% Plot
+plt.plot(expansionFactorList, expansion_scores)
+plt.xlabel("Scaling factor")
+plt.ylabel("Seq. score")
+plt.savefig("../../output_REM/expansion_scores.pdf")
+
+# %% Plot
+plt.plot(expansionFactorList, expansion_numSeqs)
+plt.xlabel("Scaling factor")
+plt.ylabel("Num. sig.\nsequences")
+plt.savefig("../../output_REM/expansion_numSeq.pdf")
+# %%
