@@ -1,6 +1,6 @@
 # I/O paths
 path_to_output: '../../output_REM'
-path_to_dataset: '../../datasets/REM_data'
+path_to_dataset: '/home/getter/projects/def-wilsyl/datasets/Jisoo/data'
 
 # Parameters
 numShuffles: 1000
