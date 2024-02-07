@@ -47,7 +47,11 @@ sns.lineplot(
     data=df_melted,
     x='L',
     y='numSeq',
-    errorbar='se'
+    errorbar='se',
+    color='C1'
 )
+plt.title('Optimal L\n\
+          n = 4 mice, 2 seq.')
 plt.xlabel('$L$\n(frame number)')
+plt.ylabel("Num. sig.\nsequences")
 # %%

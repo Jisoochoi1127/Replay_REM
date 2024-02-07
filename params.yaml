@@ -4,7 +4,7 @@ path_to_dataset: '/home/getter/projects/def-wilsyl/datasets/Jisoo/data'
 
 # Parameters
 numShuffles: 1000
-L: 125 # 5s @ 30fps
+L: 100 # 5s @ 30fps
 K: 2
 maxIters: 50
 Lambda: 0.0001
