@@ -43,6 +43,9 @@ W_LT, H_LT, _, _, _ = seqnmf(
     max_iter=10
     )
 
+#%% Test temp
+from scipy.ndimage.interpolation import zoom
+
 # %% For each template, compute matrix multiplication to extract H
 expansionFactorList = [.5,.75,1,1.5,2]
 
