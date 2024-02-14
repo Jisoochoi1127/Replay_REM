@@ -174,4 +174,4 @@ def extract_seqReplay_score(data_ref, data_pred, params):
 
         seqReplay_pvalues[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_scores[k])/params['numShuffles']
     
-    return seqReplay_scores, seqReplay_pvalues, seqReplay_locs
+    return seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref
