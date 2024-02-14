@@ -113,7 +113,7 @@ def extract_seq_score(data, params):
 
         seq_pvalues[k] = sum(seq_shuffled_score[:,k]>seq_scores[k])/params['numShuffles']
     
-    return seq_scores, seq_pvalues, seq_locs
+    return seq_scores, seq_pvalues, seq_locs, W_train
 
 def extract_seqReplay_score(data_ref, data_pred, params):
 
