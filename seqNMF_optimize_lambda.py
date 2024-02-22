@@ -23,7 +23,6 @@ condition = "LTD1"
 mouse_list = ["pv1043", "pv1060", "pv1069", "pv1254"]
 lambda_list = [10e-6,10e-5,10e-4,10e-3,10e-2,10e-1,1,10,10e2,10e3,10e4]
 
-params['maxIters'] = 2
 for mouse in mouse_list:
     data_LT = load_data(mouse=mouse, condition=condition, state="wake", params=params)
     data_REMpost = load_data(
@@ -56,3 +55,5 @@ for mouse in mouse_list:
 
     with h5py.File(os.path.join(params["path_to_output"], f"{mouse}_optimal_lambda.h5"), "w") as f:
         f.create_dataset("L_scores", data=lambda_scores) #TODO rename to lambda
+
+# %%

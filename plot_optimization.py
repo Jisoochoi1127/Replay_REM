@@ -63,11 +63,11 @@ lambda_list = [10e-6,10e-5,10e-4,10e-3,10e-2,10e-1,1,10,10e2,10e3,10e4]
 optimal_lambda_scores = []
 for mouseName in mouseList:
     with h5py.File(f"../../output_REM/{mouseName}_optimal_lambda.h5") as f:
-        for i_L, L in enumerate(L_list):
+        for i_L, Lambda in enumerate(lambda_list):
             optimal_lambda_scores.append(
                 {
                     "mouse": mouseName,
-                    "lambda": L,
+                    "lambda": Lambda,
                     "S1_numSeq": f['L_scores'][i_L][0], #TODO rename to lambda
                     "S2_numSeq": f['L_scores'][i_L][1] #TODO rename to lambda
                 }
@@ -90,6 +90,7 @@ sns.lineplot(
     errorbar='se',
     color='C1'
 )
+plt.xscale('log')
 plt.title('Optimal $\lambda$\n\
           n = 4 mice, 2 seq.')
 plt.xlabel('$lambda$')

@@ -155,7 +155,9 @@ data_REMpost = load_data(mouse=mouse,
 with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
     selected_neurons = f['place_cells'][()]
 # %% Run SeqNMF
-seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons], data_REMpost['binaryData'][:,selected_neurons], params)
+seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons],
+                                                                                     data_REMpost['binaryData'][:,selected_neurons],
+                                                                                     params)
 
 # %% Sort sequences
 #sortingIndex = np.argsort(np.argmax(np.concatenate((W_ref[:,0,:],W_ref[:,1,:]),axis=1),axis=1))
@@ -181,8 +183,9 @@ plt.imshow(W_ref[sortingIndex,0,:],
            interpolation='none',
            aspect='auto',
            cmap='gray_r',
-           vmin=0,
-           vmax=.5)
+        #    vmin=0,
+        #    vmax=.5
+           )
 plt.axis('off')
 plt.title('S$_{1}$')
 plt.subplot(122)
@@ -190,22 +193,11 @@ plt.imshow(W_ref[sortingIndex,1,:],
            interpolation='none',
            aspect='auto',
            cmap='gray_r',
-           vmin=0,
-           vmax=.5)
+        #    vmin=0,
+        #    vmax=.5
+           )
 plt.axis('off')
 plt.title('S$_{2}$')
-
-# %% Select only replay epochs for display
-# replayEvents = np.zeros((0,params['numNeurons']))
-# for event in seqReplay_locs[0]:
-#     replayEvents = np.append(replayEvents,
-#                              REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
-#                              axis=0)
-
-# for event in seqReplay_locs[1]:
-#     replayEvents = np.append(replayEvents,
-#                              REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
-#                              axis=0)
 
 # %% Plot results (i.e. recording, with location of replayed sequences)
 plt.figure(figsize=(3,1.33))
@@ -233,21 +225,7 @@ plt.plot([75,90],[128,128],
 plt.text(65,168,'500 ms',
          horizontalalignment='center',
          verticalalignment='bottom')
-# plt.imshow(replayEvents[:,sortingIndex].T,
-#            interpolation='none',
-#            aspect='auto',
-#            cmap='gray_r')
-# plt.xlim(0,len(replayEvents))
-# plt.xticks(np.arange(0,len(replayEvents),params['L']),[])
-# plt.yticks([0,128],[])
-# plt.plot([0,len(seqReplay_locs[0])*params['L']],
-#          [0,0],
-#          'C0',
-#          linewidth=2)
-# plt.plot([len(seqReplay_locs[0])*params['L'],len(replayEvents)],
-#          [0,0],
-#          'C4',
-#          linewidth=2)
+
 plt.title('REM post')
     
 plt.subplot(427)
@@ -264,26 +242,55 @@ plt.text(2300,-180,'20 s',
          horizontalalignment='center',
          verticalalignment='bottom')
 
+##Optional
 # plt.subplot(428)
-# plt.imshow(REM_PCs_data[:,sortingIndex].T,
-#            interpolation='none',
-#            aspect='auto',
-#            cmap='gray_r')
-# for event in seqReplay_locs[0]:
-#     plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
-#             [params['numNeurons'],params['numNeurons']],
-#             facecolor='C0',
-#             alpha=.1,
-#             )
-# for event in seqReplay_locs[1]:
-#     plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
-#             [params['numNeurons'],params['numNeurons']],
-#             facecolor='C4',
-#             alpha=.1,
-#             )
-# plt.xlim(0,len(REM_PCs_data))
-# plt.xticks([])
-# plt.yticks([0,params['numNeurons']],[params['numNeurons'],0])
+plt.figure(figsize=(4,1))
+plt.imshow(REM_PCs_data[:,sortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r')
+for event in seqReplay_locs[0]:
+    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+            [params['numNeurons'],params['numNeurons']],
+            facecolor='C0',
+            alpha=.1,
+            )
+for event in seqReplay_locs[1]:
+    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+            [params['numNeurons'],params['numNeurons']],
+            facecolor='C4',
+            alpha=.1,
+            )
+plt.xlim(0,len(REM_PCs_data))
+plt.xticks([])
+plt.yticks([0,params['numNeurons']],[params['numNeurons'],0])
+
+#%% Replay events, concatenated
+replayEvents = np.zeros((0,params['numNeurons']))
+for event in seqReplay_locs[0]:
+    replayEvents = np.append(replayEvents,
+                             REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
+                             axis=0)
+
+for event in seqReplay_locs[1]:
+    replayEvents = np.append(replayEvents,
+                             REM_PCs_data[event-int(params['L']/2):event+int(params['L']/2)],
+                             axis=0)
+plt.imshow(replayEvents[:,sortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r')
+plt.xlim(0,len(replayEvents))
+plt.xticks(np.arange(0,len(replayEvents),params['L']),[])
+plt.yticks([0,128],[])
+plt.plot([0,len(seqReplay_locs[0])*params['L']],
+         [0,0],
+         'C0',
+         linewidth=2)
+plt.plot([len(seqReplay_locs[0])*params['L'],len(replayEvents)],
+         [0,0],
+         'C4',
+         linewidth=2)
 
 # plt.plot([6000,6600],[params['numNeurons'],params['numNeurons']],
 #          'k',
@@ -292,7 +299,7 @@ plt.text(2300,-180,'20 s',
 #          horizontalalignment='center',
 #          verticalalignment='bottom')
 
-plt.savefig('../../output_REM/example_replay_seqNMF.pdf')
+# plt.savefig('../../output_REM/example_replay_seqNMF.pdf')
 
 # plt.xlim(5000,6000)
 #%% Only plot replayed sequences
