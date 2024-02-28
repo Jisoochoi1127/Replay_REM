@@ -39,8 +39,6 @@ for mouse in mouse_list:
     ) as f:
         selected_neurons = f["place_cells"][()]
 
-    PC_activity = data_LT["binaryData"][:, selected_neurons]
-
     L_scores = np.zeros((len(L_list), params["K"]))
     for i, L in enumerate(tqdm(L_list)):
         params["L"] = L  # Override parameters
