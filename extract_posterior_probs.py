@@ -15,8 +15,8 @@ with open('params.yaml','r') as file:
 condition_list = ['LTD1','LTD5','HATD1','HATD5']
 mouse_list = ['pv1043','pv1060', 'pv1069', 'pv1191', 'pv1192', 'pv1252', 'pv1254']
 
-#%% Same but look at replay between conditions
-for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condition_list,
+#%% For each mouse and condition
+for condition, mouse in tqdm(list(itertools.product(condition_list,
                                                            mouse_list)),
                                                            total=len(condition_list)*len(mouse_list)):
     if not os.path.exists(os.path.join(params['path_to_output'],"posterior_probs", f'posterior_probs_{condition}_{mouse}.h5')):
@@ -60,7 +60,7 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                 params['path_to_output'],
                 'posterior_probs',
                 f'posterior_probs_{condition}_{mouse}.h5'
-                ), 'r'
+                ), 'w'
                 ) as f:
             f.create_dataset('mouse', data=mouse)
             f.create_dataset('condition', data=condition)
