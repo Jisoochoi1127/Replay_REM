@@ -1,11 +1,11 @@
 # %% Imports
 import h5py
 import yaml
-import numpy as np
 import os
 from tqdm import tqdm
 import itertools
-from utils.helperFunctions import load_data, extract_seqReplay_score
+from utils.helperFunctions import load_data
+from pycaan.functions.decoding import baysian_decode
 
 #%% Load parameters
 with open('params.yaml','r') as file:
@@ -20,24 +20,49 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                                                            mouse_list)),
                                                            total=len(condition_list)*len(mouse_list)):
     if not os.path.exists(os.path.join(params['path_to_output'],"posterior_probs", f'posterior_probs_{condition}_{mouse}.h5')):
-        # Load precomputed tuning curves
+        # Load precomputed tuning curves and accessory data
+        with h5py.File(
+            os.path.join(
+                params["path_to_output"],
+                'tuning_curves',
+                f"tuning_{condition}_{mouse}.h5"
+                ), 'r'
+                ) as f:
+            tuning_curves = f['tuning_curves'][()]
+            marginal_likelihood = f['marginal_likelihood'][()]
+            occupancy = [] # TODO use uniform prior
         
         # Load selected neurons
+        with h5py.File(
+            os.path.join(
+                params['path_to_output'],
+                'neuron_selection',
+                f'selected_neurons_{condition}_{mouse}.h5'
+                ), 'r'
+                ) as f:
+            selected_neurons = f['place_cells'][()]
 
         # Load REMpre data
+        data_REMpre = load_data(mouse, condition, 'REMpre', params)
 
         # Load REMpost data
-        
-        data_REMpre = load_data(mouse, condition, 'REMpre', params)
         data_REMpost = load_data(mouse, condition, 'REMpost', params)
 
+        # Extract posteriors on REMpre and save results
+        REMpre_posterior_probs, _ = baysian_decode(tuning_curves[selected_neurons], occupancy, marginal_likelihood[selected_neurons], data_REMpre['binaryData'][:,selected_neurons])
 
+        # Extract posterior probs on REMpost and save results
+        REMpost_posterior_probs, _ = baysian_decode(tuning_curves[selected_neurons], occupancy, marginal_likelihood[selected_neurons], data_REMpost['binaryData'][:,selected_neurons])
 
-# %% Load tuning curves
-for file_name in tqdm(resultsList):
-    if file_name.startswith('tuning_') and file_name.endswith('.h5'): # Only include seqResults, not replay results
-        h5_file = h5py.File(os.path.join(results_dir,file_name))
-        mouse = h5_file['mouse'][()].decode("utf-8")
-        condition = h5_file['condition'][()].decode("utf-8")
-        marginal_likelihood = h5_file['marginal_likelihood'][()] 
-        
+        # Save results
+        with h5py.File(
+            os.path.join(
+                params['path_to_output'],
+                'posterior_probs',
+                f'posterior_probs_{condition}_{mouse}.h5'
+                ), 'r'
+                ) as f:
+            f.create_dataset('mouse', data=mouse)
+            f.create_dataset('condition', data=condition)
+            f.create_dataset('REMpre_posterior_probs', data=REMpre_posterior_probs)
+            f.create_dataset('REMpost_posterior_probs', data=REMpost_posterior_probs)

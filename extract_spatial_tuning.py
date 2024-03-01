@@ -63,7 +63,7 @@ for condition, mouse in tqdm(
 
             with h5py.File(
                 os.path.join(
-                    params["path_to_output"], f"tuning_{condition}_{mouse}.h5"
+                    params["path_to_output"], 'tuning_curves', f"tuning_{condition}_{mouse}.h5"
                 ),
                 "w",
             ) as f:
