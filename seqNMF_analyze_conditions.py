@@ -13,7 +13,7 @@ import h5py
 results_dir = '../../output_REM/'
 resultsList=os.listdir(results_dir)
 
-# %% Q1: is there replay during REM?
+# %% Load data
 data_list = []
 for file_name in resultsList:
     if file_name.startswith('seqReplayResults_') and file_name.endswith('.h5'): # Only include seqResults, not replay results

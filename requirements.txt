@@ -2,7 +2,6 @@ h5py==3.10.0
 numpy==1.26.2
 pandas==2.1.3
 pingouin==0.5.3
--e git+https://github.com/etterguillaume/PyCaAn.git@544600a43c381bf882ace969744feab3c01de912#egg=PyCaAn
 PyYAML==6.0.1
 scipy==1.11.4
 seqnmf==0.1.2
