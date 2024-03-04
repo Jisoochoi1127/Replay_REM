@@ -42,23 +42,31 @@ condition = 'LTD1'
 data_wake = load_data(mouse, condition, 'wake', params)
 
 # %%
-posterior_probs, map = bayesian_decode(tuning_curves[selected_neurons], occupancy, marginal_likelihood[selected_neurons], data_wake['binaryData'][:,selected_neurons])
+posterior_probs, map = bayesian_decode(tuning_curves, occupancy, marginal_likelihood, data_wake['binaryData'])
 # %%
-plt.figure(figsize=(4,1))
+plt.figure(figsize=(4,2))
+plt.subplot(211)
 plt.imshow(
     posterior_probs.T,
     interpolation='none',
     aspect='auto',
-    vmin=0,
-    vmax=.1
+    # vmin=0,
+    vmax=.25,
+    origin='lower'
 )
-plt.plot(data_wake['position'][:,0]/100*40,'w:',alpha=.8)
+
+plt.xlim(0,2500)
+plt.xticks(np.arange(0,2500,600),[])
+plt.yticks([0,40],[0,100])
+plt.ylabel('Position (cm)')
+# plt.colorbar(label='Posterior probability')
+
+plt.subplot(212)
+plt.plot(data_wake['position'][:,0])
 plt.xlim(0,2500)
 plt.xticks(np.arange(0,2500,600),np.arange(0,2500/60,10))
-plt.yticks([0,40],[0,100])
 plt.xlabel('Time (s)')
 plt.ylabel('Position (cm)')
-plt.colorbar(label='Posterior probability')
 plt.savefig("../../output_REM/posterior_probs.pdf")
 
 # %%
