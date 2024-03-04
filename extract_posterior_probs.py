@@ -6,6 +6,7 @@ from tqdm import tqdm
 import itertools
 from utils.helperFunctions import load_data
 from pycaan.functions.decoding import bayesian_decode
+import numpy as np
 
 #%% Load parameters
 with open('params.yaml','r') as file:
@@ -30,7 +31,8 @@ for condition, mouse in tqdm(list(itertools.product(condition_list,
                 ) as f:
             tuning_curves = f['tuning_curves'][()]
             marginal_likelihood = f['marginal_likelihood'][()]
-            occupancy = [] # TODO use uniform prior
+            # Use uniform prior
+            occupancy = np.ones(tuning_curves.shape[1])/tuning_curves.shape[1]
         
         # Load selected neurons
         with h5py.File(
