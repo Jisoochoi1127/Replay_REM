@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+import seaborn as sns
 import yaml
 import h5py
 from scipy.ndimage import zoom
