@@ -21,7 +21,7 @@ np.random.seed(params["seed"])
 
 # %% Define conditions, dataset
 states_list = ["REMpre", "wake", "REMpost"]
-condition_list = ["LTD1", "LTD5", "HATD1", "HATD5"]
+condition_list = ["LTD1", "LTD5", "HATD1", "HATD5", "HATDSwitch"]
 mouse_list = ["pv1043", "pv1060", "pv1069", "pv1191", "pv1192", "pv1252", "pv1254"]
 
 # %% First, measure 'sequenceness' in each individuate session
@@ -31,7 +31,9 @@ for condition, mouse in tqdm(
 ):
     if (
         not os.path.exists(
-            os.path.join(params["path_to_output"], "tuning", f"tuning_{condition}_{mouse}.h5")
+            os.path.join(
+                params["path_to_output"], "tuning", f"tuning_{condition}_{mouse}.h5"
+            )
         )
         or params["overwrite_mode"] == "always"
     ):
@@ -63,7 +65,9 @@ for condition, mouse in tqdm(
 
             with h5py.File(
                 os.path.join(
-                    params["path_to_output"], 'tuning_curves', f"tuning_{condition}_{mouse}.h5"
+                    params["path_to_output"],
+                    "tuning_curves",
+                    f"tuning_{condition}_{mouse}.h5",
                 ),
                 "w",
             ) as f:
