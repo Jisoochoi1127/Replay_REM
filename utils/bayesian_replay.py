@@ -1,6 +1,24 @@
 # %% Imports
 import numpy as np
-from numpy import polyfit
+from numpy import polyfit, polyval
+
+# %% Polyfit analysis
+def linear_fit(time_vec, position):
+
+    # Assess replay length
+    nanIdx = np.isnan(position)
+    portion_window = sum(~nanIdx)/len(time_vec)
+
+    # Ignore NaN values
+    time_vec = time_vec[~nanIdx]
+    position = position[~nanIdx]
+
+    # Compute replay score
+    _, residuals, _, _, _ = polyfit(x=time_vec, y=position, deg=1, full=True)
+    score = 1 - residuals[0]/((len(position)-1) * np.var(position))
+    jumpiness = np.nanmax(np.diff(position)) # Maximum jump across two frames
+
+    return score, jumpiness, portion_window
 
 # %%
 def extract_linear_replay(posterior_probs, params):
@@ -8,25 +26,26 @@ def extract_linear_replay(posterior_probs, params):
     replayScore = []
     replayJumpiness = []
     replayLength = []
-    time = np.arange(params['windowSize'])
 
     #TODO deal with preallocation, empty windows
 
-    currentWindowIdx = np.array([0:params['windowSize']])
+    currentWindowIdx = np.arange(params['windowSize'])
+
     while True:
         currentWindow = posterior_probs[currentWindowIdx]
 
         # Compute maximum a posteriori, output results in cm for correct speed computations
-        #TODO ensure empty/nan frames remain nan values
+        #TODO assert empty/nan frames remain nan values
         actual_map = (np.argmax(currentWindow,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
 
         # For each window, compute score, jumpiness, length
-        actual_score, actual_jumpiness, actual_length = linear_fit(time,actual_map)
+        actual_score, actual_jumpiness, actual_length = linear_fit(currentWindowIdx, actual_map)
 
         
     
-        current_window+=params['stepSize']
-        if current_window[1]>len(posterior_probs):
+        currentWindowIdx+=params['stepSize'] # Step forward
+
+        if currentWindowIdx[1]>len(posterior_probs): # If window goes beyond recording
             break
 
     # Get shuffled values
@@ -56,30 +75,3 @@ def extract_linear_replay(posterior_probs, params):
             replayJumpiness.append(actual_jumpiness[i])
     return replayLocs, replayScore, replayJumpiness, replayLength
 
-# %% Polyfit analysis
-def linear_fit(time, position):
-
-# x=time;
-# y=decoding.REM_decoded_position(time);
-
-# %Ignoring nan values
-# nanIndex=isnan(y);
-# y(nanIndex) = [];
-# x = x(~nanIndex);
-
-# % check the smapling point
-# sampling_percentage(window)=length(y)/length(time);
-
-
-# %calculate Rsquare
-# p = polyfit(x,y,1);
-
-# slope(window)=p(1);
-# intercept(window)=p(2);
-# yfit = polyval(p,x);
-# yresid = y - yfit;
-# SSresid = sum(yresid.^2);
-# SStotal = (length(y)-1) * var(y);
-# rsq(window) = 1 - SSresid/SStotal;
-# Replay_score_actual=rsq;\
-    return score, jumpiness, length
