@@ -29,7 +29,7 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
                 f'posterior_probs_{condition}_{mouse}.h5'
                 ), 'r'
                 ) as f:
-            posterior_probs = f['{state}_posterior_probs'][()]
+            posterior_probs = f[f'{state}_posterior_probs'][()]
             
         replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
         

@@ -2,6 +2,7 @@
 import numpy as np
 from numpy import polyfit
 
+#%%
 def linear_fit(time_vec, position):
     # Assess replay length
     nanIdx = np.isnan(position)
@@ -24,14 +25,18 @@ def extract_linear_replay(posterior_probs, params):
     replayJumpiness = []
     replayPortion = []
 
+    locationIdx = np.arange(posterior_probs.shape[1]) # Will be used to shuffle
     # Compute actual maximum a posteriori from posterior probabilities, convert to cm
     actual_map = (np.argmax(posterior_probs,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
 
     # Shuffle posteriors, extract shuffled maps
     shuffled_maps = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan
+    
     for shuffle_i in range(params['numShuffles']):
         # Shuffle posterior locations
-        shuffled_posteriors = posterior_probs[:,np.random.shuffle(np.arange(posterior_probs.shape[1]))]
+        np.random.shuffle(locationIdx)
+        shuffled_posteriors = posterior_probs[:,locationIdx]
+        
         # Compute argmax on shuffled data
         shuffled_maps[shuffle_i,:] = (np.argmax(shuffled_posteriors,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
 
