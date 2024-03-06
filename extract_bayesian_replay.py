@@ -4,7 +4,6 @@ import yaml
 import os
 from tqdm import tqdm
 import itertools
-from utils.helperFunctions import load_data
 from utils.bayesian_replay import extract_linear_replay
 
 #%% Load parameters
@@ -32,13 +31,13 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
                 ) as f:
             posterior_probs = f['{state}_posterior_probs'][()]
             
-        replay_locs, replay_score, replay_jumpiness, replay_length = extract_linear_replay(posterior_probs, params)
+        replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
         
         # Save results
         with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f:
             f.create_dataset('mouse', data=mouse)
             f.create_dataset('condition', data=condition)
-            f.create_dataset('replay_locs', data=replay_locs)
-            f.create_dataset('replay_score', data=replay_score)
-            f.create_dataset('replay_jumpiness', data=replay_jumpiness)
-            f.create_dataset('replay_length', data=replay_length)
+            f.create_dataset('replay_locs', data=replayLocs)
+            f.create_dataset('replay_score', data=replayScore)
+            f.create_dataset('replay_jumpiness', data=replayJumpiness)
+            f.create_dataset('replay_length', data=replayPortion)
