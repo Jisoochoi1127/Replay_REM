@@ -24,7 +24,6 @@ states_list = ["REMpre", "wake", "REMpost"]
 condition_list = ["LTD1", "LTD5", "HATD1", "HATD5", "HATDSwitch"]
 mouse_list = ["pv1043", "pv1060", "pv1069", "pv1191", "pv1192", "pv1252", "pv1254"]
 
-# %% First, measure 'sequenceness' in each individuate session
 for condition, mouse in tqdm(
     list(itertools.product(condition_list, mouse_list)),
     total=len(condition_list) * len(mouse_list),
