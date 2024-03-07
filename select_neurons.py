@@ -9,7 +9,7 @@ from tqdm import tqdm
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
-results_dir = params['output_path']+'/tuning'
+results_dir = params['path_to_output']+'/tuning'
 resultsList=os.listdir(results_dir)
 
 for file_name in tqdm(resultsList):
