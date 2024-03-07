@@ -36,7 +36,7 @@ for condition, mouse in tqdm(
         )
         or params["overwrite_mode"] == "always"
     ):
-        try:
+        if os.path.exists(os.path.join(params['path_to_dataset'],mouse,condition)):
             # Load data
             data = load_data(mouse, condition, "wake", params)
 
@@ -65,7 +65,7 @@ for condition, mouse in tqdm(
             with h5py.File(
                 os.path.join(
                     params["path_to_output"],
-                    "tuning_curves",
+                    "tuning",
                     f"tuning_{condition}_{mouse}.h5",
                 ),
                 "w",
@@ -87,7 +87,4 @@ for condition, mouse in tqdm(
                 f.create_dataset(
                     "total_distance_travelled", data=float(total_distance_travelled)
                 )
-
-        except:
-            print("Missing session")
 # %%
