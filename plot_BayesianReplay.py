@@ -119,7 +119,7 @@ for event in replayLocs:
             facecolor='w',
             alpha=.2,
             )
-plt.xlim(7650,7750)
+plt.xlim(4500,5000)
 
 # %% TODO overlay linear fit?
     
