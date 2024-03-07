@@ -1,18 +1,32 @@
-#%%
+# %% Imports
+import numpy as np
+import os
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib
+import h5py
+import yaml
+from tqdm import tqdm
 from utils.helperFunctions import load_data
 from pycaan.functions.decoding import bayesian_decode
-import h5py
-import os
-import yaml
-import numpy as np
-import matplotlib.pyplot as plt
+
 plt.style.use("plot_style.mplstyle")
 
-#%% Load parameters
-with open('params.yaml','r') as file:
+# %% Load parameters
+with open("params.yaml", "r") as file:
     params = yaml.full_load(file)
 
-#%%
+np.random.seed(params["seed"])
+
+# %% Select example recording
+mouse = 'pv1069'
+condition = 'LTD1'
+
+# %% Load data
+data_wake = load_data(mouse, condition, 'wake', params)
+
+#%% Load tuning curves for that session
 with h5py.File(
     os.path.join(
         params["path_to_output"],
@@ -35,15 +49,9 @@ with h5py.File(
         ) as f:
     selected_neurons = f['place_cells'][()]
 
-
-# %%
-mouse = 'pv1069'
-condition = 'LTD1'
-data_wake = load_data(mouse, condition, 'wake', params)
-
-# %%
+#%% Compute posterior probs during wake
 posterior_probs, map = bayesian_decode(tuning_curves, occupancy, marginal_likelihood, data_wake['binaryData'])
-# %%
+# %% Plot posterior probabilities during wake
 plt.figure(figsize=(4,2))
 plt.subplot(211)
 plt.imshow(
@@ -69,4 +77,30 @@ plt.xlabel('Time (s)')
 plt.ylabel('Position (cm)')
 plt.savefig("../../output_REM/posterior_probs.pdf")
 
-# %%
+# %% Load posterior probabilities during REM
+with h5py.File(params['path_to_output']+"/posterior_probs/posterior_probs_LTD1_pv1069.h5") as f:
+    info = f["info"][()]
+    p_values = f["p_value"][()]
+    peak_loc = f["peak_loc"][()][:, 0]
+    peak_val = f["peak_val"][()]
+    tuning_curves = f["tuning_curves"][()]
+
+# %% Load replay info
+    
+
+# %% Plot significant replay revents
+    
+
+# %% TODO overlay linear fit?
+    
+
+
+# %% Load all sessions
+    
+
+# %% Plot results
+    
+
+
+
+# %% Compute stats
