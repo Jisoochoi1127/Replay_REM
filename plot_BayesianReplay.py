@@ -50,7 +50,10 @@ with h5py.File(
     selected_neurons = f['place_cells'][()]
 
 #%% Compute posterior probs during wake
-posterior_probs, map = bayesian_decode(tuning_curves, occupancy, marginal_likelihood, data_wake['binaryData'])
+posterior_probs, map = bayesian_decode(tuning_curves,
+                                       occupancy,
+                                       marginal_likelihood,
+                                       data_wake['binaryData'])
 # %% Plot posterior probabilities during wake
 plt.figure(figsize=(4,2))
 plt.subplot(211)
@@ -78,18 +81,45 @@ plt.ylabel('Position (cm)')
 plt.savefig("../../output_REM/posterior_probs.pdf")
 
 # %% Load posterior probabilities during REM
-with h5py.File(params['path_to_output']+"/posterior_probs/posterior_probs_LTD1_pv1069.h5") as f:
-    info = f["info"][()]
-    p_values = f["p_value"][()]
-    peak_loc = f["peak_loc"][()][:, 0]
-    peak_val = f["peak_val"][()]
-    tuning_curves = f["tuning_curves"][()]
+with h5py.File(
+                os.path.join(
+                    params["path_to_output"],
+                    "posterior_probs",
+                    f"posterior_probs_{condition}_{mouse}.h5",
+                ),
+                "r",
+            ) as f:
+    REMpost_posterior_probs = f["REMpost_posterior_probs"][()]
 
 # %% Load replay info
-    
+with h5py.File(
+            os.path.join(
+                params["path_to_output"],
+                "bayesian_replay",
+                f"bayesian_replay_{condition}_{mouse}_REMpost.h5",
+            ),
+            "r",
+        ) as f:
+    replayLocs = f['replay_locs'][()]
+    replayScore = f['replay_score'][()]
+    replayJumpiness = f['replay_jumpiness'][()]
+    replayLength = f['replay_length'][()]
+
+# %% Identify top replay events
+sortedEventIdx = np.argsort(-1*replayScore) # Reverse to get descending order
 
 # %% Plot significant replay revents
-    
+plt.figure(figsize=(4,1))
+# Plot posterior probs
+plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none')
+
+for event in replayLocs:
+    plt.fill_between([event, event+int(params['windowSize'])],
+            [REMpost_posterior_probs.shape[1],REMpost_posterior_probs.shape[1]],
+            facecolor='w',
+            alpha=.2,
+            )
+plt.xlim(7650,7750)
 
 # %% TODO overlay linear fit?
     
