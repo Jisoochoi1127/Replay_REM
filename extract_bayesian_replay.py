@@ -15,23 +15,23 @@ resultsList=os.listdir(results_dir)
 
 #%%
 for file_name in tqdm(resultsList):
-    with h5py.File(os.path.join(results_dir, file_name), 'r') as f:
-        mouse = f['mouse'][()].decode("utf-8")
-        condition = f['condition'][()].decode("utf-8")
+    if file_name.startswith('posterior'):
+        with h5py.File(os.path.join(results_dir, file_name), 'r') as f:
+            mouse = f['mouse'][()].decode("utf-8")
+            condition = f['condition'][()].decode("utf-8")
 
-        for state in ['REMpre', 'REMpost']:
-            if not os.path.exists(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5')):
-            # Load precomputed tuning curves and accessory data
-                posterior_probs = f[f'{state}_posterior_probs'][()]
+            for state in ['REMpre', 'REMpost']:
+                if not os.path.exists(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5')):
+                # Load precomputed tuning curves and accessory data
+                    posterior_probs = f[f'{state}_posterior_probs'][()]
+                    
+                    replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
                 
-                replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
-            
-                # Save results
-                with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
-                    f2.create_dataset('mouse', data=mouse)
-                    f2.create_dataset('condition', data=condition)
-                    f2.create_dataset('replay_locs', data=replayLocs)
-                    f2.create_dataset('replay_score', data=replayScore)
-                    f2.create_dataset('replay_jumpiness', data=replayJumpiness)
-                    f2.create_dataset('replay_length', data=replayPortion)
-# %%
+                    # Save results
+                    with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
+                        f2.create_dataset('mouse', data=mouse)
+                        f2.create_dataset('condition', data=condition)
+                        f2.create_dataset('replay_locs', data=replayLocs)
+                        f2.create_dataset('replay_score', data=replayScore)
+                        f2.create_dataset('replay_jumpiness', data=replayJumpiness)
+                        f2.create_dataset('replay_length', data=replayPortion)
