@@ -5,13 +5,12 @@ import h5py
 import yaml
 from tqdm import tqdm
 
-#%%
-results_dir = '../../output_REM/tuning'
-resultsList=os.listdir(results_dir)
-
 #%% Load parameters
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
+
+results_dir = params['output_path']+'/tuning'
+resultsList=os.listdir(results_dir)
 
 for file_name in tqdm(resultsList):
     if file_name.startswith('tuning_') and file_name.endswith('.h5'): # Only include seqResults, not replay results

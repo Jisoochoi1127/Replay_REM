@@ -44,7 +44,7 @@ def extract_linear_replay(posterior_probs, params):
     # Initialize first window
     currentWindowIdx = np.arange(params['windowSize'])
 
-    while currentWindowIdx[1]<len(posterior_probs):
+    while currentWindowIdx[-1]<len(posterior_probs):
         # For each window, compute score, jumpiness, portion replayed
         actual_score, actual_jumpiness, actual_portion = linear_fit(currentWindowIdx, actual_map[currentWindowIdx])
 
