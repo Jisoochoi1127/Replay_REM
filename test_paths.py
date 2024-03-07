@@ -28,8 +28,7 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
                                                            mouse_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)):
-    
-    if 
-    print(f'processing: {mouse},{condition},{state}')
-    data = load_data(mouse, condition, state, params)
+    if os.path.exists(os.path.join(params['path_to_dataset'],mouse,condition)):
+        print(f'processing: {mouse},{condition},{state}')
+        data = load_data(mouse, condition, state, params)
 # %%
