@@ -13,7 +13,7 @@ with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
 #%% Define conditions, dataset
-condition_list = ['LTD1','LTD5','HATD1','HATD5']
+condition_list = ['LTD1','LTD5','HATD1','HATD5', 'HATDSwitch']
 mouse_list = ['pv1043','pv1060', 'pv1069', 'pv1191', 'pv1192', 'pv1252', 'pv1254']
 
 #%% For each mouse and condition
