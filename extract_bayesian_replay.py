@@ -13,6 +13,7 @@ with open('params.yaml','r') as file:
 results_dir = params['path_to_output']+'/posterior_probs'
 resultsList=os.listdir(results_dir)
 
+#%%
 for file_name in tqdm(resultsList):
     with h5py.File(os.path.join(results_dir, file_name), 'r') as f:
         mouse = f['mouse'][()].decode("utf-8")
@@ -26,10 +27,11 @@ for file_name in tqdm(resultsList):
                 replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
             
                 # Save results
-                with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f:
-                    f.create_dataset('mouse', data=mouse)
-                    f.create_dataset('condition', data=condition)
-                    f.create_dataset('replay_locs', data=replayLocs)
-                    f.create_dataset('replay_score', data=replayScore)
-                    f.create_dataset('replay_jumpiness', data=replayJumpiness)
-                    f.create_dataset('replay_length', data=replayPortion)
+                with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
+                    f2.create_dataset('mouse', data=mouse)
+                    f2.create_dataset('condition', data=condition)
+                    f2.create_dataset('replay_locs', data=replayLocs)
+                    f2.create_dataset('replay_score', data=replayScore)
+                    f2.create_dataset('replay_jumpiness', data=replayJumpiness)
+                    f2.create_dataset('replay_length', data=replayPortion)
+# %%
