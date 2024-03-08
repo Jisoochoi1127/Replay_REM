@@ -126,10 +126,43 @@ plt.xlim(4500,5000)
 
 
 # %% Load all sessions
-    
+# %% Import place cell data
+results_dir = params['path_to_output']+"/bayesian_replay"
+resultsList = os.listdir(results_dir)
+
+#%%
+data_list = []
+
+for file_name in tqdm(resultsList):
+    if (
+        file_name.startswith("bayesian_replay_")
+        and file_name.endswith(".h5")
+        and "pv1254" not in file_name # Exclude pv1254
+    ):
+        h5_file = h5py.File(os.path.join(results_dir, file_name))
+        for i in range(len(h5_file["replay_locs"][()])):
+            data_list.append(  # This will create one list entry per cell
+                {
+                    "eventID": i,
+                    "mouse": h5_file["mouse"][()].decode("utf-8"),
+                    "condition": h5_file["condition"][()].decode("utf-8"),
+                    "replayEventTime": h5_file['replay_locs'][i]/params['sampling_frequency'],
+                    "replayEventScore": h5_file['replay_score'][i],
+                    "replayEventJumpiness": h5_file['replay_jumpiness'][i],
+                    "replayEventLength": h5_file['replay_length'][i]
+                }
+            )
+        
+        # Close files
+        h5_file.close()
+
+df = pd.DataFrame(data_list)
 
 # %% Plot results
-    
+sns.histplot(
+    data=df,
+    x='replayEventJumpiness'
+)
 
 
 
