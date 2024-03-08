@@ -21,6 +21,6 @@ Lambda: 0.0001
 expansionFactor: 1.0
 
 # Bayesian decoding
-stepSize: 10 #step_size (in frames)
-windowSize: 100 # Time window (in frames)
+stepSize: 5 #step_size (in frames)
+windowSize: 12 # Time window (in frames)
 

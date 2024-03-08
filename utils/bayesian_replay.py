@@ -60,7 +60,7 @@ def extract_linear_replay(posterior_probs, params):
         for shuffle_i in range(params['numShuffles']):
             shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i] = linear_fit(currentWindowIdx, shuffled_maps[shuffle_i,currentWindowIdx])
     
-        # If 3 scores exceed shuffled surrogate, append index and properties to variables
+        # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
         if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
             if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
                 replayLocs.append(currentWindowIdx[0])

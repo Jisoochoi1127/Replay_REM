@@ -137,6 +137,7 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("bayesian_replay_")
         and file_name.endswith(".h5")
+        #and file_name.endswith("REMpost")
         and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
@@ -161,7 +162,7 @@ df = pd.DataFrame(data_list)
 # %% Plot results
 sns.histplot(
     data=df,
-    x='replayEventJumpiness'
+    x='replayEventScore'
 )
 
 
