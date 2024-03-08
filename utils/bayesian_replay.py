@@ -1,7 +1,6 @@
 # %% Imports
 import numpy as np
 from numpy import polyfit
-
 #%%
 def linear_fit(time_vec, position):
     # Assess replay length
@@ -20,6 +19,8 @@ def linear_fit(time_vec, position):
     return score, jumpiness, portion_window
 
 def extract_linear_replay(posterior_probs, params):
+    np.random.seed(params['seed']) # For reproducibility
+
     replayLocs = []
     replayScore = []
     replayJumpiness = []
@@ -36,6 +37,10 @@ def extract_linear_replay(posterior_probs, params):
         # Shuffle posterior locations
         np.random.shuffle(locationIdx)
         shuffled_posteriors = posterior_probs[:,locationIdx]
+
+        # Shuffle time
+        split_point = np.random.randint(len(posterior_probs))
+        shuffled_posteriors = np.concatenate((shuffled_posteriors[split_point:], shuffled_posteriors[:split_point]))
         
         # Compute argmax on shuffled data
         shuffled_maps[shuffle_i,:] = (np.argmax(shuffled_posteriors,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
@@ -66,4 +71,3 @@ def extract_linear_replay(posterior_probs, params):
         currentWindowIdx+=params['stepSize'] # Step forward
 
     return replayLocs, replayScore, replayJumpiness, replayPortion
-
