@@ -13,7 +13,7 @@ def linear_fit(time_vec, position):
 
     # Compute replay score
     _, residuals, _, _, _ = polyfit(x=time_vec, y=position, deg=1, full=True)
-    score = abs(1 - residuals[0]/((len(position)-1) * np.var(position))) # Using absolute will consider both replay directions
+    score = 1 - residuals[0]/((len(position)-1) * np.var(position))
     jumpiness = np.nanmax(np.diff(position)) # Maximum jump across two frames
 
     return score, jumpiness, portion_window

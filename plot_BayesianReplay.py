@@ -137,7 +137,6 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("bayesian_replay_")
         and file_name.endswith(".h5")
-        #and file_name.endswith("REMpost")
         and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
@@ -147,6 +146,7 @@ for file_name in tqdm(resultsList):
                     "eventID": i,
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
                     "condition": h5_file["condition"][()].decode("utf-8"),
+                    "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "replayEventTime": h5_file['replay_locs'][i]/params['sampling_frequency'],
                     "replayEventScore": h5_file['replay_score'][i],
                     "replayEventJumpiness": h5_file['replay_jumpiness'][i],
@@ -162,9 +162,31 @@ df = pd.DataFrame(data_list)
 # %% Plot results
 sns.histplot(
     data=df,
-    x='replayEventScore'
+    x='replayEventJumpiness',
 )
 
+#%%
+sns.histplot(
+    data=df,
+    x='replayEventScore',
+    hue="Type",
+    palette=['C4','C0']
+)
 
+#%%
+sns.histplot(
+    data=df,
+    x='replayEventJumpiness',
+    hue="Type",
+    palette=['C4','C0']
+)
+
+#%%
+sns.scatterplot(
+    data=df,
+    x='replayEventScore',
+    y='replayEventJumpiness',
+)
 
 # %% Compute stats
+# %%

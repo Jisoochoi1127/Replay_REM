@@ -22,5 +22,5 @@ expansionFactor: 1.0
 
 # Bayesian decoding
 stepSize: 5 #step_size (in frames)
-windowSize: 12 # Time window (in frames)
+windowSize: 15 # Time window (in frames)
 
