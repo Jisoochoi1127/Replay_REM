@@ -62,7 +62,7 @@ def extract_linear_replay(posterior_probs, params):
     
         # If 3 scores exceed shuffled surrogate, append index and properties to variables
         if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
-            if replayLocs and replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]: # This prevents counting the same event multiple times
+            if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
                 replayLocs.append(currentWindowIdx[0])
                 replayScore.append(actual_score)
                 replayJumpiness.append(actual_jumpiness)

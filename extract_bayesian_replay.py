@@ -3,7 +3,6 @@ import h5py
 import yaml
 import os
 from tqdm import tqdm
-import itertools
 from utils.bayesian_replay import extract_linear_replay
 
 #%% Load parameters
