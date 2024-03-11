@@ -4,7 +4,6 @@ import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib
 import h5py
 import yaml
 from tqdm import tqdm
@@ -55,7 +54,7 @@ posterior_probs, map = bayesian_decode(tuning_curves,
                                        marginal_likelihood,
                                        data_wake['binaryData'])
 # %% Plot posterior probabilities during wake
-plt.figure(figsize=(4,2))
+plt.figure(figsize=(2,1))
 plt.subplot(211)
 plt.imshow(
     posterior_probs.T,
@@ -69,7 +68,7 @@ plt.imshow(
 plt.xlim(0,2500)
 plt.xticks(np.arange(0,2500,600),[])
 plt.yticks([0,40],[0,100])
-plt.ylabel('Position (cm)')
+#plt.ylabel('Position\n(cm)')
 # plt.colorbar(label='Posterior probability')
 
 plt.subplot(212)
@@ -164,29 +163,17 @@ sns.histplot(
     data=df,
     x='replayEventJumpiness',
 )
+plt.title('REM post')
+plt.xlabel('Replay jumpiness (cm)')
+plt.ylabel('N')
+plt.savefig("../../output_REM/REMpost_allEventsJumpiness.pdf")
 
 #%%
 sns.histplot(
-    data=df,
+    data=df.query("Type=='replay' and replayEventJumpiness>0"),
     x='replayEventScore',
-    hue="Type",
-    palette=['C4','C0']
 )
-
-#%%
-sns.histplot(
-    data=df,
-    x='replayEventJumpiness',
-    hue="Type",
-    palette=['C4','C0']
-)
-
-#%%
-sns.scatterplot(
-    data=df,
-    x='replayEventScore',
-    y='replayEventJumpiness',
-)
-
-# %% Compute stats
-# %%
+plt.title('REM post')
+plt.xlabel('Replay score (R$^{2}$)')
+plt.ylabel('N')
+plt.savefig("../../output_REM/REMpost_replayScores.pdf")
