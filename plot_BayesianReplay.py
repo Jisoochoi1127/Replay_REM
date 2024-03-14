@@ -18,7 +18,7 @@ with open("params.yaml", "r") as file:
 
 np.random.seed(params["seed"])
 
-# %% Select example recording
+# %% Select example recording to plot wake posteriors
 mouse = 'pv1069'
 condition = 'LTD1'
 
@@ -79,51 +79,6 @@ plt.xlabel('Time (s)')
 plt.ylabel('Position (cm)')
 plt.savefig("../../output_REM/posterior_probs.pdf")
 
-# %% Load posterior probabilities during REM
-with h5py.File(
-                os.path.join(
-                    params["path_to_output"],
-                    "posterior_probs",
-                    f"posterior_probs_{condition}_{mouse}.h5",
-                ),
-                "r",
-            ) as f:
-    REMpost_posterior_probs = f["REMpost_posterior_probs"][()]
-
-# %% Load replay info
-with h5py.File(
-            os.path.join(
-                params["path_to_output"],
-                "bayesian_replay",
-                f"bayesian_replay_{condition}_{mouse}_REMpost.h5",
-            ),
-            "r",
-        ) as f:
-    replayLocs = f['replay_locs'][()]
-    replayScore = f['replay_score'][()]
-    replayJumpiness = f['replay_jumpiness'][()]
-    replayLength = f['replay_length'][()]
-
-# %% Identify top replay events
-sortedEventIdx = np.argsort(-1*replayScore) # Reverse to get descending order
-
-# %% Plot significant replay revents
-plt.figure(figsize=(4,1))
-# Plot posterior probs
-plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none')
-
-for event in replayLocs:
-    plt.fill_between([event, event+int(params['windowSize'])],
-            [REMpost_posterior_probs.shape[1],REMpost_posterior_probs.shape[1]],
-            facecolor='w',
-            alpha=.2,
-            )
-plt.xlim(4500,5000)
-
-# %% TODO overlay linear fit?
-    
-
-
 # %% Load all sessions
 # %% Import place cell data
 results_dir = params['path_to_output']+"/bayesian_replay"
@@ -177,3 +132,57 @@ plt.title('REM post')
 plt.xlabel('Replay score (R$^{2}$)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
+
+# %% Find example replay to plot
+top_replay_events = df.query("spatial_marginal_likelihood>.01 and spatial_peak_val>.25")
+
+#%% Example place cell in open field
+idx = 0 # Pick top examples
+example_idx=df['replayEventScore'].query("Type=='replay' and replayEventJumpiness>0").argsort().flip()[idx]
+example_info=df.iloc[example_idx]
+mouse=example_info['mouse']
+condition=example_info['condition']
+
+# %% Load posterior probabilities during REM
+with h5py.File(
+                os.path.join(
+                    params["path_to_output"],
+                    "posterior_probs",
+                    f"posterior_probs_{condition}_{mouse}.h5",
+                ),
+                "r",
+            ) as f:
+    REMpost_posterior_probs = f["REMpost_posterior_probs"][()]
+
+# %% Load replay info
+with h5py.File(
+            os.path.join(
+                params["path_to_output"],
+                "bayesian_replay",
+                f"bayesian_replay_{condition}_{mouse}_REMpost.h5",
+            ),
+            "r",
+        ) as f:
+    replayLocs = f['replay_locs'][()]
+    replayScore = f['replay_score'][()]
+    replayJumpiness = f['replay_jumpiness'][()]
+    replayLength = f['replay_length'][()]
+
+# %% Identify top replay events
+sortedEventIdx = np.argsort(-1*replayScore) # Reverse to get descending order
+
+# %% Plot significant replay revents
+plt.figure(figsize=(4,1))
+# Plot posterior probs
+plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none')
+
+for event in replayLocs:
+    plt.fill_between([event, event+int(params['windowSize'])],
+            [REMpost_posterior_probs.shape[1],REMpost_posterior_probs.shape[1]],
+            facecolor='w',
+            alpha=.2,
+            )
+plt.xlim(4500,5000)
+
+# %% TODO overlay linear fit?
+    
