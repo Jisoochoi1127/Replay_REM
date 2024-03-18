@@ -73,11 +73,11 @@ for condition, mouse in tqdm(
             )
 
             if params['filtWindowSize']>0:
-                REMPpre_posterior_probs = temporal_bayesian_filter(
+                REMpre_posterior_probs = temporal_bayesian_filter(
                     REMpre_posterior_probs,
                     params['filtWindowSize']
                     )
-                REMPppost_posterior_probs = temporal_bayesian_filter(
+                REMpost_posterior_probs = temporal_bayesian_filter(
                     REMpost_posterior_probs,
                     params['filtWindowSize']
                     )
