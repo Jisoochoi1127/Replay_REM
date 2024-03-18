@@ -2,11 +2,11 @@
 import h5py
 import yaml
 import os
-from tqdm import tqdm
-import itertools
 from utils.helperFunctions import load_data
 from pycaan.functions.decoding import bayesian_decode, temporal_bayesian_filter
 import numpy as np
+import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 # %% Load parameters
 with open("params.yaml", "r") as file:
@@ -31,8 +31,40 @@ data_REMpost = load_data(mouse, condition, "REMpost", params)
 
 #%%
 REMpost_posterior_probs, _ = bayesian_decode(
-                tuning_curves[selected_neurons],
+                tuning_curves,
                 occupancy,
-                marginal_likelihood[selected_neurons],
-                data_REMpost["binaryData"][:, selected_neurons],
+                marginal_likelihood,
+                data_REMpost["binaryData"],
             )
+#%%
+plt.imshow(REMpost_posterior_probs.T,aspect='auto',
+           interpolation='none')
+
+#%%
+windowSize = params['filtWindowSize']
+smoothed_posteriors = np.zeros((REMpost_posterior_probs.shape))*np.nan
+
+#%%
+posterior_probs = np.concatenate((
+        np.zeros((int(windowSize/2),REMpost_posterior_probs.shape[1])),
+        REMpost_posterior_probs,
+        np.zeros((int(windowSize/2),REMpost_posterior_probs.shape[1]))
+        ))
+
+#%%
+currentWindowIdx = np.arange(windowSize)
+
+for i in range(len(smoothed_posteriors)):
+    bayesian_step_prob = posterior_probs[currentWindowIdx]
+    smoothed_posteriors[i,:] = np.expm1(np.nansum(np.log1p(bayesian_step_prob),axis=0)) # This should be used instead of simple product to avoid numerical underflow
+    smoothed_posteriors[i,:] = smoothed_posteriors[i,:]/np.nansum(smoothed_posteriors[i,:]) # Normalize into a probability distribution
+    currentWindowIdx+=1 # Step forward
+
+
+
+# %%
+filtered_posteriors = temporal_bayesian_filter(
+                    REMpost_posterior_probs,
+                    params['filtWindowSize']
+                    )
+# %%
