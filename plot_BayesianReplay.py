@@ -133,13 +133,11 @@ plt.xlabel('Replay score (R$^{2}$)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
 
-# %% Find example replay to plot
-top_replay_events = df.query("spatial_marginal_likelihood>.01 and spatial_peak_val>.25")
-
-#%% Example place cell in open field
-idx = 0 # Pick top examples
-example_idx=df['replayEventScore'].query("Type=='replay' and replayEventJumpiness>0").argsort().flip()[idx]
+#%% Example example replay events
+idx = 10 # Pick top examples
+example_idx=df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].sort_values(ascending=False).index[idx]
 example_info=df.iloc[example_idx]
+eventID=example_info['eventID']
 mouse=example_info['mouse']
 condition=example_info['condition']
 
@@ -168,21 +166,24 @@ with h5py.File(
     replayJumpiness = f['replay_jumpiness'][()]
     replayLength = f['replay_length'][()]
 
-# %% Identify top replay events
-sortedEventIdx = np.argsort(-1*replayScore) # Reverse to get descending order
-
 # %% Plot significant replay revents
-plt.figure(figsize=(4,1))
-# Plot posterior probs
-plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none')
+plt.figure(figsize=(2,.75))
 
-for event in replayLocs:
-    plt.fill_between([event, event+int(params['windowSize'])],
-            [REMpost_posterior_probs.shape[1],REMpost_posterior_probs.shape[1]],
-            facecolor='w',
-            alpha=.2,
-            )
-plt.xlim(4500,5000)
+plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none',
+           origin='lower')
 
-# %% TODO overlay linear fit?
-    
+plt.xlim(replayLocs[eventID]-100,replayLocs[eventID]+100)
+plt.xticks([replayLocs[eventID]-100,replayLocs[eventID], replayLocs[eventID]+100],
+          [0,int(100/30),int(200/30)])
+plt.yticks([0,REMpost_posterior_probs.shape[1]],
+           [0,100])
+plt.xlabel('Time (s)')
+plt.ylabel('Decoded\nlocation (cm)')
+
+plt.plot([replayLocs[eventID], replayLocs[eventID]+int(params['windowSize'])],
+         [42,42],
+         linewidth=2,
+         color='C4')
+plt.title(f"R$^{2}$ = {replayScore[eventID].round(2)}")
+
+plt.savefig(f"../../output_REM/example_replay_{mouse}_{condition}_{eventID}.pdf")
