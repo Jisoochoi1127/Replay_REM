@@ -23,4 +23,5 @@ expansionFactor: 1.0
 # Bayesian decoding
 stepSize: 5 #step_size (in frames)
 windowSize: 15 # Time window (in frames)
+filtWindowSize: 32 # Time window for Bayesian temporal filtering
 
