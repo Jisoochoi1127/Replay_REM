@@ -5,7 +5,7 @@ import os
 from tqdm import tqdm
 import itertools
 from utils.helperFunctions import load_data
-from pycaan.functions.decoding import bayesian_decode
+from pycaan.functions.decoding import bayesian_decode, temporal_bayesian_filter
 import numpy as np
 
 # %% Load parameters
@@ -71,6 +71,16 @@ for condition, mouse in tqdm(
                 marginal_likelihood[selected_neurons],
                 data_REMpost["binaryData"][:, selected_neurons],
             )
+
+            if params['filtWindowSize']>0:
+                REMPpre_posterior_probs = temporal_bayesian_filter(
+                    REMpre_posterior_probs,
+                    params['filtWindowSize']
+                    )
+                REMPppost_posterior_probs = temporal_bayesian_filter(
+                    REMpost_posterior_probs,
+                    params['filtWindowSize']
+                    )
 
             # Save results
             with h5py.File(
