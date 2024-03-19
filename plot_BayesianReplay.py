@@ -134,7 +134,7 @@ plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
 
 #%% Example example replay events
-idx = 10 # Pick top examples
+idx = 0 # Pick top examples
 example_idx=df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].sort_values(ascending=False).index[idx]
 example_info=df.iloc[example_idx]
 eventID=example_info['eventID']
@@ -187,3 +187,5 @@ plt.plot([replayLocs[eventID], replayLocs[eventID]+int(params['windowSize'])],
 plt.title(f"R$^{2}$ = {replayScore[eventID].round(2)}")
 
 plt.savefig(f"../../output_REM/example_replay_{mouse}_{condition}_{eventID}.pdf")
+
+# %%

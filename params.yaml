@@ -1,6 +1,6 @@
 # I/O paths
-path_to_output: '../../output_REM'
-path_to_dataset: '../../datasets/REM_data'
+path_to_output: "../../output_REM"
+path_to_dataset: "../../datasets/REM_data"
 
 # Params
 numShuffles: 1000
@@ -11,7 +11,7 @@ seed: 42 # Seed for reproducibility
 z_threshold: 2
 numNeurons: 256
 spatialBinSize: 2.5 # cm
-overwrite_mode: 'always' # Set as 'always' or 'never'
+overwrite_mode: "always" # Set as 'always' or 'never'
 
 # SeqNMF
 L: 100 # sequence length in frames
@@ -23,5 +23,5 @@ expansionFactor: 1.0
 # Bayesian decoding
 stepSize: 5 #step_size (in frames)
 windowSize: 15 # Time window (in frames)
-filtWindowSize: 32 # Time window for Bayesian temporal filtering
+filtWindowSize: 8 # Time window for Bayesian temporal filtering. 0 for no filtering
 
