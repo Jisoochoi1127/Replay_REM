@@ -64,7 +64,10 @@ def extract_seq_score(data, params):
         K=params['K'],
         L=params['L'],
         Lambda=params['Lambda'],
-        max_iter=params['maxIters']
+        max_iter=params['maxIters'],
+        lambda_OrthW=params['lambda_OrthW'], # 1 enforces event-bases sequences.
+        lambda_L1W=params['lambda_L1W'],
+        shift= params['shift']
         )
 
     # Optional expansion
@@ -123,7 +126,10 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         K=params['K'],
         L=params['L'],
         Lambda=params['Lambda'],
-        max_iter=params['maxIters']
+        max_iter=params['maxIters'],
+        lambda_OrthW=params['lambda_OrthW'], # 1 enforces event-bases sequences.
+        lambda_L1W=params['lambda_L1W'],
+        shift= params['shift']
         )
 
     # Optional expansion

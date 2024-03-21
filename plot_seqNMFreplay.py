@@ -154,13 +154,50 @@ data_REMpost = load_data(mouse=mouse,
 
 with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
     selected_neurons = f['place_cells'][()]
+
+#%% TEMP TEST
+from seqnmf import seqnmf
+W_ref, _, _, _, _ = seqnmf(
+        LT_PCs_data.T,
+        K=2,
+        L=100,
+        Lambda=0.0001,
+        max_iter=params['maxIters'],
+        lambda_OrthW=1, # 1 enforces event-bases sequences.
+        lambda_L1W=1,
+        shift=False
+        )
+
+plt.figure(figsize=(.5,.75))
+plt.subplot(121)
+plt.imshow(W_ref[PCsortingIndex,0,:],
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r',
+            vmin=0,
+            vmax=.5
+           )
+plt.axis('off')
+plt.title('S$_{1}$')
+plt.subplot(122)
+plt.imshow(W_ref[PCsortingIndex,1,:],
+           interpolation='none',
+           aspect='auto',
+           cmap='gray_r',
+            vmin=0,
+            vmax=.5
+           )
+plt.axis('off')
+plt.title('S$_{2}$')
+
 # %% Run SeqNMF
+params['numNeurons']=128
 seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons],
                                                                                      data_REMpost['binaryData'][:,selected_neurons],
                                                                                      params)
 
 # %% Sort sequences
-#sortingIndex = np.argsort(np.argmax(np.concatenate((W_ref[:,0,:],W_ref[:,1,:]),axis=1),axis=1))
+seqSortingIndex = np.argsort(np.argmax(np.concatenate((W_ref[:,0,:],W_ref[:,1,:]),axis=1),axis=1))
 
 # %% Focus on place cells, sort cells according to place field locations
 LT_PCs_data = data_LT['binaryData'][:,selected_neurons]
@@ -170,7 +207,7 @@ REM_PCs_data = data_REMpost['binaryData'][:,selected_neurons]
 with h5py.File(os.path.join(params['path_to_output'],"tuning", f'tuning_{condition}_{mouse}.h5'),'r') as f:
     placeFieldLocations = f['peak_loc'][()][:,0]
 placeFieldLocations = placeFieldLocations[selected_neurons]
-sortingIndex = np.argsort(placeFieldLocations)
+PCsortingIndex = np.argsort(placeFieldLocations)
 
 # Select running epochs only
 LT_PCs_data = LT_PCs_data[data_LT['running_ts']]
@@ -179,7 +216,7 @@ LT_position = data_LT['position'][data_LT['running_ts'],0]
 # %% Plot sequences sorted by place field location
 plt.figure(figsize=(.5,.75))
 plt.subplot(121)
-plt.imshow(W_ref[sortingIndex,0,:],
+plt.imshow(W_ref[PCsortingIndex,0,:],
            interpolation='none',
            aspect='auto',
            cmap='gray_r',
@@ -189,7 +226,7 @@ plt.imshow(W_ref[sortingIndex,0,:],
 plt.axis('off')
 plt.title('S$_{1}$')
 plt.subplot(122)
-plt.imshow(W_ref[sortingIndex,1,:],
+plt.imshow(W_ref[PCsortingIndex,1,:],
            interpolation='none',
            aspect='auto',
            cmap='gray_r',
@@ -202,7 +239,7 @@ plt.title('S$_{2}$')
 # %% Plot results (i.e. recording, with location of replayed sequences)
 plt.figure(figsize=(3,1.33))
 plt.subplot(221)
-plt.imshow(LT_PCs_data[:,sortingIndex].T,
+plt.imshow(LT_PCs_data[:,seqSortingIndex].T,
            interpolation='none',
            aspect='auto',
            cmap='gray_r')
@@ -213,18 +250,18 @@ plt.ylabel('Neuron ID')
 plt.title('Wakefulness')
 
 plt.subplot(2,16,9)
-plt.imshow(REM_PCs_data[:,sortingIndex].T,
+plt.imshow(REM_PCs_data[:,seqSortingIndex].T,
            interpolation='none',
            aspect='auto',
            cmap='gray_r')
 plt.xlim(50,100)
 plt.axis('off')
-plt.plot([75,90],[128,128],
-         'k',
-         linewidth=2)
-plt.text(65,168,'500 ms',
-         horizontalalignment='center',
-         verticalalignment='bottom')
+# plt.plot([75,90],[128,128],
+#          'k',
+#          linewidth=2)
+# plt.text(65,168,'500 ms',
+#          horizontalalignment='center',
+#          verticalalignment='bottom')
 
 plt.title('REM post')
     
@@ -241,11 +278,13 @@ plt.plot([2000,2600],[-120,-120],
 plt.text(2300,-180,'20 s',
          horizontalalignment='center',
          verticalalignment='bottom')
+plt.savefig('../../output_REM/example_replay_seq2.pdf')
 
+#%%
 ##Optional
 # plt.subplot(428)
 plt.figure(figsize=(4,1))
-plt.imshow(REM_PCs_data[:,sortingIndex].T,
+plt.imshow(REM_PCs_data[:,PCsortingIndex].T,
            interpolation='none',
            aspect='auto',
            cmap='gray_r')
