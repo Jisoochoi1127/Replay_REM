@@ -9,7 +9,7 @@ sampling_frequency: 30
 train_test_ratio: .5
 seed: 42 # Seed for reproducibility
 z_threshold: 2
-numNeurons: 128
+numNeurons: 256
 spatialBinSize: 2.5 # cm
 overwrite_mode: "always" # Set as 'always' or 'never'
 

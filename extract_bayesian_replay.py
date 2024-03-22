@@ -24,7 +24,7 @@ for file_name in tqdm(resultsList):
                 # Load precomputed tuning curves and accessory data
                     posterior_probs = f[f'{state}_posterior_probs'][()]
                     
-                    replayLocs, replayScore, replayJumpiness, replayPortion = extract_linear_replay(posterior_probs, params)
+                    replayLocs, replayScore, replayJumpiness, replayPortion, replaySlope = extract_linear_replay(posterior_probs, params)
                 
                     # Save results
                     with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
@@ -34,3 +34,4 @@ for file_name in tqdm(resultsList):
                         f2.create_dataset('replay_score', data=replayScore)
                         f2.create_dataset('replay_jumpiness', data=replayJumpiness)
                         f2.create_dataset('replay_length', data=replayPortion)
+                        f2.create_dataset('replay_slope', data=replaySlope)
