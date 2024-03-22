@@ -13,7 +13,7 @@ with open('params.yaml','r') as file:
 
 #%% Define conditions, dataset
 states_list = ['REMpre', 'wake', 'REMpost']
-condition_list = ['LTD1','LTD5','HATD1','HATD5']
+condition_list = ['LTD1','LTD5','HATD1','HATD5', 'HATDSwitch']
 mouse_list = ['pv1043','pv1060', 'pv1069', 'pv1191', 'pv1192', 'pv1252', 'pv1254']
 
 #%% Same but look at replay between conditions
@@ -22,8 +22,8 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                                                            states_list,
                                                            states_list)),
                                                            total=len(condition_list)*len(mouse_list)*len(states_list)*len(states_list)):
-    if not os.path.exists(os.path.join(params['path_to_output'],"place_cells", f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5')):
-        try: #TODO remove try statement, instead parse existing sessions in advance!
+    if not os.path.exists(os.path.join(params['path_to_output'],"seqNMF", f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5')):
+        if os.path.exists(os.path.join(params['path_to_dataset'], mouse, condition, 'ms.mat')): # If recording exists
             # Load data for both states
             data_ref = load_data(mouse, condition, state_ref, params)
             data_pred = load_data(mouse, condition, state_pred, params)
@@ -48,5 +48,3 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                 f.create_dataset('S2_pvalue', data=seqReplay_pvalues[1])
                 f.create_dataset('S1_numSeqs', data=len(seqReplay_locs[0]))
                 f.create_dataset('S2_numSeqs', data=len(seqReplay_locs[1]))
-        except:
-            print('Missing session')
