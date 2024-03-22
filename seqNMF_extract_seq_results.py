@@ -36,7 +36,7 @@ for condition, mouse, state in tqdm(list(itertools.product(condition_list,
             # selected_neurons = np.arange(params['numNeurons']) # If file don't exist, just pick top-k neurons
 
             # Extract seq score
-            seq_scores, seq_pvalues, seq_locs = extract_seq_score(data['binaryData'][:,selected_neurons], params)
+            seq_scores, seq_pvalues, seq_locs, _ = extract_seq_score(data['binaryData'][:,selected_neurons], params)
             
             with h5py.File(os.path.join(params['path_to_output'], "seqNMF", f'seqResults_{condition}_{mouse}_{state}.h5'),'w') as f:
                 f.create_dataset('mouse', data=mouse)
