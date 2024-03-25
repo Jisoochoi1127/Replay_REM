@@ -104,7 +104,8 @@ for file_name in tqdm(resultsList):
                     "replayEventTime": h5_file['replay_locs'][i]/params['sampling_frequency'],
                     "replayEventScore": h5_file['replay_score'][i],
                     "replayEventJumpiness": h5_file['replay_jumpiness'][i],
-                    "replayEventLength": h5_file['replay_length'][i]
+                    "replayEventLength": h5_file['replay_length'][i],
+                    "replayEventSlope": h5_file['replay_slope'][i]
                 }
             )
         
@@ -132,6 +133,16 @@ plt.title('REM post')
 plt.xlabel('Replay score (R$^{2}$)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
+
+#%%
+sns.histplot(
+    data=df.query("Type=='replay' and replayEventJumpiness==0"),
+    x='replayEventSlope',
+)
+plt.title('REM post')
+plt.xlabel('Replay slope')
+plt.ylabel('N')
+plt.savefig("../../output_REM/REMpost_replaySlope.pdf")
 
 #%% Example example replay events
 idx = 0 # Pick top examples

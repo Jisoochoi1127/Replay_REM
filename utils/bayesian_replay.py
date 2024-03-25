@@ -53,14 +53,20 @@ def extract_linear_replay(posterior_probs, params):
 
     while currentWindowIdx[-1]<len(posterior_probs):
         # For each window, compute score, jumpiness, portion replayed
-        actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(currentWindowIdx, actual_map[currentWindowIdx])
+        actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
+            currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
+            actual_map[currentWindowIdx]
+            )
 
         # Same for shuffled
         shuffled_score = np.zeros(params['numShuffles'])
         shuffled_jumpiness = np.zeros(params['numShuffles'])
         shuffled_portion = np.zeros(params['numShuffles'])
         for shuffle_i in range(params['numShuffles']):
-            shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(currentWindowIdx, shuffled_maps[shuffle_i,currentWindowIdx])
+            shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(
+                currentWindowIdx/params['sampling_frequency'],
+                shuffled_maps[shuffle_i,currentWindowIdx]
+                )
     
         # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
         if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
