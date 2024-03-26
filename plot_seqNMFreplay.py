@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pandas as pd
 import seaborn as sns
+import pingouin as pg
 import matplotlib.pyplot as plt
 import h5py
 import yaml
@@ -158,3 +159,9 @@ plt.ylim(0,22)
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/PCs_numSeqReplay_LTD1.pdf')
+
+#%% STATS
+pg.kruskal(data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+         dv='numSeqs',
+         between='seqType')
+# %%
