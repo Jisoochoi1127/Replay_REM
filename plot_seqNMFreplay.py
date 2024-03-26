@@ -23,15 +23,6 @@ np.random.seed(params["seed"])
 # %% Load example statistics
 data = load_data(mouse="pv1069", condition="LTD1", state="wake", params=params)
 
-# %% Plot dist of time spent according to speed threshold
-plt.figure(figsize=(4, 4))
-speed_list = [2, 3, 4, 5, 6, 7, 8, 9, 10]
-for i, speed_i in enumerate(speed_list):
-    plt.subplot(3, 3, i + 1)
-    plt.hist(data["position"][data["velocity"] > speed_i, 0], rasterized=True)
-    plt.title(f"Thresh.: {speed_i} cm.s$^{-1}$")
-    plt.axis("off")
-plt.savefig("../../output_REM/speed_threshold_optimization.pdf")
 # %%
 with h5py.File("../../output_REM/tuning/tuning_LTD1_pv1069.h5") as f:
     info = f["info"][()]
