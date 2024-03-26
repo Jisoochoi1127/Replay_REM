@@ -4,13 +4,12 @@ import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib
 import h5py
-from scipy.ndimage import gaussian_filter1d
 import yaml
 from tqdm import tqdm
 from utils.helperFunctions import load_data
 from utils.helperFunctions import extract_seqReplay_score
+from utils.helperFunctions import extract_H
 
 plt.style.use("plot_style.mplstyle")
 
@@ -38,41 +37,6 @@ data_REMpost = load_data(mouse=mouse,
 with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", f'selected_neurons_{condition}_{mouse}.h5'),'r') as f:
     selected_neurons = f['place_cells'][()]
 
-#%% TEMP TEST
-from seqnmf import seqnmf
-W_ref, _, _, _, _ = seqnmf(
-        LT_PCs_data.T,
-        K=2,
-        L=100,
-        Lambda=0.0001,
-        max_iter=params['maxIters'],
-        lambda_OrthW=1, # 1 enforces event-bases sequences.
-        lambda_L1W=1,
-        shift=False
-        )
-
-plt.figure(figsize=(.5,.75))
-plt.subplot(121)
-plt.imshow(W_ref[PCsortingIndex,0,:],
-           interpolation='none',
-           aspect='auto',
-           cmap='gray_r',
-            vmin=0,
-            vmax=.5
-           )
-plt.axis('off')
-plt.title('S$_{1}$')
-plt.subplot(122)
-plt.imshow(W_ref[PCsortingIndex,1,:],
-           interpolation='none',
-           aspect='auto',
-           cmap='gray_r',
-            vmin=0,
-            vmax=.5
-           )
-plt.axis('off')
-plt.title('S$_{2}$')
-
 # %% Run SeqNMF
 params['numNeurons']=128
 seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seqReplay_score(data_LT['binaryData'][:,selected_neurons],
@@ -96,96 +60,64 @@ PCsortingIndex = np.argsort(placeFieldLocations)
 LT_PCs_data = LT_PCs_data[data_LT['running_ts']]
 LT_position = data_LT['position'][data_LT['running_ts'],0]
 
-# %% Plot sequences sorted by place field location
-plt.figure(figsize=(.5,.75))
+#%%
+H = extract_H(W_ref, REM_PCs_data)
+#%%
+SF1 = REM_PCs_data*H[0][:,None]
+SF2 = REM_PCs_data*-H[1][:,None]
+sequence_data = SF1+SF2
+
+#%%
+plt.figure()
 plt.subplot(121)
-plt.imshow(W_ref[PCsortingIndex,0,:],
+plt.imshow(sequence_data[:,seqSortingIndex].T,
            interpolation='none',
            aspect='auto',
-           cmap='gray_r',
-        #    vmin=0,
-        #    vmax=.5
-           )
+           cmap='RdBu',
+           vmin=-10,
+           vmax=10)
+plt.xlim(4875,4975)
 plt.axis('off')
-plt.title('S$_{1}$')
+plt.colorbar()
+plt.title('S1')
+
 plt.subplot(122)
-plt.imshow(W_ref[PCsortingIndex,1,:],
+plt.imshow(sequence_data[:,seqSortingIndex].T,
            interpolation='none',
            aspect='auto',
-           cmap='gray_r',
-        #    vmin=0,
-        #    vmax=.5
-           )
+           cmap='RdBu',
+           vmin=-10,
+           vmax=10)
+plt.xlim(5450,5550)
 plt.axis('off')
-plt.title('S$_{2}$')
-
-# %% Plot results (i.e. recording, with location of replayed sequences)
-plt.figure(figsize=(3,1.33))
-plt.subplot(221)
-plt.imshow(LT_PCs_data[:,seqSortingIndex].T,
-           interpolation='none',
-           aspect='auto',
-           cmap='gray_r')
-plt.xticks([])
-plt.xlim(0,len(LT_PCs_data))
-plt.yticks([0,128],[128,0])
-plt.ylabel('Neuron ID')
-plt.title('Wakefulness')
-
-plt.subplot(2,16,9)
-plt.imshow(REM_PCs_data[:,seqSortingIndex].T,
-           interpolation='none',
-           aspect='auto',
-           cmap='gray_r')
-plt.xlim(50,100)
-plt.axis('off')
-# plt.plot([75,90],[128,128],
-#          'k',
-#          linewidth=2)
-# plt.text(65,168,'500 ms',
-#          horizontalalignment='center',
-#          verticalalignment='bottom')
-
-plt.title('REM post')
-    
-plt.subplot(427)
-plt.plot(-LT_position)
-plt.xlim(0,len(LT_position))
-plt.yticks([-100,0],[0,100])
-plt.ylabel('Position (cm)')
-plt.title('Linear track (runs only)')
-plt.xticks([])
-plt.plot([2000,2600],[-120,-120],
-         'k',
-         linewidth=2)
-plt.text(2300,-180,'20 s',
-         horizontalalignment='center',
-         verticalalignment='bottom')
-plt.savefig('../../output_REM/example_replay_seq2.pdf')
+plt.colorbar()
+plt.title('S2')
+plt.tight_layout()
+plt.savefig('../../output_REM/example_seqNMF_replay.pdf')
 
 #%%
 ##Optional
 # plt.subplot(428)
-plt.figure(figsize=(4,1))
-plt.imshow(REM_PCs_data[:,PCsortingIndex].T,
-           interpolation='none',
-           aspect='auto',
-           cmap='gray_r')
-for event in seqReplay_locs[0]:
-    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
-            [params['numNeurons'],params['numNeurons']],
-            facecolor='C0',
-            alpha=.1,
-            )
-for event in seqReplay_locs[1]:
-    plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
-            [params['numNeurons'],params['numNeurons']],
-            facecolor='C4',
-            alpha=.1,
-            )
-plt.xlim(0,len(REM_PCs_data))
-plt.xticks([])
-plt.yticks([0,params['numNeurons']],[params['numNeurons'],0])
+# plt.figure(figsize=(4,1))
+# plt.imshow(REM_PCs_data[:,PCsortingIndex].T,
+#            interpolation='none',
+#            aspect='auto',
+#            cmap='gray_r')
+# for event in seqReplay_locs[0]:
+#     plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+#             [params['numNeurons'],params['numNeurons']],
+#             facecolor='C0',
+#             alpha=.1,
+#             )
+# for event in seqReplay_locs[1]:
+#     plt.fill_between([event-int(params['L']/2), event+int(params['L']/2)],
+#             [params['numNeurons'],params['numNeurons']],
+#             facecolor='C4',
+#             alpha=.1,
+#             )
+# plt.xlim(0,len(REM_PCs_data))
+# plt.xticks([])
+# plt.yticks([0,params['numNeurons']],[params['numNeurons'],0])
 
 #%% Replay events, concatenated
 replayEvents = np.zeros((0,params['numNeurons']))
