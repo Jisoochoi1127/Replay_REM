@@ -115,44 +115,51 @@ for file_name in tqdm(resultsList):
 df = pd.DataFrame(data_list)
 
 # %% Plot results
+plt.figure(figsize=(1,.25))
 sns.histplot(
-    data=df,
+    data=df.query("Type=='replay'"),
     x='replayEventJumpiness',
 )
 plt.title('REM post')
-plt.xlabel('Replay jumpiness (cm)')
+plt.xlabel('Jumpiness (cm)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_allEventsJumpiness.pdf")
 
 #%%
+plt.figure(figsize=(1,.25))
 sns.histplot(
     data=df.query("Type=='replay' and replayEventJumpiness>0"),
     x='replayEventScore',
 )
-plt.title('REM post')
+# plt.title('REM post')
 plt.xlabel('Replay score (R$^{2}$)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
 
 #%%
+plt.figure(figsize=(1.25,.33))
 sns.histplot(
     data=df.query("Type=='replay' and replayEventJumpiness==0"),
     x='replayEventSlope',
 )
-plt.title('REM post')
+# plt.title('REM post')
 plt.xlabel('Replay slope')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replaySlope.pdf")
 
+
+
+
+
+
 #%% Example example replay events
-idx = 0 # Pick top examples
+idx = 5 # Pick top examples
 example_idx=df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].sort_values(ascending=False).index[idx]
 example_info=df.iloc[example_idx]
 eventID=example_info['eventID']
 mouse=example_info['mouse']
 condition=example_info['condition']
 
-# %% Load posterior probabilities during REM
 with h5py.File(
                 os.path.join(
                     params["path_to_output"],
@@ -163,7 +170,6 @@ with h5py.File(
             ) as f:
     REMpost_posterior_probs = f["REMpost_posterior_probs"][()]
 
-# %% Load replay info
 with h5py.File(
             os.path.join(
                 params["path_to_output"],
@@ -176,26 +182,35 @@ with h5py.File(
     replayScore = f['replay_score'][()]
     replayJumpiness = f['replay_jumpiness'][()]
     replayLength = f['replay_length'][()]
+    replaySlope = f['replay_slope'][()]
 
-# %% Plot significant replay revents
-plt.figure(figsize=(2,.75))
+max_vec = np.max(REMpost_posterior_probs,axis=1)
+#REMpost_posterior_probs = REMpost_posterior_probs/max_vec[:,None]
 
-plt.imshow(REMpost_posterior_probs.T,aspect='auto',vmax=.05,interpolation='none',
-           origin='lower')
+plt.figure(figsize=(.75,.75))
+plt.imshow(REMpost_posterior_probs.T,
+           aspect='auto',
+           vmin=.023,
+           vmax=.035,
+           interpolation='none',
+           origin='lower',
+           rasterized=True)
 
-plt.xlim(replayLocs[eventID]-100,replayLocs[eventID]+100)
-plt.xticks([replayLocs[eventID]-100,replayLocs[eventID], replayLocs[eventID]+100],
-          [0,int(100/30),int(200/30)])
+plt.xlim(replayLocs[eventID],replayLocs[eventID]+params['windowSize'])
+plt.xticks([replayLocs[eventID], replayLocs[eventID]+params['windowSize']],
+          [0,
+           params['windowSize']/params['sampling_frequency'],
+           ])
 plt.yticks([0,REMpost_posterior_probs.shape[1]],
            [0,100])
 plt.xlabel('Time (s)')
 plt.ylabel('Decoded\nlocation (cm)')
 
-plt.plot([replayLocs[eventID], replayLocs[eventID]+int(params['windowSize'])],
-         [42,42],
-         linewidth=2,
-         color='C4')
-plt.title(f"R$^{2}$ = {replayScore[eventID].round(2)}")
+# plt.plot([replayLocs[eventID], replayLocs[eventID]+int(params['windowSize'])],
+#          [42,42],
+#          linewidth=2,
+#          color='C1')
+plt.title(f"R$^{2}$ = {replayScore[eventID].round(2)}, {abs(replaySlope[eventID]).round(2)}" + " cm.s$^{-1}$")
 
 plt.savefig(f"../../output_REM/example_replay_{mouse}_{condition}_{eventID}.pdf")
 
