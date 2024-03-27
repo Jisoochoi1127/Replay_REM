@@ -154,9 +154,6 @@ plt.savefig("../../output_REM/REMpost_replaySlope.pdf")
 
 
 
-
-
-
 #%% Example example replay events
 idx = 5 # Pick top examples
 example_idx=df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].sort_values(ascending=False).index[idx]

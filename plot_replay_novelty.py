@@ -80,8 +80,22 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_numEvents.pdf')
 
+#%% DESCRIPTIVES
+mean_novelty = df_numEvents.query("condition=='LTD1' and Type=='replay'")['numReplayEvents'].mean()
+SEM_novelty = df_numEvents.query("condition=='LTD1' and Type=='replay'")['numReplayEvents'].sem()
+print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
+
+mean_familiar = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].mean()
+SEM_familiar = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
+
 #%% STATS
-#TODO
+pg.anova(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    dv='numReplayEvents',
+    between='condition',
+
+)
 
 #%% Plot replay score as a function of novelty
 plt.figure(figsize=(.75,1))
@@ -103,8 +117,21 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_scores.pdf')
 
+#%% DESCRIPTIVES
+mean_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventScore'].mean()
+SEM_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventScore'].sem()
+print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
+
+mean_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventScore'].mean()
+SEM_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventScore'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
+
 #%% STATS
-#TODO
+pg.anova(
+    data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    dv='replayEventScore',
+    between='condition',
+)
 
 #%% Plot jumpiness as a function of novelty
 plt.figure(figsize=(.75,1))
@@ -126,8 +153,21 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_jumpiness.pdf')
 
+#%% DESCRIPTIVES
+mean_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventJumpiness'].mean()
+SEM_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventJumpiness'].sem()
+print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
+
+mean_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventJumpiness'].mean()
+SEM_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventJumpiness'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
+
 #%% STATS
-#TODO
+pg.anova(
+    data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    dv='replayEventJumpiness',
+    between='condition',
+)
 
 #%%
 plt.figure(figsize=(.75,1))
@@ -186,14 +226,14 @@ df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'cond
 
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
-sns.boxenplot(
+sns.barplot(
     data=df_replay_stats.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
     y='numSeqs',
     palette=(['C3','gray']),
-    showfliers=False
-    # errorbar='se',
-    # capsize=.2
+    # showfliers=False
+    errorbar='se',
+    capsize=.2
 )
 
 #plt.xticks([0,1],['S1', 'S2'])
@@ -205,20 +245,22 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novely_seqnmf_numSeqs.pdf')
 
 #%% STATS
-pg.kruskal(data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+pg.rm_anova(data=df_replay_stats.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
          dv='numSeqs',
-         between='seqType')
+         within='condition',
+         subject='mouse'
+         )
 
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
-sns.boxenplot(
+sns.barplot(
     data=df_replay_scores.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
     y='seqScore',
     palette=(['C3','gray']),
-    showfliers=False
-    # errorbar='se',
-    # capsize=.2
+    # showfliers=False
+    errorbar='se',
+    capsize=.2
 )
 
 #plt.xticks([0,1],['S1', 'S2'])
