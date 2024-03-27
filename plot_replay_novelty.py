@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import yaml
 import h5py
 from tqdm import tqdm
-from utils.helperFunctions import load_data
 
 plt.style.use("plot_style.mplstyle")
 
@@ -23,6 +22,7 @@ results_dir = params['path_to_output']+"/bayesian_replay"
 resultsList = os.listdir(results_dir)
 
 data_list = []
+num_event_list = []
 
 for file_name in tqdm(resultsList):
     if (
@@ -31,6 +31,14 @@ for file_name in tqdm(resultsList):
         and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
+        num_event_list.append(
+            {
+                "mouse": h5_file["mouse"][()].decode("utf-8"),
+                "condition": h5_file["condition"][()].decode("utf-8"),
+                "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
+                "numReplayEvents": len(h5_file["replay_locs"][()])
+            }
+        )
         for i in range(len(h5_file["replay_locs"][()])):
             data_list.append(  # This will create one list entry per cell
                 {
@@ -50,6 +58,30 @@ for file_name in tqdm(resultsList):
         h5_file.close()
 
 df = pd.DataFrame(data_list)
+df_numEvents = pd.DataFrame(num_event_list)
+
+#%% Plot number of events per condition
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='numReplayEvents',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    #showfliers=False
+    errorbar='se',
+    capsize=.2
+)
+
+plt.ylabel('Num. replay\nevents')
+plt.xticks([0,1],['Novel','Familiar'])
+plt.xlabel('')
+plt.xticks(rotation=90)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/novelty_bayesian_numEvents.pdf')
+
+#%% STATS
+#TODO
 
 #%% Plot replay score as a function of novelty
 plt.figure(figsize=(.75,1))
@@ -71,6 +103,9 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_scores.pdf')
 
+#%% STATS
+#TODO
+
 #%% Plot jumpiness as a function of novelty
 plt.figure(figsize=(.75,1))
 sns.barplot(
@@ -91,6 +126,9 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_jumpiness.pdf')
 
+#%% STATS
+#TODO
+
 #%%
 plt.figure(figsize=(.75,1))
 sns.boxenplot(
@@ -110,6 +148,9 @@ plt.xlabel('')
 plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_slope.pdf')
+
+#%% STATS
+#TODO
 
 #%% SeqNMF
 results_dir = '../../output_REM/seqNMF'

@@ -136,6 +136,11 @@ plt.xlabel('Replay score (R$^{2}$)')
 plt.ylabel('N')
 plt.savefig("../../output_REM/REMpost_replayScores.pdf")
 
+#%% DESCRIPTIVES
+mean_S1 = df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].mean()
+SEM_S1 = df.query("Type=='replay' and replayEventJumpiness>0")['replayEventScore'].sem()
+print(f'{mean_S1} +/- {SEM_S1}')
+
 #%%
 plt.figure(figsize=(1.25,.33))
 sns.histplot(

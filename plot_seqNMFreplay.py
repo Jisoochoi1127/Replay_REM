@@ -25,7 +25,6 @@ mouse = 'pv1069'
 condition = 'LTD1'
 
 # %% Representative seqNMF replay example
-
 data_LT = load_data(mouse=mouse,
                     condition=condition,
                     state='wake',
@@ -155,10 +154,18 @@ sns.stripplot(
 plt.ylabel('Num. significant \nsequences')
 plt.xticks([0,1],['S1','S2'])
 plt.xlabel('')
-plt.ylim(0,22)
-plt.xticks(rotation=90)
+#plt.ylim(0,22)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/PCs_numSeqReplay_LTD1.pdf')
+
+#%% DESCRIPTIVES
+mean_S1 = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+SEM_S1 = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
+print(f'{mean_S1} +/- {SEM_S1}')
+
+mean_S2 = df_replay_stats.query("seqType=='S2_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+SEM_S2 = df_replay_stats.query("seqType=='S2_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
+print(f'{mean_S2} +/- {SEM_S2}')
 
 #%% STATS
 pg.kruskal(data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
