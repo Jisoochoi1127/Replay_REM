@@ -198,7 +198,10 @@ resultsList=os.listdir(results_dir)
 
 data_list = []
 for file_name in resultsList:
-    if file_name.startswith('seqReplayResults_') and file_name.endswith('.h5'): # Only include seqResults, not replay results
+    if (
+        file_name.startswith('seqReplayResults_') and file_name.endswith('.h5')
+        and "pv1252" not in file_name
+        ): # Exclude pv1254: # Only include seqResults, not replay results
         h5_file = h5py.File(os.path.join(results_dir,file_name))
         data_list.append( #This will create one list entry per cell
                 {
@@ -227,7 +230,7 @@ df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'cond
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df_replay_stats.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
     y='numSeqs',
     palette=(['C3','gray']),
@@ -244,11 +247,14 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novely_seqnmf_numSeqs.pdf')
 
+#%% DESCRIPTIVES
+
+
 #%% STATS
-pg.rm_anova(data=df_replay_stats.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
          dv='numSeqs',
          within='condition',
-         subject='mouse'
+         subject='mouse',
          )
 
 # %% Plot num. sequences vs novelty
@@ -272,6 +278,9 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novely_seqnmf_seqScore.pdf')
 
 #%% STATS
-pg.kruskal(data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
-         dv='numSeqs',
-         between='seqType')
+pg.rm_anova(data=df_replay_scores.query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+         dv='seqScore',
+         within='condition',
+         subject='mouse',
+         )
+# %%

@@ -46,5 +46,6 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                 f.create_dataset('S2_score', data=seqReplay_scores[1])
                 f.create_dataset('S1_pvalue', data=seqReplay_pvalues[0])
                 f.create_dataset('S2_pvalue', data=seqReplay_pvalues[1])
+                f.create_dataset('seqReplayLocs', data=seqReplay_locs)
                 f.create_dataset('S1_numSeqs', data=len(seqReplay_locs[0]))
                 f.create_dataset('S2_numSeqs', data=len(seqReplay_locs[1]))

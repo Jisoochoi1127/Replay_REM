@@ -19,9 +19,9 @@ K: 2
 maxIters: 50
 Lambda: 0.0001
 expansionFactor: 1.0
-lambda_OrthW: 1 # 1 enforces event-bases sequences.
-lambda_L1W: 1
-shift: False
+lambda_OrthW: 0 # 1 enforces event-bases sequences.
+lambda_L1W: 0
+shift: True
 
 # Bayesian decoding
 stepSize: 5 #step_size (in frames)
