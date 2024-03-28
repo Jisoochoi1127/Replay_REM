@@ -13,7 +13,8 @@ with open('params.yaml','r') as file:
 
 #%% Define conditions, dataset
 states_list = ['REMpre', 'wake', 'REMpost']
-condition_list = ['LTD1','LTD5','HATD1','HATD5', 'HATDSwitch']
+#condition_list = ['LTD1','LTD5','HATD1','HATD5', 'HATDSwitch']
+condition_list = ['LTD1']
 mouse_list = ['pv1043','pv1060', 'pv1069', 'pv1191', 'pv1192', 'pv1252', 'pv1254']
 
 #%% Same but look at replay between conditions
@@ -36,6 +37,9 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
 
             # Extract seq score
             seqReplay_scores, seqReplay_pvalues, seqReplay_locs, _ = extract_seqReplay_score(data_ref['binaryData'][:,selected_neurons], data_pred['binaryData'][:,selected_neurons], params)
+            seq_timestamps = np.zeros(0,dtype='int')
+            for key in seqReplay_locs:
+                seq_timestamps=np.append(seq_timestamps,seqReplay_locs[key])
 
             with h5py.File(os.path.join(params['path_to_output'],"seqNMF", f'seqReplayResults_{condition}_{mouse}_{state_ref}_{state_pred}.h5'),'w') as f:
                 f.create_dataset('mouse', data=mouse)
@@ -46,6 +50,8 @@ for condition, mouse, state_ref, state_pred in tqdm(list(itertools.product(condi
                 f.create_dataset('S2_score', data=seqReplay_scores[1])
                 f.create_dataset('S1_pvalue', data=seqReplay_pvalues[0])
                 f.create_dataset('S2_pvalue', data=seqReplay_pvalues[1])
-                f.create_dataset('seqReplayLocs', data=seqReplay_locs.astype('int'))
+                f.create_dataset('seqReplayLocs', data=seq_timestamps)
                 f.create_dataset('S1_numSeqs', data=len(seqReplay_locs[0]))
                 f.create_dataset('S2_numSeqs', data=len(seqReplay_locs[1]))
+
+# %%

@@ -9,4 +9,12 @@ data_dict = {
 }
 # %%
 with h5py.File('../../test.h5','w') as f:
-    f.create_dataset()
+    dict_group = f.create_group('timestamps')
+    for k, v in data_dict.items():
+        dict_group[str(k)] = v
+    
+# %%
+f = h5py.File('../../test.h5','f')
+
+
+# %%
