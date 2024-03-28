@@ -50,8 +50,8 @@ for mouse in mouse_list:
         ),
         "r",
     ) as seqNMF_file:
-        seqNMF_ts = seqNMF_file['replay_locs']
-
+        seqNMF_ts = seqNMF_file['seqReplayLocs'][()].flatten() # combined both seq types
+        
     
     # Match events
 
