@@ -3,12 +3,10 @@ import numpy as np
 import os
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 import yaml
+import h5py
 import scipy.io as sio
-from tqdm import tqdm
-import itertools
-from utils.helperFunctions import load_data, open_file
+from utils.helperFunctions import load_data
 
 plt.style.use("plot_style.mplstyle")
 
@@ -21,14 +19,6 @@ states_list = ["REMpre", "wake", "REMpost"]
 condition_list = ["LTD1", "LTD5", "HATD5"]
 mouse_list = ["pv1060", "pv1254", "pv1069"]
 
-# %% TEMP TEST
-for condition, mouse, state in tqdm(
-    list(itertools.product(condition_list, mouse_list, states_list)),
-    total=len(condition_list) * len(mouse_list) * len(states_list),
-):
-    print(f"processing: {mouse},{condition},{state}")
-    data = load_data(mouse, condition, state, params)
-
 # %% First, plot SFPs
 mouse = "pv1060"
 condition = "LTD1"
@@ -40,14 +30,14 @@ plt.imshow(np.max(data["SFPs"], axis=2), vmin=0, vmax=10, cmap="YlGnBu_r")
 plt.axis("off")
 plt.savefig("../../output_REM/SFPs.pdf")
 # %% Then plot transients during each state
-mouse = "pv1060"
-condition = "LTD1"
-state = "wake"
-wake_data = load_data(mouse, condition, state, params)
-state = "REMpre"
-REMpre_data = load_data(mouse, condition, state, params)
-state = "REMpost"
-REMpost_data = load_data(mouse, condition, state, params)
+wake_data = load_data(mouse, condition, "wake", params)
+REMpre_data = load_data(mouse, condition, "REMpre", params)
+REMpost_data = load_data(mouse, condition, "REMpost", params)
+
+# %% Extract ephys traces
+with h5py.File('../../output_REM/LFP/lfp_pv1060_LTD1.h5','r') as f:
+    pre_REM_LFP = f['pre_rem_lfp'][()]
+    post_REM_LFP = f['post_rem_lfp'][()]
 
 # %%
 import matplotlib
@@ -57,42 +47,75 @@ cmap = matplotlib.cm.get_cmap("viridis")
 # numNeurons=data['SFPs'].shape[0]
 numNeurons = 100
 threshold = 0.2
+LFP_Fs = 2000
+MS_Fs = 30
+interval_pre = [11,13]
 
-plt.figure(figsize=(3, 1))
-plt.subplot(131)
+plt.figure(figsize=(3, 1.5))
+plt.subplot(434)
+plt.title("REM pre", color='C1')
+plt.plot(pre_REM_LFP[22000:26000,1],
+         color = 'C1',
+         linewidth=.3)
+plt.axis("off")
+
+plt.subplot(435)
+plt.title("Wakefulness")
+# animal position here?
+plt.axis("off")
+
+plt.subplot(436)
+plt.title("REM post", color='C4')
+plt.plot(post_REM_LFP[20000:24000,1],
+         color = 'C4',
+         linewidth=.3)
+plt.axis("off")
+
+plt.subplot(234)
 plt.imshow(
-    REMpre_data["binaryData"].T, cmap="GnBu", aspect="auto", interpolation="none"
+    REMpre_data["binaryData"].T,
+    cmap="bone_r",
+    vmax=1.5,
+    aspect="auto",
+    interpolation="none"
 )
-plt.xlim(0, 1800)
-plt.xticks([0, 900, 1800], [0, 30, 60])
+plt.xlim(330, 390)
+plt.xticks([330, 360, 390], [0, 1, 2])
 plt.ylim(0, numNeurons)
 # plt.xlabel('Time (s)')
 plt.ylabel("Neuron #")
-plt.title("REM pre")
 
-plt.subplot(132)
-plt.imshow(wake_data["binaryData"].T, cmap="GnBu", aspect="auto", interpolation="none")
 
-plt.xlim(0, 1800)
-plt.xticks([0, 900, 1800], [0, 30, 60])
+plt.subplot(235)
+plt.imshow(wake_data["binaryData"].T,
+           cmap="bone_r",
+            vmax=1.5,
+           aspect="auto",
+           interpolation="none")
+
+plt.xlim(0, 60)
+plt.xticks([0, 30, 60], [0, 1, 2])
 plt.ylim(0, numNeurons)
 plt.yticks([])
 plt.xlabel("Time (s)")
 plt.ylabel("")
-plt.title("Wakefulness")
 
-plt.subplot(133)
+
+plt.subplot(236)
 plt.imshow(
-    REMpost_data["binaryData"].T, cmap="GnBu", aspect="auto", interpolation="none"
+    REMpost_data["binaryData"].T,
+    cmap="bone_r",
+    vmax=1.5,
+    aspect="auto",
+    interpolation="none"
 )
 
-plt.xlim(0, 1800)
-plt.xticks([0, 900, 1800], [0, 30, 60])
+plt.xlim(300, 360)
+plt.xticks([300, 330, 360], [0, 1, 2])
 plt.ylim(0, numNeurons)
 # plt.xlabel('Time (s)')
 plt.yticks([])
 plt.ylabel("")
-plt.title("REM post")
 
 plt.savefig("../../output_REM/calcium_transients.pdf")
 

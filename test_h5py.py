@@ -14,7 +14,10 @@ with h5py.File('../../test.h5','w') as f:
         dict_group[str(k)] = v
     
 # %%
-f = h5py.File('../../test.h5','f')
+f = h5py.File('../../test.h5','r')
 
+
+# %% Load LFP
+f = h5py.File('../../output_REM/LFP/lfp_pv1060_LTD1.h5','r')
 
 # %%
