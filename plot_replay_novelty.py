@@ -15,7 +15,54 @@ plt.style.use("plot_style.mplstyle")
 with open("params.yaml", "r") as file:
     params = yaml.full_load(file)
 
-#%% Assemblies TODO
+#%% Assemblies
+results_dir = params['path_to_output']+"/assembly"
+resultsList = os.listdir(results_dir)
+
+#%%
+data_list = []
+data_list_num_events = []
+
+for file_name in tqdm(resultsList):
+    if (
+        file_name.startswith("assembly_")
+        and file_name.endswith(".h5")
+        and "pv1254" not in file_name # Exclude pv1254
+    ):
+        h5_file = h5py.File(os.path.join(results_dir, file_name))
+        data_list_num_events.append(
+            {
+                "mouse": h5_file["mouse"][0].decode("utf-8"),
+                "condition": h5_file["condition"][0].decode("utf-8"),
+                "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
+                "numAssemblies": np.max(h5_file['post_rem_A_ID']),
+                "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/params['sampling_frequency']
+            }
+        )
+
+        for i in range(len(h5_file["post_rem_react_idx"][()])):
+            data_list.append(  # This will create one list entry per cell
+                {
+                    "eventID": i,
+                    "mouse": h5_file["mouse"][0].decode("utf-8"),
+                    "condition": h5_file["condition"][0].decode("utf-8"),
+                    "replayEventTime": h5_file['post_rem_react_idx'][i]/params['sampling_frequency'],
+                    "replayEventID": h5_file['post_rem_A_ID'][i],
+                    "replayEventStrength": h5_file['post_rem_A_str'][i],
+                    "replayEventSignificance": h5_file['post_rem_A_sig'][i],
+                }
+            )
+
+        # Close files
+        h5_file.close()
+
+df = pd.DataFrame(data_list)
+df_numEvents = pd.DataFrame(data_list_num_events)    
+
+
+
+
 
 #%% Bayesian replay
 results_dir = params['path_to_output']+"/bayesian_replay"
