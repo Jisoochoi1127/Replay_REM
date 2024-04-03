@@ -39,9 +39,17 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("assembly_")
         and file_name.endswith(".h5")
-        and "pv1254" not in file_name # Exclude pv1254
+        # and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
+        data = load_data(h5_file["mouse"][0].decode("utf-8"),
+                         h5_file["condition"][0].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
+
         data_list_num_events.append(
             {
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
@@ -49,7 +57,7 @@ for file_name in tqdm(resultsList):
                 "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
                 "numAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
-                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/params['sampling_frequency']
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength
             }
         )
 

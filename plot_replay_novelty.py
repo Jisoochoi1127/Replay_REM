@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import yaml
 import h5py
 from tqdm import tqdm
+from utils.helperFunctions import load_data
 
 plt.style.use("plot_style.mplstyle")
 
@@ -27,9 +28,17 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("assembly_")
         and file_name.endswith(".h5")
-        and "pv1254" not in file_name # Exclude pv1254
+        #and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
+        data = load_data(h5_file["mouse"][0].decode("utf-8"),
+                         h5_file["condition"][0].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
+
         data_list_num_events.append(
             {
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
@@ -37,7 +46,7 @@ for file_name in tqdm(resultsList):
                 "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
                 "numAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
-                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/params['sampling_frequency']
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength
             }
         )
 
@@ -60,7 +69,82 @@ for file_name in tqdm(resultsList):
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)    
 
+#%% Plot results
+#%% Plot results
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='numAssemblies',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    color='gray',
+    order=['LTD1', 'LTD5'],
+    x='condition',
+    y='numAssemblies',
+    size=2
+)
+plt.xticks([0,1],['Novel','Familiar'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Num. assemblies')
+plt.savefig("../../output_REM/noveltyReplay_numAssemblies.pdf")
 
+#%% Plot frequency
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='meanFreqPerAssembly',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    color='gray',
+    order=['LTD1', 'LTD5'],
+    x='condition',
+    y='meanFreqPerAssembly',
+    size=2
+)
+
+plt.xticks([0,1],['Novel','Familiar'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Mean reactivation\nfrequency (Hz)')
+plt.savefig("../../output_REM/noveltyReplay_meanAssemblyFreq.pdf")
+
+#%%
+plt.figure(figsize=(1.25,.75))
+sns.histplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5"),
+    x='replayEventStrength',
+    y='replayEventID',
+    hue='replayEventID',
+    palette='Spectral',
+    cbar=False,
+    legend=False
+)
+# plt.title('REM post')
+plt.xlabel('Strength (z)')
+plt.ylabel('Assembly ID')
+plt.xscale('log')
+plt.savefig("../../output_REM/noveltyReplay_assemblyStrength.pdf")
+
+
+
+
+
+
+
+
+
+#%%
 
 
 
@@ -75,7 +159,7 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("bayesian_replay_")
         and file_name.endswith(".h5")
-        and "pv1254" not in file_name # Exclude pv1254
+        # and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
         num_event_list.append(
@@ -239,17 +323,18 @@ plt.savefig('../../output_REM/novelty_bayesian_replay_slope.pdf')
 #%% STATS
 #TODO
 
-#%% SeqNMF
+#%% SeqNMF #TODO RERUN WITH LATEST RESULTS!
 results_dir = '../../output_REM/seqNMF'
 resultsList=os.listdir(results_dir)
 
+#%%
 data_list = []
 for file_name in resultsList:
     if (
         file_name.startswith('seqReplayResults_') and file_name.endswith('.h5')
-        and "pv1252" not in file_name
-        ): # Exclude pv1254: # Only include seqResults, not replay results
+        ):
         h5_file = h5py.File(os.path.join(results_dir,file_name))
+
         data_list.append( #This will create one list entry per cell
                 {
                     'state_ref':h5_file['state_ref'][()].decode("utf-8"),
