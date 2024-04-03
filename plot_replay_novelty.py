@@ -70,7 +70,6 @@ df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)    
 
 #%% Plot results
-#%% Plot results
 plt.figure(figsize=(.75,1))
 sns.barplot(
     data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
@@ -120,29 +119,20 @@ plt.ylabel('Mean reactivation\nfrequency (Hz)')
 plt.savefig("../../output_REM/noveltyReplay_meanAssemblyFreq.pdf")
 
 #%%
-plt.figure(figsize=(1.25,.75))
-sns.histplot(
-    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5"),
-    x='replayEventStrength',
-    y='replayEventID',
-    hue='replayEventID',
-    palette='Spectral',
-    cbar=False,
-    legend=False
+plt.figure(figsize=(1.25,1))
+sns.boxenplot(
+    data=df.query("condition=='LTD1' or condition=='LTD5'"),
+    x = 'condition',
+    y ='replayEventStrength',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    showfliers=False
 )
 # plt.title('REM post')
-plt.xlabel('Strength (z)')
-plt.ylabel('Assembly ID')
-plt.xscale('log')
+plt.xlabel('')
+plt.ylabel('Strength (z)')
+plt.yscale('log')
 plt.savefig("../../output_REM/noveltyReplay_assemblyStrength.pdf")
-
-
-
-
-
-
-
-
 
 #%%
 
