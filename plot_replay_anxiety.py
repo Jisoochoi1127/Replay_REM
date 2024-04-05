@@ -60,6 +60,8 @@ for file_name in tqdm(resultsList):
                     "replayEventID": h5_file['post_rem_A_ID'][i],
                     "replayEventStrength": h5_file['post_rem_A_str'][i],
                     "replayEventSignificance": h5_file['post_rem_A_sig'][i],
+                    "peak_loc": h5_file['map_loc'][()],
+                    "wake_rate": h5_file['wake_rate'][()],
                 }
             )
 
@@ -320,72 +322,93 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 
 
 
+#%% SeqNMF
+results_dir = '../../output_REM/seqNMF'
+resultsList=os.listdir(results_dir)
 
-#######TODO UPDATE THE PART BELOW!!!!
-# #%% SeqNMF
-# results_dir = '../../output_REM/seqNMF'
-# resultsList=os.listdir(results_dir)
+data_list = []
+for file_name in resultsList:
+    if (
+        file_name.startswith('seqReplayResults_') and file_name.endswith('.h5')
+        and "pv1254" not in file_name
+        ): # Exclude pv1254: # Only include seqResults, not replay results
+        h5_file = h5py.File(os.path.join(results_dir,file_name))
+        data_list.append( #This will create one list entry per cell
+                {
+                    'state_ref':h5_file['state_ref'][()].decode("utf-8"),
+                    'state_pred':h5_file['state_pred'][()].decode("utf-8"),
+                    'condition':h5_file['condition'][()].decode("utf-8"),
+                    'mouse':h5_file['mouse'][()].decode("utf-8"),
+                    'S1_numSeqs':h5_file['S1_numSeqs'][()],
+                    'S2_numSeqs':h5_file['S2_numSeqs'][()],
+                    'S1_score':h5_file['S1_score'][()],
+                    'S2_score':h5_file['S2_score'][()],
+                    'S1_pvalue':h5_file['S1_pvalue'][()],
+                    'S2_pvalue':h5_file['S2_pvalue'][()],
+                }
+            )
 
-# data_list = []
-# for file_name in resultsList:
-#     if (
-#         file_name.startswith('seqReplayResults_') and file_name.endswith('.h5')
-#         and "pv1252" not in file_name
-#         ): # Exclude pv1254: # Only include seqResults, not replay results
-#         h5_file = h5py.File(os.path.join(results_dir,file_name))
-#         data_list.append( #This will create one list entry per cell
-#                 {
-#                     'state_ref':h5_file['state_ref'][()].decode("utf-8"),
-#                     'state_pred':h5_file['state_pred'][()].decode("utf-8"),
-#                     'condition':h5_file['condition'][()].decode("utf-8"),
-#                     'mouse':h5_file['mouse'][()].decode("utf-8"),
-#                     'S1_numSeqs':h5_file['S1_numSeqs'][()],
-#                     'S2_numSeqs':h5_file['S2_numSeqs'][()],
-#                     'S1_score':h5_file['S1_score'][()],
-#                     'S2_score':h5_file['S2_score'][()],
-#                     'S1_pvalue':h5_file['S1_pvalue'][()],
-#                     'S2_pvalue':h5_file['S2_pvalue'][()],
-#                 }
-#             )
+        # Close files
+        h5_file.close()
 
-#         # Close files
-#         h5_file.close()
+df_replay = pd.DataFrame(data_list)
 
-# df_replay = pd.DataFrame(data_list)
+#%%
+df_replay_stats=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='seqScore',value_vars=['S1_score', 'S2_score'],var_name='seqType')
 
-# #%%
-# df_replay_stats=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
-# df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='seqScore',value_vars=['S1_score', 'S2_score'],var_name='seqType')
+# %% Plot num. sequences vs anxiety
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_replay_stats.query("condition == 'LTD5' or condition == 'HATD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    hue='condition',
+    y='numSeqs',
+    x='seqType',
+    palette=(['gray','C4']),
+    # showfliers=False
+    errorbar='se',
+    capsize=.2
+)
 
-# # %% Plot num. sequences vs novelty
-# plt.figure(figsize=(.75,1))
-# sns.barplot(
-#     data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
-#     x='condition',
-#     y='numSeqs',
-#     palette=(['C3','gray']),
-#     # showfliers=False
-#     errorbar='se',
-#     capsize=.2
-# )
+plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Num. significant \nsequences')
+plt.xlabel('')
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anxiety_seqnmf_numSeqs_by_seqType.pdf')
 
-# #plt.xticks([0,1],['S1', 'S2'])
-# plt.ylabel('Num. significant \nsequences')
-# plt.xticks([0,1],['Novel','Familiar'])
-# plt.xlabel('')
-# plt.xticks(rotation=90)
-# plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-# plt.savefig('../../output_REM/novely_seqnmf_numSeqs.pdf')
+#%% DESCRIPTIVES
+#TODO
 
-# #%% DESCRIPTIVES
+#%% STATS
+#TODO
+pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+         dv='numSeqs',
+         within='condition',
+         subject='mouse',
+         )
+
+# %% Plot seq. score vs anxiety
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_replay_scores.query("condition == 'LTD5' or condition == 'HATD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='seqScore',
+    hue='seqType',
+    #palette=(['gray','C4']),
+    # showfliers=False
+    errorbar='se',
+    capsize=.2
+)
+
+plt.xticks([0,1],['Control', 'Anxiety'], rotation=90)
+plt.ylabel('Seq. score (z)')
+plt.xlabel('')
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anxiety_seqnmf_seqScore_by_seqType.pdf')
 
 
-# #%% STATS
-# pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
-#          dv='numSeqs',
-#          within='condition',
-#          subject='mouse',
-#          )
+
+
 
 # # %% Plot num. sequences vs novelty
 # plt.figure(figsize=(.75,1))
