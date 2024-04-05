@@ -28,7 +28,7 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("assembly_")
         and file_name.endswith(".h5")
-        #and "pv1254" not in file_name # Exclude pv1254
+        and "pv1254" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
         data = load_data(h5_file["mouse"][0].decode("utf-8"),
@@ -60,8 +60,8 @@ for file_name in tqdm(resultsList):
                     "replayEventID": h5_file['post_rem_A_ID'][i],
                     "replayEventStrength": h5_file['post_rem_A_str'][i],
                     "replayEventSignificance": h5_file['post_rem_A_sig'][i],
-                    "peak_loc": h5_file['map_loc'][()],
-                    "wake_rate": h5_file['wake_rate'][()],
+                    "peak_loc": h5_file['map_loc'][h5_file['post_rem_A_ID'][i]-1],
+                    "wake_rate": h5_file['wake_rate'][h5_file['post_rem_A_ID'][i]-1],
                 }
             )
 
@@ -70,6 +70,90 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)
+
+#%% Plot num assemblies
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
+    x='condition',
+    y='numAssemblies',
+    order=['LTD5', 'HATD1'],
+    palette=(['C0','C4']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
+    color='gray',
+    order=['LTD5', 'HATD1'],
+    x='condition',
+    y='numAssemblies',
+    size=2
+)
+plt.xticks([0,1],['Control','Anxiety'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Num. assemblies')
+plt.savefig("../../output_REM/anxietyReplay_numAssemblies.pdf")
+
+#%% Plot assembly frequency
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
+    x='condition',
+    y='meanFreqPerAssembly',
+    order=['LTD5', 'HATD1'],
+    palette=(['C0','C4']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
+    color='gray',
+    order=['LTD5', 'HATD1'],
+    x='condition',
+    y='meanFreqPerAssembly',
+    size=2
+)
+
+plt.xticks([0,1],['Control','Anxiety'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Mean reactivation\nfrequency (Hz)')
+plt.savefig("../../output_REM/anxietyReplay_meanAssemblyFreq.pdf")
+
+#%% Plot assembly prefered locs.
+# plt.figure(figsize=(.75,1))
+sns.histplot(
+    data=df.query("condition=='LTD5' or condition=='HATD1'"),
+    hue='condition',
+    x='peak_loc',
+    hue_order=['LTD5', 'HATD1'],
+    palette=['C0','C4'],
+    stat='density',
+    legend=False,
+    #hue='peak_loc',
+    #cmap='magma',
+    
+    #cbar=True,
+    #cbar_kws={'label':'Num. reactivations'}
+    #order=['LTD5', 'HATD1'],
+    #errorbar='se',
+    #capsize=.2
+)
+plt.title('Distribution of reactivations')
+#plt.xticks([0,1],['Control','Anxiety'],rotation=90)
+plt.xlabel('Location on track (cm)')
+#plt.ylabel('Mean reactivation\nfrequency (Hz)')
+plt.savefig("../../output_REM/anxietyReplay_assemblyPeakLoc.pdf")
+
+#%% Descriptives
+
+#%% Stats
+
+
+#%%
+
+
+
 
 #%% Bayesian replay
 results_dir = params['path_to_output']+"/bayesian_replay"
@@ -113,67 +197,6 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(num_event_list)
-
-#%% Plot results
-plt.figure(figsize=(.75,1))
-sns.barplot(
-    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
-    x='condition',
-    y='numAssemblies',
-    order=['LTD5', 'HATD1'],
-    palette=(['C0','C4']),
-    errorbar='se',
-    capsize=.2
-)
-sns.stripplot(
-    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
-    color='gray',
-    order=['LTD5', 'HATD1'],
-    x='condition',
-    y='numAssemblies',
-    size=2
-)
-plt.xticks([0,1],['Control','Anxiety'],rotation=90)
-plt.xlabel('')
-plt.ylabel('Num. assemblies')
-plt.savefig("../../output_REM/anxietyReplay_numAssemblies.pdf")
-
-#%% Plot frequency
-plt.figure(figsize=(.75,1))
-sns.barplot(
-    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
-    x='condition',
-    y='meanFreqPerAssembly',
-    order=['LTD5', 'HATD1'],
-    palette=(['C0','C4']),
-    errorbar='se',
-    capsize=.2
-)
-sns.stripplot(
-    data=df_numEvents.query("condition=='LTD5' or condition=='HATD1'"),
-    color='gray',
-    order=['LTD5', 'HATD1'],
-    x='condition',
-    y='meanFreqPerAssembly',
-    size=2
-)
-
-plt.xticks([0,1],['Control','Anxiety'],rotation=90)
-plt.xlabel('')
-plt.ylabel('Mean reactivation\nfrequency (Hz)')
-plt.savefig("../../output_REM/anxietyReplay_meanAssemblyFreq.pdf")
-
-#%% 
-
-
-#%%
-
-
-
-
-
-
-
 
 
 #%% Plot number of events per condition
@@ -249,7 +272,72 @@ pg.anova(
     between='condition',
 )
 
-#%% PLOT POSTERIOR DISTRIBUTIONS!!!!!
+#%% Example posteriors
+mouse = 'pv1069'
+with h5py.File(os.path.join(results_dir, 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
+    familiar_posteriors = f[f'REMpost_posterior_probs'][()]
+
+with h5py.File(os.path.join(results_dir, 'posterior_probs_HATD1_pv1060.h5'), 'r') as f:
+    anxiety_posteriors = f[f'REMpost_posterior_probs'][()]
+
+plt.figure(figsize=(3.5,.75))
+plt.subplot(141)
+plt.imshow(
+    familiar_posteriors.T,
+    aspect='auto',
+    interpolation='none',
+    vmin=0.01,
+    vmax=.065,
+    cmap='Blues',
+    rasterized=True
+    )
+plt.yticks([0,19,39],[0,50,100])
+plt.ylabel('Location (cm)')
+plt.xlim(0,4000)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+
+plt.subplot(142)
+plt.imshow(
+    anxiety_posteriors.T,
+    aspect='auto',
+    interpolation='none',
+    vmin=0.01,
+    vmax=.065,
+    cmap='Blues',
+    rasterized=True
+    )
+plt.xlim(0,4000)
+plt.yticks([0,19,39],['','',''])
+plt.xticks([0,1800,3600],[0,1,2])
+
+plt.subplot(185)
+plt.imshow(np.zeros((1,1))*np.nan,
+    vmin=0.01,
+    vmax=.065,
+    cmap='Blues',
+           )
+plt.axis('off')
+plt.colorbar(label='Posterior prob.')
+
+plt.subplot(188)
+plt.plot(
+    np.median(familiar_posteriors,axis=0),
+    np.arange(40),
+    color='C0'
+    )
+plt.plot(
+    np.median(anxiety_posteriors,axis=0),
+    np.arange(40),
+    color='C4'
+    )
+plt.xlabel('Median posterior\nprobability')
+
+plt.xlim(.022,.028)
+plt.yticks([])
+plt.xticks(rotation=90)
+plt.savefig('../../output_REM/anxietyReplay_examplePosteriors.pdf')
+
 # %% List posteriors results
 results_dir = params['path_to_output']+'/posterior_probs'
 resultsList=os.listdir(results_dir)
@@ -285,6 +373,36 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 
+# %% Median posterior
+sns.lineplot(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    x='Location',
+    y='Median posterior',
+    hue='Condition',
+    hue_order=['LTD5', 'HATD1'],
+    palette = ['C0','C4'],
+    errorbar='se'
+    )
+
+plt.ylim(.023,.026)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anxietyReplay_medianPosteriors.pdf')
+
+# %% MAP
+sns.lineplot(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    x='Location',
+    y='MAP',
+    hue='Condition',
+    hue_order=['LTD5', 'HATD1'],
+    palette = ['C0','C4'],
+    errorbar='se'
+    )
+
+#plt.ylim(.023,.026)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anxietyReplay_MAP.pdf')
+
 # %%
 sns.lineplot(
     data=df.query("Condition=='HATDSwitch' or Condition=='LTD1'"),
@@ -298,21 +416,6 @@ plt.plot([40,55],[35,35],'k')
 plt.title("Switch day")
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/HATDS_MAP_location.pdf')
-
-# %%
-sns.lineplot(
-    data=df.query("Condition=='HATD5'"),
-    x='Location',
-    y='Median posterior',
-    hue='Mouse',
-    errorbar='se'
-    )
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-
-
-
-
-
 #%%
 
 
