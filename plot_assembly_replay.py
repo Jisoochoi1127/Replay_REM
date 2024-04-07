@@ -99,6 +99,11 @@ plt.yticks([])
 plt.xlabel('Number of assemblies')
 plt.savefig("../../output_REM/REMpost_numAssemblies.pdf")
 
+#%%
+mean_numAssemblies = df_numEvents.query("condition=='LTD1'")['numAssemblies'].mean()
+SEM_numAssemblies = df_numEvents.query("condition=='LTD1'")['numAssemblies'].sem()
+print(f'{mean_numAssemblies} +/- {SEM_numAssemblies}')
+
 #%% Plot frequency
 plt.figure(figsize=(1.25,.15))
 sns.barplot(
@@ -119,6 +124,11 @@ plt.xlabel('Mean reactivation\nfrequency (Hz)')
 plt.savefig("../../output_REM/REMpost_meanAssemblyFreq.pdf")
 
 #%%
+mean_freqAssemblies = df_numEvents.query("condition=='LTD1'")['meanFreqPerAssembly'].mean()
+SEM_freqAssemblies = df_numEvents.query("condition=='LTD1'")['meanFreqPerAssembly'].sem()
+print(f'{mean_freqAssemblies} +/- {SEM_freqAssemblies}')
+
+#%%
 plt.figure(figsize=(1.25,.75))
 sns.histplot(
     data=df.query("condition=='LTD1'"),
@@ -135,4 +145,8 @@ plt.ylabel('Assembly ID')
 plt.xscale('log')
 plt.savefig("../../output_REM/REMpost_assemblyStrength.pdf")
 
+# %%
+mean_strengthAssemblies = df.query("condition=='LTD1'")['replayEventStrength'].mean()
+SEM_strengthAssemblies = df.query("condition=='LTD1'")['replayEventStrength'].sem()
+print(f'{mean_strengthAssemblies} +/- {SEM_strengthAssemblies}')
 # %%

@@ -136,6 +136,25 @@ plt.title('Overlapping events filtered')
 #plt.ylabel('Num. specific\nevents')
 plt.savefig("../../output_REM/LTD1_cross_validation.pdf")
 
+#%% Descriptives
+mean_unstruct = df.query("Type=='Unstructured' and condition=='LTD1'")['Event frequency (Hz)'].mean()
+SEM_unstruct = df.query("Type=='Unstructured' and condition=='LTD1'")['Event frequency (Hz)'].sem()
+print(f'{mean_unstruct} +/- {SEM_unstruct}')
+
+mean_flex = df.query("Type=='Flexible' and condition=='LTD1'")['Event frequency (Hz)'].mean()
+SEM_flex = df.query("Type=='Flexible' and condition=='LTD1'")['Event frequency (Hz)'].sem()
+print(f'{mean_flex} +/- {SEM_flex}')
+
+mean_rigid = df.query("Type=='Rigid' and condition=='LTD1'")['Event frequency (Hz)'].mean()
+SEM_rigid = df.query("Type=='Rigid' and condition=='LTD1'")['Event frequency (Hz)'].sem()
+print(f'{mean_rigid} +/- {SEM_rigid}')
+
+#%%
+
+
+
+
+
 # %% Plot example overlap
 mouse = 'pv1069'
 condition = 'LTD1'
