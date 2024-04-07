@@ -16,6 +16,48 @@ plt.style.use("plot_style.mplstyle")
 with open("params.yaml", "r") as file:
     params = yaml.full_load(file)
 
+#%% Plot examples
+mouse = 'pv1060'
+data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='REMpost', params=params)
+data_LTD5 = load_data(mouse='pv1060', condition='LTD5', state='REMpost', params=params)
+datalist_LTD1 = []
+datalist_LTD5 = []
+with h5py.File(os.path.join(params['path_to_output'],"assembly", "assembly_LTD1_pv1060.h5")) as h5_file:
+    for i in range(len(h5_file["post_rem_react_idx"][()])):
+                datalist_LTD1.append(  # This will create one list entry per cell
+                    {
+                        "eventID": i,
+                        "mouse": h5_file["mouse"][0].decode("utf-8"),
+                        "condition": h5_file["condition"][0].decode("utf-8"),
+                        "replayEventTime": h5_file['post_rem_react_idx'][i]/params['sampling_frequency'],
+                        "replayEventID": h5_file['post_rem_A_ID'][i],
+                        "replayEventStrength": h5_file['post_rem_A_str'][i],
+                        "replayEventSignificance": h5_file['post_rem_A_sig'][i],
+                    }
+                )
+with h5py.File(os.path.join(params['path_to_output'],"assembly", "assembly_LTD5_pv1060.h5")) as h5_file:
+    for i in range(len(h5_file["post_rem_react_idx"][()])):
+                datalist_LTD1.append(  # This will create one list entry per cell
+                    {
+                        "eventID": i,
+                        "mouse": h5_file["mouse"][0].decode("utf-8"),
+                        "condition": h5_file["condition"][0].decode("utf-8"),
+                        "replayEventTime": h5_file['post_rem_react_idx'][i]/params['sampling_frequency'],
+                        "replayEventID": h5_file['post_rem_A_ID'][i],
+                        "replayEventStrength": h5_file['post_rem_A_str'][i],
+                        "replayEventSignificance": h5_file['post_rem_A_sig'][i],
+                    }
+                )
+
+df_novel = pd.DataFrame(datalist_LTD1)
+df_familiar = pd.DataFrame(datalist_LTD5)
+
+plt.figure() # TODO plot examples with Eric
+
+
+
+
+
 #%% Assemblies
 results_dir = params['path_to_output']+"/assembly"
 resultsList = os.listdir(results_dir)
@@ -28,7 +70,7 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("assembly_")
         and file_name.endswith(".h5")
-        #and "pv1254" not in file_name # Exclude pv1254
+        and "pv1252" not in file_name # Exclude pv1254
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
         data = load_data(h5_file["mouse"][0].decode("utf-8"),
@@ -82,7 +124,7 @@ sns.barplot(
 )
 sns.stripplot(
     data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
-    color='gray',
+    color='k',
     order=['LTD1', 'LTD5'],
     x='condition',
     y='numAssemblies',
@@ -92,6 +134,21 @@ plt.xticks([0,1],['Novel','Familiar'],rotation=90)
 plt.xlabel('')
 plt.ylabel('Num. assemblies')
 plt.savefig("../../output_REM/noveltyReplay_numAssemblies.pdf")
+
+#%% DESCRIPTIVES
+mean_novel = df_numEvents.query("condition=='LTD1'")['numAssemblies'].mean()
+SEM_novel = df_numEvents.query("condition=='LTD1'")['numAssemblies'].sem()
+print(f'{mean_novel} +/- {SEM_novel}')
+
+mean_fam = df_numEvents.query("condition=='LTD5'")['numAssemblies'].mean()
+SEM_fam = df_numEvents.query("condition=='LTD5'")['numAssemblies'].sem()
+print(f'{mean_fam} +/- {SEM_fam}')
+
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['numAssemblies'],
+    y=df_numEvents.query("condition=='LTD5'")['numAssemblies'],
+    paired=True)
 
 #%% Plot frequency
 plt.figure(figsize=(.75,1))
@@ -106,7 +163,7 @@ sns.barplot(
 )
 sns.stripplot(
     data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
-    color='gray',
+    color='k',
     order=['LTD1', 'LTD5'],
     x='condition',
     y='meanFreqPerAssembly',
@@ -118,25 +175,36 @@ plt.xlabel('')
 plt.ylabel('Mean reactivation\nfrequency (Hz)')
 plt.savefig("../../output_REM/noveltyReplay_meanAssemblyFreq.pdf")
 
-#%%
-plt.figure(figsize=(1.25,1))
-sns.boxenplot(
-    data=df.query("condition=='LTD1' or condition=='LTD5'"),
-    x = 'condition',
-    y ='replayEventStrength',
-    order=['LTD1', 'LTD5'],
-    palette=(['C3','gray']),
-    showfliers=False
-)
-# plt.title('REM post')
-plt.xlabel('')
-plt.ylabel('Strength (z)')
-plt.yscale('log')
-plt.savefig("../../output_REM/noveltyReplay_assemblyStrength.pdf")
+#%% DESCRIPTIVES
+mean_novel = df_numEvents.query("condition=='LTD1'")['meanFreqPerAssembly'].mean()
+SEM_novel = df_numEvents.query("condition=='LTD1'")['meanFreqPerAssembly'].sem()
+print(f'{mean_novel} +/- {SEM_novel}')
+
+mean_fam = df_numEvents.query("condition=='LTD5'")['meanFreqPerAssembly'].mean()
+SEM_fam = df_numEvents.query("condition=='LTD5'")['meanFreqPerAssembly'].sem()
+print(f'{mean_fam} +/- {SEM_fam}')
+
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['meanFreqPerAssembly'],
+    y=df_numEvents.query("condition=='LTD5'")['meanFreqPerAssembly'],
+    paired=True)
 
 #%%
-
-
+# plt.figure(figsize=(1.25,1))
+# sns.boxenplot(
+#     data=df.query("condition=='LTD1' or condition=='LTD5'"),
+#     x = 'condition',
+#     y ='replayEventStrength',
+#     order=['LTD1', 'LTD5'],
+#     palette=(['C3','gray']),
+#     showfliers=False
+# )
+# # plt.title('REM post')
+# plt.xlabel('')
+# plt.ylabel('Strength (z)')
+# plt.yscale('log')
+# plt.savefig("../../output_REM/noveltyReplay_assemblyStrength.pdf")
 
 #%% Bayesian replay
 results_dir = params['path_to_output']+"/bayesian_replay"
@@ -149,7 +217,7 @@ for file_name in tqdm(resultsList):
     if (
         file_name.startswith("bayesian_replay_")
         and file_name.endswith(".h5")
-        # and "pv1254" not in file_name # Exclude pv1254
+        and "pv1252" not in file_name
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
         num_event_list.append(
@@ -180,53 +248,62 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(num_event_list)
+df_numEvents = df_numEvents.query("Type=='replay'")
 
 #%% Plot number of events per condition
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df_numEvents.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
     x='condition',
     y='numReplayEvents',
     order=['LTD1', 'LTD5'],
     palette=(['C3','gray']),
-    #showfliers=False
     errorbar='se',
     capsize=.2
+)
+
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='numReplayEvents',
+    order=['LTD1', 'LTD5'],
+    color='k',
+    size=2
 )
 
 plt.ylabel('Num. replay\nevents')
 plt.xticks([0,1],['Novel','Familiar'])
 plt.xlabel('')
 plt.xticks(rotation=90)
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+#plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_numEvents.pdf')
 
 #%% DESCRIPTIVES
-mean_novelty = df_numEvents.query("condition=='LTD1' and Type=='replay'")['numReplayEvents'].mean()
-SEM_novelty = df_numEvents.query("condition=='LTD1' and Type=='replay'")['numReplayEvents'].sem()
+mean_novelty = df_numEvents.query("condition=='LTD1'")['numReplayEvents'].mean()
+SEM_novelty = df_numEvents.query("condition=='LTD1'")['numReplayEvents'].sem()
 print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
 
-mean_familiar = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].mean()
-SEM_familiar = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].sem()
+mean_familiar = df_numEvents.query("condition=='LTD5'")['numReplayEvents'].mean()
+SEM_familiar = df_numEvents.query("condition=='LTD5'")['numReplayEvents'].sem()
 print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% STATS
-pg.anova(
-    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
-    dv='numReplayEvents',
-    between='condition',
-
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['numReplayEvents'],
+    y=df_numEvents.query("condition=='LTD5'")['numReplayEvents'],
+    paired=True
 )
 
 #%% Plot replay score as a function of novelty
 plt.figure(figsize=(.75,1))
 sns.boxenplot(
-    data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    data=df.query("condition=='LTD1' or condition=='LTD5'"),
     x='condition',
     y='replayEventScore',
     order=['LTD1', 'LTD5'],
     palette=(['C3','gray']),
     showfliers=False
+    #units='mouse',
     #errorbar='se',
     #capsize=.2
 )
@@ -239,25 +316,25 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_scores.pdf')
 
 #%% DESCRIPTIVES
-mean_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventScore'].mean()
-SEM_novelty = df.query("Type=='replay' and condition=='LTD1'")['replayEventScore'].sem()
+mean_novelty = df.query("condition=='LTD1'")['replayEventScore'].mean()
+SEM_novelty = df.query("condition=='LTD1'")['replayEventScore'].sem()
 print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
 
-mean_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventScore'].mean()
-SEM_familiar = df.query("Type=='replay' and condition=='LTD5'")['replayEventScore'].sem()
+mean_familiar = df.query("condition=='LTD5'")['replayEventScore'].mean()
+SEM_familiar = df.query("condition=='LTD5'")['replayEventScore'].sem()
 print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% STATS
-pg.anova(
-    data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
-    dv='replayEventScore',
-    between='condition',
+pg.ttest(
+    x=df.query("condition=='LTD1'")['replayEventScore'],
+    y=df.query("condition=='LTD5'")['replayEventScore'],
+    paired=False
 )
 
 #%% Plot jumpiness as a function of novelty
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
+    data=df.query("condition=='LTD1' or condition=='LTD5'"),
     x='condition',
     y='replayEventJumpiness',
     order=['LTD1', 'LTD5'],
@@ -292,15 +369,15 @@ pg.anova(
 
 #%%
 plt.figure(figsize=(.75,1))
-sns.boxenplot(
+sns.barplot(
     data=df.query("Type=='replay' and condition=='LTD1' or condition=='LTD5'"),
     x='condition',
     y='replayEventSlope',
     order=['LTD1', 'LTD5'],
     palette=(['C3','gray']),
-    showfliers=False
-    #errorbar='se',
-    #capsize=.2
+    # showfliers=False
+    errorbar='se',
+    capsize=.2
 )
 
 plt.ylabel('Slope (cm.s$^{-1}$)')
@@ -310,10 +387,8 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novelty_bayesian_replay_slope.pdf')
 
-#%% STATS
-#TODO
 
-#%% SeqNMF #TODO RERUN WITH LATEST RESULTS!
+#%% SeqNMF
 results_dir = '../../output_REM/seqNMF'
 resultsList=os.listdir(results_dir)
 
@@ -321,7 +396,9 @@ resultsList=os.listdir(results_dir)
 data_list = []
 for file_name in resultsList:
     if (
-        file_name.startswith('seqReplayResults_') and file_name.endswith('.h5')
+        file_name.startswith('seqReplayResults_')
+        and file_name.endswith('.h5')
+        and "pv1252" not in file_name
         ):
         h5_file = h5py.File(os.path.join(results_dir,file_name))
 
@@ -351,14 +428,14 @@ df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'cond
 
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
-sns.barplot(
+sns.boxenplot(
     data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
     y='numSeqs',
     palette=(['C3','gray']),
-    # showfliers=False
-    errorbar='se',
-    capsize=.2
+    showfliers=False
+    # errorbar='se',
+    # capsize=.2
 )
 
 #plt.xticks([0,1],['S1', 'S2'])
@@ -370,7 +447,13 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novely_seqnmf_numSeqs.pdf')
 
 #%% DESCRIPTIVES
+mean_novelty = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+SEM_novelty = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
+print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
 
+mean_familiar = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+SEM_familiar = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% STATS
 pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
