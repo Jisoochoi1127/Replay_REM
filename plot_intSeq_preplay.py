@@ -2,11 +2,13 @@
 import numpy as np
 import os
 import pandas as pd
+import pingouin as pg
 import seaborn as sns
 import matplotlib.pyplot as plt
 import h5py
 import yaml
 from tqdm import tqdm
+from utils.helperFunctions import load_data, extract_seq_score, extract_H
 
 plt.style.use("plot_style.mplstyle")
 
@@ -16,8 +18,51 @@ with open("params.yaml", "r") as file:
 
 np.random.seed(params["seed"])
 
-#%% Internal structure analysis
-# SeqNMF
+#%% Assembly analysis
+#TODO eric
+
+#%% Flexible sequences analysis?
+#Skip since no internal organization?
+
+
+
+#%% SeqNMF
+# Load example
+mouse = 'pv1060'
+with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
+    selected_neurons = f['place_cells'][()]
+# data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='wake', params=params)
+data_REMpre = load_data(mouse='pv1060', condition='LTD1', state='REMpre', params=params)
+
+seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seq_score(data_REMpre['binaryData'][:,selected_neurons],
+                                                                                params)
+#%% Sorting index
+seqSortingIndex = np.argsort(np.argmax(np.concatenate((W_ref[:,0,:],W_ref[:,1,:]),axis=1),axis=1))
+
+H = extract_H(W_ref, data_REMpre['binaryData'][:,selected_neurons])
+SF1 = data_REMpre['binaryData'][:,selected_neurons]*H[0][:,None]
+SF2 = data_REMpre['binaryData'][:,selected_neurons]*H[1][:,None]
+sequence_data = SF1+SF2
+
+#%%
+plt.figure(figsize=(3,1))
+plt.imshow(sequence_data[:,seqSortingIndex].T,
+           interpolation='none',
+           aspect='auto',
+           cmap='Blues',
+           rasterized=True,
+           vmin=0,
+           vmax=1
+           )
+plt.xlim(500,2700)
+plt.xticks([500,1400,2300],[0,30,60])
+plt.xlabel('Time (s)')
+plt.ylabel('Neuron ID')
+plt.yticks([0,128,256])
+plt.title('Pre-task REM (naive)')
+plt.savefig("../../output_REM/preplay_seqNMF_example.pdf")
+
+#%% Analysis
 results_dir = '../../output_REM/seqNMF'
 resultsList=os.listdir(results_dir)
 
@@ -67,44 +112,108 @@ plt.savefig('../../output_REM/intStruct_numSeqs_heatmap.pdf')
 #%% Plot seqNMF preplay
 plt.figure(figsize=(.75,1))
 sns.barplot(
-    data=df_replay_stats.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'"),
+    data=df_replay.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'"),
     x=1,
-    y='numSeqs',
+    y='S1_numSeqs',
     # showfliers=False,
     color='C3',
     errorbar='se',
     capsize=.2
 )
+sns.stripplot(
+    data=df_replay.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'"),
+    x=1,
+    y='S1_numSeqs',
+    color='k',
+    size=2,
+    dodge=False,
+    legend=False
+)
+
 sns.barplot(
-    data=df_replay_stats.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'"),
+    data=df_replay.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'"),
     x=2,
-    y='numSeqs',
+    y='S1_numSeqs',
     # showfliers=False,
     color='C0',
     errorbar='se',
     capsize=.2
 )
-# sns.stripplot(
-#     data=df_replay_stats.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'"),
-#     y='numSeqs',
-#     size=1,
-#     dodge=True,
-#     legend=False
-# )
+sns.stripplot(
+    data=df_replay.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'"),
+    x=2,
+    y='S1_numSeqs',
+    color='k',
+    size=2,
+    dodge=False,
+    legend=False
+)
+
 plt.xticks([0,1],['Preplay', 'Replay'],rotation=90)
-plt.ylabel('Num. rigid sequences')
+plt.ylabel('Num. rigid\nsequences')
 plt.xlabel('')
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/seqNMF_preplay_numSeqs.pdf')
 
-#%%
+#%% DESCRIPTIVES
+mean_preplay = df_replay.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'")['S1_numSeqs'].mean()
+SEM_preplay = df_replay.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'")['S1_numSeqs'].sem()
+print(f'{mean_preplay} +/- {SEM_preplay}')
+
+mean_replay = df_replay.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'")['S1_numSeqs'].mean()
+SEM_replay = df_replay.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'")['S1_numSeqs'].sem()
+print(f'{mean_replay} +/- {SEM_replay}')
+
+#%% STATS
+pg.ttest(
+    x=df_replay.query("condition=='LTD1' and state_ref=='REMpre' and state_pred=='wake'")['S1_numSeqs'],
+    y=df_replay.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'")['S1_numSeqs'],
+    paired=True)
+
+#%% Flexible replay
+# Example
+with h5py.File(os.path.join(params['path_to_output'], "posterior_probs", 'posterior_probs_LTD1_pv1060.h5'), 'r') as f:
+    REMpre_posteriors = f[f'REMpre_posterior_probs'][()]
+
+# Load preplay timestamps
+with h5py.File(os.path.join(params['path_to_output'], "bayesian_replay", 'bayesian_replay_LTD1_pv1060_REMpre.h5'), 'r') as f:
+    novel_replay_ts = f['replay_locs'][()]
+    novel_replay_jumpiness = f['replay_jumpiness'][()]
+
+novel_replay_ts = novel_replay_ts[novel_replay_jumpiness>0]
+
+# Plot results
+plt.figure(figsize=(3,1)) # TODO plot examples with Eric
+plt.subplot(211)
+plt.title('Pre-task REM (non-stationary events only)')
+plt.imshow(
+     REMpre_posteriors.T,
+     aspect='auto',
+     interpolation='none',
+     cmap='magma',
+     rasterized=True,
+     vmin=0,
+     vmax=.075
+     )
+plt.xlim(0,3000)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,19,39],[0,50,100])
+plt.ylabel('Location (cm)')
+
+plt.subplot(413)
+plt.eventplot(novel_replay_ts,colors='C2')
+plt.yticks([])
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.ylabel('')
+
+plt.savefig("../../output_REM/preplay_exampleBayesianReplay.pdf")
 
 
 
-# Assembly patterns
 
-
-#%% Preplay analysis
+#%% Analysis
 results_dir = params['path_to_output']+"/bayesian_replay"
 resultsList = os.listdir(results_dir)
 
@@ -160,11 +269,26 @@ sns.boxenplot(
     showfliers=False
     #errorbar='se'
 )
-# plt.title('REM post')
+plt.title('Non-stationary only')
 plt.xlabel('')
 plt.yscale('log')
 plt.ylabel('Replay frequency (Hz)')
 plt.savefig("../../output_REM/REMpre_vs_post_replayFrequency.pdf")
+
+#%% DESCRIPTIVES
+mean_preplay = df.query("replayEventJumpiness>0 and Type=='preplay'")['replayFrequency'].mean()
+SEM_preplay = df.query("replayEventJumpiness>0 and Type=='preplay'")['replayFrequency'].sem()
+print(f'{mean_preplay} +/- {SEM_preplay}')
+
+mean_replay = df.query("replayEventJumpiness>0 and Type=='replay'")['replayFrequency'].mean()
+SEM_replay = df.query("replayEventJumpiness>0 and Type=='replay'")['replayFrequency'].sem()
+print(f'{mean_replay} +/- {SEM_replay}')
+
+#%% STATS
+pg.ttest(
+    x=df.query("replayEventJumpiness>0 and Type=='preplay'")['replayFrequency'],
+    y=df.query("replayEventJumpiness>0 and Type=='replay'")['replayFrequency'],
+    paired=True)
 
 # %% Plot slope preplay vs replay
 plt.figure(figsize=(.75,1))

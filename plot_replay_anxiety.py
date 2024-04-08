@@ -274,10 +274,10 @@ pg.anova(
 
 #%% Example posteriors
 mouse = 'pv1069'
-with h5py.File(os.path.join(results_dir, 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
+with h5py.File(os.path.join(params['path_to_output'],'posterior_probs', 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
     familiar_posteriors = f[f'REMpost_posterior_probs'][()]
 
-with h5py.File(os.path.join(results_dir, 'posterior_probs_HATD1_pv1060.h5'), 'r') as f:
+with h5py.File(os.path.join(params['path_to_output'],'posterior_probs', 'posterior_probs_HATD1_pv1060.h5'), 'r') as f:
     anxiety_posteriors = f[f'REMpost_posterior_probs'][()]
 
 plt.figure(figsize=(3.5,.75))
@@ -387,6 +387,20 @@ sns.lineplot(
 plt.ylim(.023,.026)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/anxietyReplay_medianPosteriors.pdf')
+
+#%%
+pg.rm_anova(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    dv='Median posterior',
+    within=['Location','Condition'],
+    subject='Mouse'
+)
+
+
+
+
+
+
 
 # %% MAP
 sns.lineplot(
