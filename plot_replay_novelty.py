@@ -20,42 +20,202 @@ with open("params.yaml", "r") as file:
 mouse = 'pv1060'
 data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='REMpost', params=params)
 data_LTD5 = load_data(mouse='pv1060', condition='LTD5', state='REMpost', params=params)
-datalist_LTD1 = []
-datalist_LTD5 = []
+
+with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
+    selected_neurons_LTD1 = f['place_cells'][()]
+with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD5_pv1060.h5")) as f:
+    selected_neurons_LTD5 = f['place_cells'][()]
+
+# Assembly stuff
 with h5py.File(os.path.join(params['path_to_output'],"assembly", "assembly_LTD1_pv1060.h5")) as h5_file:
-    for i in range(len(h5_file["post_rem_react_idx"][()])):
-                datalist_LTD1.append(  # This will create one list entry per cell
-                    {
-                        "eventID": i,
-                        "mouse": h5_file["mouse"][0].decode("utf-8"),
-                        "condition": h5_file["condition"][0].decode("utf-8"),
-                        "replayEventTime": h5_file['post_rem_react_idx'][i]/params['sampling_frequency'],
-                        "replayEventID": h5_file['post_rem_A_ID'][i],
-                        "replayEventStrength": h5_file['post_rem_A_str'][i],
-                        "replayEventSignificance": h5_file['post_rem_A_sig'][i],
-                    }
-                )
+    LTD1_ID = h5_file['post_rem_A_ID'][()]
+    LTD1_idx = h5_file['post_rem_react_idx'][()]
+                
 with h5py.File(os.path.join(params['path_to_output'],"assembly", "assembly_LTD5_pv1060.h5")) as h5_file:
-    for i in range(len(h5_file["post_rem_react_idx"][()])):
-                datalist_LTD1.append(  # This will create one list entry per cell
-                    {
-                        "eventID": i,
-                        "mouse": h5_file["mouse"][0].decode("utf-8"),
-                        "condition": h5_file["condition"][0].decode("utf-8"),
-                        "replayEventTime": h5_file['post_rem_react_idx'][i]/params['sampling_frequency'],
-                        "replayEventID": h5_file['post_rem_A_ID'][i],
-                        "replayEventStrength": h5_file['post_rem_A_str'][i],
-                        "replayEventSignificance": h5_file['post_rem_A_sig'][i],
-                    }
-                )
+    LTD5_ID = h5_file['post_rem_A_ID'][()]
+    LTD5_idx = h5_file['post_rem_react_idx'][()]         
 
-df_novel = pd.DataFrame(datalist_LTD1)
-df_familiar = pd.DataFrame(datalist_LTD5)
+plt.figure(figsize=(4,1)) # TODO plot examples with Eric
+plt.subplot(221)
+plt.title('REM post (novel)')
+plt.imshow(
+     data_LTD1['binaryData'][:,selected_neurons_LTD1].T,
+     aspect='auto',
+     interpolation='none',
+     cmap='gray_r',
+     rasterized=True
+     )
+plt.xlim(0,3000)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,128,256])
+plt.ylabel('Neuron ID')
 
-plt.figure() # TODO plot examples with Eric
+plt.subplot(425)
+#event_colors = ['C{}'.format(i) for i in range(len(LTD1_ID))]
+#plt.eventplot(np.stack((LTD1_idx,LTD1_ID),axis=1), colors=event_colors)
+plt.eventplot(LTD1_idx[LTD1_ID==10], colors='C3')
+plt.yticks([])
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.ylabel('')
+
+plt.subplot(222)
+plt.title('REM post (familiar)')
+plt.imshow(
+     data_LTD5['binaryData'][:,selected_neurons_LTD5].T,
+     aspect='auto',
+     interpolation='none',
+     cmap='gray_r',
+     rasterized=True
+     )
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,128,256],['','',''])
+plt.ylabel('')
+
+plt.subplot(426)
+plt.eventplot(LTD5_idx[LTD5_ID==10], colors='gray')
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.yticks([])
+plt.savefig("../../output_REM/replayNovelty_exampleAssemblies.pdf")
+
+#%% Plot Bayesian decoding example
+# Load posteriors
+with h5py.File(os.path.join(params['path_to_output'], "posterior_probs", 'posterior_probs_LTD1_pv1060.h5'), 'r') as f:
+    novel_posteriors = f[f'REMpost_posterior_probs'][()]
+
+with h5py.File(os.path.join(params['path_to_output'], "posterior_probs", 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
+    familiar_posteriors = f[f'REMpost_posterior_probs'][()]
+
+# Load replay timestamps
+with h5py.File(os.path.join(params['path_to_output'], "bayesian_replay", 'bayesian_replay_LTD1_pv1060_REMpost.h5'), 'r') as f:
+    novel_replay_ts = f['replay_locs'][()]
+
+with h5py.File(os.path.join(params['path_to_output'], "bayesian_replay", 'bayesian_replay_LTD5_pv1060_REMpost.h5'), 'r') as f:
+    familiar_replay_ts = f['replay_locs'][()]
+
+# Plot results
+plt.figure(figsize=(4,1)) # TODO plot examples with Eric
+plt.subplot(221)
+plt.title('REM post (novel)')
+plt.imshow(
+     novel_posteriors.T,
+     aspect='auto',
+     interpolation='none',
+     cmap='magma',
+     rasterized=True,
+     vmin=0,
+     vmax=.075
+     )
+plt.xlim(0,3000)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,19,39],[0,50,100])
+plt.ylabel('Location (cm)')
+
+plt.subplot(425)
+plt.eventplot(novel_replay_ts,colors='C3')
+plt.yticks([])
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.ylabel('')
+
+plt.subplot(222)
+plt.title('REM post (familiar)')
+plt.imshow(
+     familiar_posteriors.T,
+     aspect='auto',
+     interpolation='none',
+     cmap='magma',
+     rasterized=True,
+     vmin=0,
+     vmax=.075
+     )
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,19,39],['','',''])
+plt.ylabel('')
+
+plt.subplot(426)
+plt.eventplot(familiar_replay_ts,colors='gray')
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.yticks([])
+plt.savefig("../../output_REM/replayNovelty_exampleBayesianReplay.pdf")
 
 
+#%% Plot seqNMF examples
+# load replay timestamps
+with h5py.File(
+                os.path.join(
+                    params["path_to_output"],
+                    'seqNMF_timestamps',
+                    'seqReplayResults_LTD1_pv1060_wake_REMpost.h5'
+                ),
+                "r",
+            ) as seqNMF_file:
+                LTD1_seqNMF_ts = seqNMF_file['seqReplayLocs'][()]
+                
+with h5py.File(
+                os.path.join(
+                    params["path_to_output"],
+                    'seqNMF_timestamps',
+                    'seqReplayResults_LTD5_pv1060_wake_REMpost.h5'
+                ),
+                "r",
+            ) as seqNMF_file:
+                LTD5_seqNMF_ts = seqNMF_file['seqReplayLocs'][()]
 
+plt.figure(figsize=(4,1)) # TODO plot examples with Eric
+plt.subplot(221)
+plt.title('REM post (novel)')
+plt.imshow(
+     data_LTD1['binaryData'][:,selected_neurons_LTD1].T,
+     aspect='auto',
+     interpolation='none',
+     cmap='gray_r',
+     rasterized=True
+     )
+plt.xlim(0,3000)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,128,256])
+plt.ylabel('Neuron ID')
+
+plt.subplot(425)
+#event_colors = ['C{}'.format(i) for i in range(len(LTD1_ID))]
+#plt.eventplot(np.stack((LTD1_idx,LTD1_ID),axis=1), colors=event_colors)
+plt.eventplot(LTD1_seqNMF_ts, colors='C3')
+plt.yticks([])
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.ylabel('')
+
+plt.subplot(222)
+plt.title('REM post (familiar)')
+plt.imshow(
+     data_LTD5['binaryData'][:,selected_neurons_LTD5].T,
+     aspect='auto',
+     interpolation='none',
+     cmap='gray_r',
+     rasterized=True
+     )
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],['','',''])
+plt.yticks([0,128,256],['','',''])
+plt.ylabel('')
+
+plt.subplot(426)
+plt.eventplot(LTD5_seqNMF_ts, colors='gray')
+plt.xlim(0,3600)
+plt.xticks([0,1800,3600],[0,1,2])
+plt.xlabel('Time (min)')
+plt.yticks([])
+plt.savefig("../../output_REM/replayNovelty_exampleSeqNMF.pdf")
 
 
 #%% Assemblies
@@ -488,4 +648,4 @@ pg.rm_anova(data=df_replay_scores.query("condition == 'LTD1' or condition == 'LT
          within='condition',
          subject='mouse',
          )
-# %%
+# %%    

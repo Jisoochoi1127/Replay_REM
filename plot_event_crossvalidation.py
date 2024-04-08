@@ -53,7 +53,7 @@ for mouse in mouse_list:
             with h5py.File(
                 os.path.join(
                     params["path_to_output"],
-                    'seqNMF',
+                    'seqNMF_timestamps',
                     f'seqReplayResults_{condition}_{mouse}_wake_REMpost.h5'
                 ),
                 "r",
