@@ -24,8 +24,54 @@ condition = 'LTD1'
 # %% Load data
 data_wake = load_data(mouse, condition, 'wake', params)
 
-#%% Load tuning curves for that session
-#TODO PLOT EXAMPLES HERE
+#%% Load assembly data for that session
+with h5py.File(
+    os.path.join(
+        params['path_to_output'],
+        'neuron_selection',
+        f"selected_neurons_{condition}_{mouse}.h5"
+        ), 'r'
+        ) as f:
+    selected_neurons = f['place_cells'][()]
+
+with h5py.File(
+    os.path.join(
+        params["path_to_output"],
+        'assembly',
+        f"assembly_{condition}_{mouse}.h5"
+        ), 'r'
+        ) as f:
+    sig_cells=f['A_sig_cells'][()]
+    weights=f['weights'][()]
+
+#%% Assembly example plot
+assembly_ID=15
+plt.figure(figsize=(3,1))
+plt.subplot(142)
+plt.stem(
+    weights[assembly_ID],
+    orientation='horizontal',
+    # linefmt=sig_cells[assembly_ID]
+    )
+plt.xlabel('Weight')
+plt.ylabel('Neuron ID')
+
+plt.subplot(122)
+plt.imshow(
+    data_wake['binaryData'][:,selected_neurons].T*weights[assembly_ID].T[:,None],
+    aspect='auto',
+    interpolation='none',
+    origin='lower',
+    cmap='RdBu',
+    vmin=-.1,
+    vmax=.1
+           )
+plt.xlim(340,700)
+plt.plot([520,670],[0,0],linewidth=2, color='k')
+plt.text(570,-40,'5 s')
+plt.colorbar()
+plt.axis('off')
+plt.savefig("../../output_REM/example_awake_assembly.pdf")
 
 # %% Load all sessions
 results_dir = params['path_to_output']+"/assembly"
