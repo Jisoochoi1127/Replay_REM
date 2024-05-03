@@ -145,6 +145,8 @@ plt.xlabel('Location on track (cm)')
 #plt.ylabel('Mean reactivation\nfrequency (Hz)')
 plt.savefig("../../output_REM/anxietyReplay_assemblyPeakLoc.pdf")
 
+#%% Separate rewards, open , closed locations
+
 #%% Descriptives
 
 #%% Stats
@@ -291,7 +293,7 @@ plt.imshow(
     cmap='Blues',
     rasterized=True
     )
-plt.yticks([0,19,39],[0,50,100])
+plt.yticks([0,19,39],[100,50,0])
 plt.ylabel('Location (cm)')
 plt.xlim(0,4000)
 plt.xticks([0,1800,3600],[0,1,2])
@@ -388,16 +390,40 @@ plt.ylim(.023,.026)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/anxietyReplay_medianPosteriors.pdf')
 
-#%%
-pg.rm_anova(
+#%% Bin open vs closed
+df['Zone']=''
+df.loc[df['Location']<=50,'Zone']='Closed'
+df.loc[df['Location']>50,'Zone']='Open'
+
+# %% Median posterior
+sns.barplot(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    x='Zone',
+    y='Median posterior',
+    hue='Condition',
+    hue_order=['LTD5', 'HATD1'],
+    palette = ['C0','C4'],
+    errorbar='se',
+    capsize=.2
+    )
+
+plt.ylim(.023,.026)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/anxietyReplay_medianPosteriors_zone_bars.pdf')
+
+#%% STATS
+pg.anova(
     data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
     dv='Median posterior',
-    within=['Location','Condition'],
-    subject='Mouse'
+    between=['Zone','Condition'],
 )
 
-
-
+#%% POSTHOC
+pg.pairwise_ttests(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    dv='Median posterior',
+    between=['Zone','Condition'],
+)
 
 
 
