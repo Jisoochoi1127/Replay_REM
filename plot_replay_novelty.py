@@ -380,12 +380,21 @@ for file_name in tqdm(resultsList):
         and "pv1252" not in file_name
     ):
         h5_file = h5py.File(os.path.join(results_dir, file_name))
+        data = load_data(h5_file["mouse"][()].decode("utf-8"),
+                         h5_file["condition"][()].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
+
         num_event_list.append(
             {
                 "mouse": h5_file["mouse"][()].decode("utf-8"),
                 "condition": h5_file["condition"][()].decode("utf-8"),
                 "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
-                "numReplayEvents": len(h5_file["replay_locs"][()])
+                "numReplayEvents": len(h5_file["replay_locs"][()]),
+                "eventsFrequency": len(h5_file["replay_locs"][()])/recordingLength
             }
         )
         for i in range(len(h5_file["replay_locs"][()])):
@@ -415,7 +424,7 @@ plt.figure(figsize=(.75,1))
 sns.barplot(
     data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
     x='condition',
-    y='numReplayEvents',
+    y='eventsFrequency',
     order=['LTD1', 'LTD5'],
     palette=(['C3','gray']),
     errorbar='se',
@@ -425,32 +434,32 @@ sns.barplot(
 sns.stripplot(
     data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
     x='condition',
-    y='numReplayEvents',
+    y='eventsFrequency',
     order=['LTD1', 'LTD5'],
     color='k',
     size=2
 )
 
-plt.ylabel('Num. replay\nevents')
+plt.ylabel('Replay events\nfrequency (Hz)')
 plt.xticks([0,1],['Novel','Familiar'])
 plt.xlabel('')
 plt.xticks(rotation=90)
 #plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/novelty_bayesian_numEvents.pdf')
+plt.savefig('../../output_REM/novelty_bayesian_eventsFrequency.pdf')
 
 #%% DESCRIPTIVES
-mean_novelty = df_numEvents.query("condition=='LTD1'")['numReplayEvents'].mean()
-SEM_novelty = df_numEvents.query("condition=='LTD1'")['numReplayEvents'].sem()
+mean_novelty = df_numEvents.query("condition=='LTD1'")['eventsFrequency'].mean()
+SEM_novelty = df_numEvents.query("condition=='LTD1'")['eventsFrequency'].sem()
 print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
 
-mean_familiar = df_numEvents.query("condition=='LTD5'")['numReplayEvents'].mean()
-SEM_familiar = df_numEvents.query("condition=='LTD5'")['numReplayEvents'].sem()
+mean_familiar = df_numEvents.query("condition=='LTD5'")['eventsFrequency'].mean()
+SEM_familiar = df_numEvents.query("condition=='LTD5'")['eventsFrequency'].sem()
 print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% STATS
 pg.ttest(
-    x=df_numEvents.query("condition=='LTD1'")['numReplayEvents'],
-    y=df_numEvents.query("condition=='LTD5'")['numReplayEvents'],
+    x=df_numEvents.query("condition=='LTD1'")['eventsFrequency'],
+    y=df_numEvents.query("condition=='LTD5'")['eventsFrequency'],
     paired=True
 )
 
@@ -561,6 +570,13 @@ for file_name in resultsList:
         and "pv1252" not in file_name
         ):
         h5_file = h5py.File(os.path.join(results_dir,file_name))
+        data = load_data(h5_file["mouse"][()].decode("utf-8"),
+                         h5_file["condition"][()].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
 
         data_list.append( #This will create one list entry per cell
                 {
@@ -570,6 +586,8 @@ for file_name in resultsList:
                     'mouse':h5_file['mouse'][()].decode("utf-8"),
                     'S1_numSeqs':h5_file['S1_numSeqs'][()],
                     'S2_numSeqs':h5_file['S2_numSeqs'][()],
+                    'S1_freq':h5_file['S1_numSeqs'][()]/recordingLength,
+                    'S2_freq':h5_file['S2_numSeqs'][()]/recordingLength,
                     'S1_score':h5_file['S1_score'][()],
                     'S2_score':h5_file['S2_score'][()],
                     'S1_pvalue':h5_file['S1_pvalue'][()],
@@ -584,6 +602,7 @@ df_replay = pd.DataFrame(data_list)
 
 #%%
 df_replay_stats=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+df_replay_freq=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='seqFreq',value_vars=['S1_freq', 'S2_freq'],var_name='seqType')
 df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='seqScore',value_vars=['S1_score', 'S2_score'],var_name='seqType')
 
 # %% Plot num. sequences vs novelty
@@ -621,6 +640,70 @@ pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == '
          within='condition',
          subject='mouse',
          )
+
+# %% Plot sequences frequency vs novelty
+plt.figure(figsize=(.75,1))
+sns.stripplot(
+    data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='seqFreq',
+    palette=(['C3','gray']),
+    #showfliers=False
+    # errorbar='se',
+    size=1,
+    #alpha=.5
+)
+sns.boxplot(
+    data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='seqFreq',
+    palette=(['C3','gray']),
+    showfliers=False
+    # errorbar='se',
+    # capsize=.2
+)
+
+
+#plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Sequence\nfrequency (Hz)')
+plt.xticks([0,1],['Novel','Familiar'])
+plt.xlabel('')
+plt.xticks(rotation=90)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/novely_seqnmf_seqFreq.pdf')
+
+#%% DESCRIPTIVES
+mean_novelty = df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['seqFreq'].mean()
+SEM_novelty = df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['seqFreq'].sem()
+print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
+
+mean_familiar = df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['seqFreq'].mean()
+SEM_familiar = df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['seqFreq'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
+
+#%% STATS
+pg.rm_anova(data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+         dv='seqFreq',
+         within='condition',
+         subject='mouse',
+         )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
