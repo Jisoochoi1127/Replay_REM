@@ -643,16 +643,6 @@ pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == '
 
 # %% Plot sequences frequency vs novelty
 plt.figure(figsize=(.75,1))
-sns.stripplot(
-    data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='condition',
-    y='seqFreq',
-    palette=(['C3','gray']),
-    #showfliers=False
-    # errorbar='se',
-    size=1,
-    #alpha=.5
-)
 sns.boxplot(
     data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
@@ -662,7 +652,6 @@ sns.boxplot(
     # errorbar='se',
     # capsize=.2
 )
-
 
 #plt.xticks([0,1],['S1', 'S2'])
 plt.ylabel('Sequence\nfrequency (Hz)')
@@ -689,7 +678,7 @@ pg.rm_anova(data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1
          )
 
 
-
+#%%
 
 
 

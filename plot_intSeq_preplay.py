@@ -19,10 +19,80 @@ with open("params.yaml", "r") as file:
 np.random.seed(params["seed"])
 
 #%% Assembly analysis
-#TODO eric
+results_dir = params['path_to_output']+"/assembly"
+resultsList = os.listdir(results_dir)
+data_list = []
+data_list_num_events = []
 
-#%% Flexible sequences analysis?
-#Skip since no internal organization?
+for file_name in tqdm(resultsList):
+    if (
+        file_name.startswith("assembly_")
+        and file_name.endswith(".h5")
+        # and "pv1254" not in file_name # Exclude pv1254
+    ):
+        h5_file = h5py.File(os.path.join(results_dir, file_name))
+        data = load_data(h5_file["mouse"][0].decode("utf-8"),
+                         h5_file["condition"][0].decode("utf-8"),
+                         'REMpre',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
+
+        data_list_num_events.append(
+            {
+                "mouse": h5_file["mouse"][0].decode("utf-8"),
+                "condition": h5_file["condition"][0].decode("utf-8"),
+                "numSigEvents": np.sum(h5_file['pre_rem_A_sig'][()]==1),
+                "numAssemblies": np.max(h5_file['pre_rem_A_ID']),
+                "meanReactPerAssembly": np.mean(np.unique(h5_file['pre_rem_A_ID'][()],return_counts=True)),
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['pre_rem_A_ID'][()],return_counts=True))/recordingLength
+            }
+        )
+
+        for i in range(len(h5_file["pre_rem_A_react_idx"][()])):
+            data_list.append(  # This will create one list entry per cell
+                {
+                    "eventID": i,
+                    "mouse": h5_file["mouse"][0].decode("utf-8"),
+                    "condition": h5_file["condition"][0].decode("utf-8"),
+                    "replayEventTime": h5_file['pre_rem_A_react_idx'][i]/params['sampling_frequency'],
+                    "replayEventID": h5_file['pre_rem_A_ID'][i],
+                    "replayEventStrength": h5_file['pre_rem_A_str'][i],
+                    "replayEventSignificance": h5_file['pre_rem_A_sig'][i],
+                }
+            )
+
+        # Close files
+        h5_file.close()
+
+df = pd.DataFrame(data_list)
+df_numEvents = pd.DataFrame(data_list_num_events)
+
+#%% Plot results
+plt.figure(figsize=(1.25,.15))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1'"),
+    x='numAssemblies',
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1'"),
+    color='gray',
+    x='numAssemblies',
+    size=2
+)
+plt.xlim(0,25)
+plt.yticks([])
+plt.xlabel('Number of\npre-existing assemblies')
+plt.savefig("../../output_REM/REMpre_numAssemblies.pdf")
+
+
+
+
+#%%
+
 
 
 
