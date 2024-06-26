@@ -44,9 +44,11 @@ for file_name in tqdm(resultsList):
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
                 "condition": h5_file["condition"][0].decode("utf-8"),
                 "numSigEvents": np.sum(h5_file['pre_rem_A_sig'][()]==1),
-                "numAssemblies": np.max(h5_file['pre_rem_A_ID']),
+                "numPreplayedAssemblies": np.max(h5_file['pre_rem_A_ID']),
+                "numReplayedAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['pre_rem_A_ID'][()],return_counts=True)),
-                "meanFreqPerAssembly": np.mean(np.unique(h5_file['pre_rem_A_ID'][()],return_counts=True))/recordingLength
+                "meanPreplayFreqPerAssembly": np.mean(np.unique(h5_file['pre_rem_A_ID'][()],return_counts=True))/recordingLength,
+                "meanReplayFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength
             }
         )
 
@@ -69,31 +71,115 @@ for file_name in tqdm(resultsList):
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)
 
+#%% Melt data
+melted_df_numEvents = df_numEvents.melt(
+    id_vars = ['mouse', 'condition'],
+    value_vars = ['numPreplayedAssemblies', 'numReplayedAssemblies'],
+    var_name = 'Type',
+    value_name = 'Num. assemblies'
+)
+
 #%% Plot results
-plt.figure(figsize=(1.25,.15))
+plt.figure(figsize=(1.25,.5))
 sns.barplot(
-    data=df_numEvents.query("condition=='LTD1'"),
-    x='numAssemblies',
+    data=melted_df_numEvents.query("condition=='LTD1'"),
+    y='Type',
+    hue='Type',
+    palette=['C3','C0'],
+    x='Num. assemblies',
     errorbar='se',
-    capsize=.2
+    capsize=.2,
+    legend=False
 )
 sns.stripplot(
-    data=df_numEvents.query("condition=='LTD1'"),
-    color='gray',
-    x='numAssemblies',
-    size=2
+    data=melted_df_numEvents.query("condition=='LTD1'"),
+    hue='Type',
+    y='Type',
+    palette=['gray','gray'],
+    x='Num. assemblies',
+    size=2,
+    legend=False
 )
 plt.xlim(0,25)
-plt.yticks([])
-plt.xlabel('Number of\npre-existing assemblies')
+plt.yticks([0,1],['Pre-task REM','Post-task REM'])
+plt.ylabel('')
+#plt.xlabel('Number of\npre-existing assemblies')
+#plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+
 plt.savefig("../../output_REM/REMpre_numAssemblies.pdf")
 
+#%% DESCRIPTIVES
+mean_preplay = df_numEvents.query("condition=='LTD1'")['numPreplayedAssemblies'].mean()
+SEM_preplay = df_numEvents.query("condition=='LTD1'")['numPreplayedAssemblies'].sem()
+print(f'{mean_preplay} +/- {SEM_preplay}')
 
+mean_replayed = df_numEvents.query("condition=='LTD1'")['numReplayedAssemblies'].mean()
+SEM_replayed = df_numEvents.query("condition=='LTD1'")['numReplayedAssemblies'].sem()
+print(f'{mean_replayed} +/- {SEM_replayed}')
 
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['numPreplayedAssemblies'],
+    y=df_numEvents.query("condition=='LTD1'")['numReplayedAssemblies'],
+    paired=True)
+
+#%% Assembly reactivations frequency
+melted_df_freq = df_numEvents.melt(
+    id_vars = ['mouse', 'condition'],
+    value_vars = ['meanPreplayFreqPerAssembly', 'meanReplayFreqPerAssembly'],
+    var_name = 'Type',
+    value_name = 'Reactivation frequency (Hz)'
+)
 
 #%%
+plt.figure(figsize=(1.25,.5))
+sns.barplot(
+    data=melted_df_freq.query("condition=='LTD1'"),
+    y='Type',
+    hue='Type',
+    palette=['C3','C0'],
+    x='Reactivation frequency (Hz)',
+    errorbar='se',
+    capsize=.2,
+    legend=False
+)
+sns.stripplot(
+    data=melted_df_freq.query("condition=='LTD1'"),
+    hue='Type',
+    y='Type',
+    palette=['gray','gray'],
+    x='Reactivation frequency (Hz)',
+    size=2,
+    legend=False
+)
+#plt.xlim(0,25)
+plt.yticks([0,1],['Pre-task REM','Post-task REM'])
+plt.xlabel('Reactivation\nfrequency (Hz)')
+plt.ylabel('')
+#plt.xlabel('Number of\npre-existing assemblies')
+#plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+
+plt.savefig("../../output_REM/REMpre_reac_freq.pdf")
+
+#%% Descriptives
+mean_preplay = df_numEvents.query("condition=='LTD1'")['meanPreplayFreqPerAssembly'].mean()
+SEM_preplay = df_numEvents.query("condition=='LTD1'")['meanPreplayFreqPerAssembly'].sem()
+print(f'{mean_preplay} +/- {SEM_preplay}')
+
+mean_replayed = df_numEvents.query("condition=='LTD1'")['meanReplayFreqPerAssembly'].mean()
+SEM_replayed = df_numEvents.query("condition=='LTD1'")['meanReplayFreqPerAssembly'].sem()
+print(f'{mean_replayed} +/- {SEM_replayed}')
+
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['meanPreplayFreqPerAssembly'],
+    y=df_numEvents.query("condition=='LTD1'")['meanReplayFreqPerAssembly'],
+    paired=True)
+
+#%% Stats
 
 
+#%% Plot example
 
 
 #%% SeqNMF
