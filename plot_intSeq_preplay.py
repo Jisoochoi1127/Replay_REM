@@ -176,11 +176,36 @@ pg.ttest(
     y=df_numEvents.query("condition=='LTD1'")['meanReplayFreqPerAssembly'],
     paired=True)
 
-#%% Stats
-
+#%% Load example
+with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
+    selected_neurons = f['place_cells'][()]
+# data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='wake', params=params)
+data_REMpre = load_data(mouse='pv1060', condition='LTD1', state='REMpre', params=params)
 
 #%% Plot example
+plt.figure(figsize=(3,1))
+plt.imshow(
+    data_REMpre['binaryData'][:,selected_neurons].T,
+    interpolation='none',
+    aspect='auto',
+    cmap='Blues',
+    rasterized=True,
+    vmin=0,
+    vmax=1
+)
+event_times = df.query("mouse=='pv1060' and replayEventID==8 and condition=='LTD1'")['replayEventTime']
 
+for key in event_times.keys():
+    timeStamp = event_times[key]*30
+    plt.plot([timeStamp, timeStamp],[-10,0],
+             color='C4')
+plt.xlim(0,2700)
+plt.xticks([0,900,1800,2700],[0,30,60,90])
+plt.xlabel('Time (s)')
+plt.ylabel('Neuron ID')
+plt.yticks([0,128,256])
+plt.title('Pre-task REM (naive)')
+plt.savefig("../../output_REM/preplay_assembly_example.pdf")
 
 #%% SeqNMF
 # Load example
