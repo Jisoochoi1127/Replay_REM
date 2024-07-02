@@ -130,19 +130,10 @@ sns.histplot(
     palette=['C0','C4'],
     stat='density',
     legend=False,
-    #hue='peak_loc',
-    #cmap='magma',
-    
-    #cbar=True,
-    #cbar_kws={'label':'Num. reactivations'}
-    #order=['LTD5', 'HATD1'],
-    #errorbar='se',
-    #capsize=.2
+    element='step'
 )
 plt.title('Distribution of reactivations')
-#plt.xticks([0,1],['Control','Anxiety'],rotation=90)
 plt.xlabel('Location on track (cm)')
-#plt.ylabel('Mean reactivation\nfrequency (Hz)')
 plt.savefig("../../output_REM/anxietyReplay_assemblyPeakLoc.pdf")
 
 #%% Separate rewards, open , closed locations
