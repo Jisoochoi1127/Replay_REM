@@ -96,6 +96,13 @@ for file_name in tqdm(resultsList):
         numFrames = data['binaryData'].shape[0]
         recordingLength = numFrames/params['sampling_frequency']
 
+        # Percent replay?
+        ID_wake_assemblies = np.unique(h5_file['post_rem_A_ID'][()])
+        ID_replayed_assemblies = np.unique(h5_file['post_rem_A_ID'][()][h5_file['post_rem_A_sig'][()]==1])
+        num_wake_assemblies = len(np.unique(h5_file["post_rem_A_ID"][()]))
+        num_REMpost_assemblies = len(np.unique(h5_file['post_rem_A_ID'][()][h5_file['post_rem_A_sig'][()]==1]))
+        portion_replayed = num_REMpost_assemblies/num_wake_assemblies
+
         data_list_num_events.append(
             {
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
@@ -103,7 +110,10 @@ for file_name in tqdm(resultsList):
                 "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
                 "numAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
-                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength,
+                "numWakeAssemblies": num_wake_assemblies,
+                "numREMpostAssemblies": num_REMpost_assemblies,
+                "portionREMpostReplay": portion_replayed
             }
         )
 
@@ -127,28 +137,55 @@ df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)
 
 #%% Plot results
-plt.figure(figsize=(1.25,.15))
+plt.figure(figsize=(.33,1))
 sns.barplot(
     data=df_numEvents.query("condition=='LTD1'"),
-    x='numAssemblies',
+    y='numWakeAssemblies',
     errorbar='se',
     capsize=.2
 )
 sns.stripplot(
     data=df_numEvents.query("condition=='LTD1'"),
     color='gray',
-    x='numAssemblies',
+    y='numWakeAssemblies',
     size=2
 )
-plt.xlim(0,25)
-plt.yticks([])
-plt.xlabel('Number of assemblies')
-plt.savefig("../../output_REM/REMpost_numAssemblies.pdf")
+plt.ylim(0,25)
+plt.xticks([])
+plt.ylabel('Num. awake\nassemblies')
+plt.savefig("../../output_REM/REMpost_numWakeAssemblies.pdf")
 
 #%%
-mean_numAssemblies = df_numEvents.query("condition=='LTD1'")['numAssemblies'].mean()
-SEM_numAssemblies = df_numEvents.query("condition=='LTD1'")['numAssemblies'].sem()
+mean_numAssemblies = df_numEvents.query("condition=='LTD1'")['numWakeAssemblies'].mean()
+SEM_numAssemblies = df_numEvents.query("condition=='LTD1'")['numWakeAssemblies'].sem()
 print(f'{mean_numAssemblies} +/- {SEM_numAssemblies}')
+
+#%% Plot assembly reactivation rate
+plt.figure(figsize=(.33,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1'"),
+    y='portionREMpostReplay',
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1'"),
+    color='gray',
+    y='portionREMpostReplay',
+    size=2
+)
+#plt.ylim(0,100)
+plt.xticks([])
+plt.ylabel('Portion replayed')
+plt.savefig("../../output_REM/REMpost_AssemblyReplayRate.pdf")
+
+#%%
+mean_portReplayed = df_numEvents.query("condition=='LTD1'")['portionREMpostReplay'].mean()
+SEM_portReplayed = df_numEvents.query("condition=='LTD1'")['portionREMpostReplay'].sem()
+print(f'{mean_portReplayed} +/- {SEM_portReplayed}')
+
+
+
 
 #%% Plot frequency
 plt.figure(figsize=(1.25,.15))
