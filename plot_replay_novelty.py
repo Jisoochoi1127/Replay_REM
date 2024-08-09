@@ -241,6 +241,13 @@ for file_name in tqdm(resultsList):
         numFrames = data['binaryData'].shape[0]
         recordingLength = numFrames/params['sampling_frequency']
 
+        # Percent replay?
+        ID_wake_assemblies = np.unique(h5_file['post_rem_A_ID'][()])
+        ID_replayed_assemblies = np.unique(h5_file['post_rem_A_ID'][()][h5_file['post_rem_A_sig'][()]==1])
+        num_wake_assemblies = len(np.unique(h5_file["post_rem_A_ID"][()]))
+        num_REMpost_assemblies = len(np.unique(h5_file['post_rem_A_ID'][()][h5_file['post_rem_A_sig'][()]==1]))
+        portion_replayed = num_REMpost_assemblies/num_wake_assemblies
+
         data_list_num_events.append(
             {
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
@@ -248,7 +255,10 @@ for file_name in tqdm(resultsList):
                 "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
                 "numAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
-                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength
+                "meanFreqPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True))/recordingLength,
+                "numWakeAssemblies": num_wake_assemblies,
+                "numREMpostAssemblies": num_REMpost_assemblies,
+                "portionREMpostReplay": portion_replayed
             }
         )
 
@@ -271,6 +281,54 @@ for file_name in tqdm(resultsList):
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)    
 
+#%% Plot awake assemblies
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='numWakeAssemblies',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    color='k',
+    order=['LTD1', 'LTD5'],
+    x='condition',
+    y='numWakeAssemblies',
+    size=2
+)
+plt.xticks([0,1],['Novel','Familiar'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Portion replayed\nassemblies')
+plt.savefig("../../output_REM/novelty_numAwakeAssemblies.pdf")
+
+#%% Plot percent replayed
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    x='condition',
+    y='portionREMpostReplay',
+    order=['LTD1', 'LTD5'],
+    palette=(['C3','gray']),
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_numEvents.query("condition=='LTD1' or condition=='LTD5'"),
+    color='k',
+    order=['LTD1', 'LTD5'],
+    x='condition',
+    y='portionREMpostReplay',
+    size=2
+)
+plt.xticks([0,1],['Novel','Familiar'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Portion replayed\nassemblies')
+plt.savefig("../../output_REM/novelty_portionReplayedAssemblies.pdf")
+
 #%% Plot results
 plt.figure(figsize=(.75,1))
 sns.barplot(
@@ -292,7 +350,7 @@ sns.stripplot(
 )
 plt.xticks([0,1],['Novel','Familiar'],rotation=90)
 plt.xlabel('')
-plt.ylabel('Num. assemblies')
+plt.ylabel('Num. replayed\nassemblies')
 plt.savefig("../../output_REM/noveltyReplay_numAssemblies.pdf")
 
 #%% DESCRIPTIVES
@@ -569,7 +627,7 @@ for file_name in resultsList:
         and file_name.endswith('.h5')
         and "pv1252" not in file_name
         ):
-        h5_file = h5py.File(os.path.join(results_dir,file_name))
+        h5_file = h5py.File(os.path.join(results_dir,file_name), 'r')
         data = load_data(h5_file["mouse"][()].decode("utf-8"),
                          h5_file["condition"][()].decode("utf-8"),
                          'REMpost',
@@ -577,6 +635,25 @@ for file_name in resultsList:
                          )
         numFrames = data['binaryData'].shape[0]
         recordingLength = numFrames/params['sampling_frequency']
+
+        # Per event analysis
+        # for i in range(len(h5_file["replay_locs"][()])):
+        #     data_list.append(  # This will create one list entry per cell
+        #         {
+        #             "eventID": i,
+        #             "mouse": h5_file["mouse"][()].decode("utf-8"),
+        #             "condition": h5_file["condition"][()].decode("utf-8"),
+        #             "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
+        #             "replayEventTime": h5_file['replay_locs'][i]/params['sampling_frequency'],
+        #             "replayEventScore": h5_file['replay_score'][i],
+        #             "replayEventJumpiness": h5_file['replay_jumpiness'][i],
+        #             "replayEventLength": h5_file['replay_length'][i],
+        #             "replayEventSlope": abs(h5_file['replay_slope'][i])
+        #         }
+        #     )
+
+
+
 
         data_list.append( #This will create one list entry per cell
                 {
@@ -607,12 +684,22 @@ df_replay_scores=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'cond
 
 # %% Plot num. sequences vs novelty
 plt.figure(figsize=(.75,1))
-sns.boxenplot(
-    data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+sns.barplot(
+    data=df_replay_stats.query("seqType=='S1_numSeqs'").query("condition == 'LTD1' or condition == 'LTD5'").query("state_ref == 'wake' and state_pred == 'REMpost'"),
     x='condition',
     y='numSeqs',
     palette=(['C3','gray']),
-    showfliers=False
+    #alpha=.2,
+    #linewidth=0
+    errorbar='se',
+    capsize=.2
+)
+sns.stripplot(
+    data=df_replay_stats.query("seqType=='S1_numSeqs'").query("condition == 'LTD1' or condition == 'LTD5'").query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='numSeqs',
+    palette=(['k','k']),
+    size=2
     # errorbar='se',
     # capsize=.2
 )
@@ -626,40 +713,20 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/novely_seqnmf_numSeqs.pdf')
 
 #%% DESCRIPTIVES
-mean_novelty = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+mean_novelty = df_replay_stats.query("seqType=='S1_numSeqs'").query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
 SEM_novelty = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
 print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
 
-mean_familiar = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
+mean_familiar = df_replay_stats.query("seqType=='S1_numSeqs'").query("condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].mean()
 SEM_familiar = df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'")['numSeqs'].sem()
 print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% STATS
-pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
+pg.rm_anova(data=df_replay_stats.query("seqType=='S1_numSeqs'").query("condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
          dv='numSeqs',
          within='condition',
          subject='mouse',
          )
-
-# %% Plot sequences frequency vs novelty
-plt.figure(figsize=(.75,1))
-sns.boxplot(
-    data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' or condition == 'LTD5' and state_ref == 'wake' and state_pred == 'REMpost'"),
-    x='condition',
-    y='seqFreq',
-    palette=(['C3','gray']),
-    showfliers=False
-    # errorbar='se',
-    # capsize=.2
-)
-
-#plt.xticks([0,1],['S1', 'S2'])
-plt.ylabel('Sequence\nfrequency (Hz)')
-plt.xticks([0,1],['Novel','Familiar'])
-plt.xlabel('')
-plt.xticks(rotation=90)
-plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-plt.savefig('../../output_REM/novely_seqnmf_seqFreq.pdf')
 
 #%% DESCRIPTIVES
 mean_novelty = df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'")['seqFreq'].mean()
@@ -679,14 +746,76 @@ pg.rm_anova(data=df_replay_freq.query("seqType=='S1_freq' and condition == 'LTD1
 
 
 #%%
+results_dir = '../../output_REM/seqNMF_timestamps'
+resultsList=os.listdir(results_dir)
 
+#%% Focus on replayu timestamps to compute instantaneous frequencies
+data_list = []
+for file_name in resultsList:
+    if (
+        file_name.startswith('seqReplayResults_')
+        and file_name.endswith('.h5')
+        and "pv1252" not in file_name
+        ):
+        h5_file = h5py.File(os.path.join(results_dir,file_name), 'r')
+        data = load_data(h5_file["mouse"][()].decode("utf-8"),
+                         h5_file["condition"][()].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
+        inst_frequencies = h5_file['seqReplayLocs'][()]/params['sampling_frequency']
+        inst_frequencies = 1/np.diff(inst_frequencies)
 
+        # Per event analysis
+        for i in range(len(inst_frequencies)):
+            data_list.append(  # This will create one list entry per cell
+                {
+                    "eventID": i,
+                    "mouse": h5_file["mouse"][()].decode("utf-8"),
+                    "condition": h5_file["condition"][()].decode("utf-8"),
+                    "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
+                    'state_ref':h5_file['state_ref'][()].decode("utf-8"),
+                    'state_pred':h5_file['state_pred'][()].decode("utf-8"),
+                    "inst_freq": inst_frequencies[i]
+                }
+            )
 
+        # Close files
+        h5_file.close()
 
+df_replay = pd.DataFrame(data_list)
 
+#%%
+plt.figure(figsize=(.75,1))
+sns.violinplot(
+    data=df_replay.query("condition == 'LTD1' or condition == 'LTD5'").query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='inst_freq',
+    palette=(['C3','gray']),
+    linewidth=0,
+    alpha=.2
+    # errorbar='se',
+    # capsize=.2
+)
+sns.stripplot(
+    data=df_replay.query("condition == 'LTD1' or condition == 'LTD5'").query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    x='condition',
+    y='inst_freq',
+    palette=(['C3','gray']),
+    size=2
+    # errorbar='se',
+    # capsize=.2
+)
 
-
-
+#plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Num. significant \nsequences')
+plt.xticks([0,1],['Novel','Familiar'])
+plt.xlabel('')
+plt.xticks(rotation=90)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/novely_seqnmf_inst_freq.pdf')
 
 
 
