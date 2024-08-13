@@ -62,38 +62,62 @@ LT_position = data_LT['position'][data_LT['running_ts'],0]
 
 #%%
 H = extract_H(W_ref, REM_PCs_data)
-#%%
-SF1 = REM_PCs_data*H[0][:,None]
-SF2 = REM_PCs_data*-H[1][:,None]
-sequence_data = SF1+SF2
+#%% LEGACY plots (unclear)
+# SF1 = REM_PCs_data*H[0][:,None]
+# SF2 = REM_PCs_data*-H[1][:,None]
+# sequence_data = SF1+SF2
 
-#%%
-plt.figure()
-plt.subplot(121)
-plt.imshow(sequence_data[:,seqSortingIndex].T,
+# #%%
+# plt.figure()
+# plt.subplot(121)
+# plt.imshow(sequence_data[:,seqSortingIndex].T,
+#            interpolation='none',
+#            aspect='auto',
+#            cmap='RdBu',
+#            vmin=-10,
+#            vmax=10)
+# plt.xlim(4875,4975)
+# plt.axis('off')
+# plt.colorbar()
+# plt.title('S1')
+
+# plt.subplot(122)
+# plt.imshow(sequence_data[:,seqSortingIndex].T,
+#            interpolation='none',
+#            aspect='auto',
+#            cmap='RdBu',
+#            vmin=-10,
+#            vmax=10)
+# plt.xlim(5450,5550)
+# plt.axis('off')
+# plt.colorbar()
+# plt.title('S2')
+# plt.tight_layout()
+# plt.savefig('../../output_REM/example_seqNMF_replay.pdf')
+
+#%% Plot H
+segment = np.arange(5420,5520)
+#segment = np.arange(800,1100)
+
+data_block = data_LT['binaryData'][segment]
+sort_idx = np.argsort(np.argmax(data_block,axis=1))
+
+plt.figure(figsize=(.5,1))
+plt.subplot(211)
+plt.imshow(data_block[sort_idx].T,
            interpolation='none',
            aspect='auto',
-           cmap='RdBu',
-           vmin=-10,
-           vmax=10)
-plt.xlim(4875,4975)
-plt.axis('off')
-plt.colorbar()
-plt.title('S1')
+           cmap='gray_r')
+plt.yticks([])
+plt.xticks([])
 
-plt.subplot(122)
-plt.imshow(sequence_data[:,seqSortingIndex].T,
-           interpolation='none',
-           aspect='auto',
-           cmap='RdBu',
-           vmin=-10,
-           vmax=10)
-plt.xlim(5450,5550)
-plt.axis('off')
-plt.colorbar()
-plt.title('S2')
-plt.tight_layout()
+plt.subplot(212)
+plt.plot(H[0,segment])
+plt.xticks([0,60],[0,2])
+plt.xlabel('Time (s)')
+plt.ylabel('Replay\nstrength')
 plt.savefig('../../output_REM/example_seqNMF_replay.pdf')
+
 
 # %% Extract replay statistics
 results_dir = '../../output_REM/seqNMF'

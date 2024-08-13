@@ -302,8 +302,23 @@ sns.stripplot(
 )
 plt.xticks([0,1],['Novel','Familiar'],rotation=90)
 plt.xlabel('')
-plt.ylabel('Portion replayed\nassemblies')
+plt.ylabel('Num. wake\nassemblies')
 plt.savefig("../../output_REM/novelty_numAwakeAssemblies.pdf")
+
+#%% Descriptives
+mean_novel = df_numEvents.query("condition=='LTD1'")['numWakeAssemblies'].mean()
+SEM_novel = df_numEvents.query("condition=='LTD1'")['numWakeAssemblies'].sem()
+print(f'{mean_novel} +/- {SEM_novel}')
+
+mean_fam = df_numEvents.query("condition=='LTD5'")['numWakeAssemblies'].mean()
+SEM_fam = df_numEvents.query("condition=='LTD5'")['numWakeAssemblies'].sem()
+print(f'{mean_fam} +/- {SEM_fam}')
+
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['numWakeAssemblies'],
+    y=df_numEvents.query("condition=='LTD5'")['numWakeAssemblies'],
+    paired=True)
 
 #%% Plot percent replayed
 plt.figure(figsize=(.75,1))
@@ -328,6 +343,21 @@ plt.xticks([0,1],['Novel','Familiar'],rotation=90)
 plt.xlabel('')
 plt.ylabel('Portion replayed\nassemblies')
 plt.savefig("../../output_REM/novelty_portionReplayedAssemblies.pdf")
+
+#%% Descriptives
+mean_novel = df_numEvents.query("condition=='LTD1'")['portionREMpostReplay'].mean()
+SEM_novel = df_numEvents.query("condition=='LTD1'")['portionREMpostReplay'].sem()
+print(f'{mean_novel} +/- {SEM_novel}')
+
+mean_fam = df_numEvents.query("condition=='LTD5'")['portionREMpostReplay'].mean()
+SEM_fam = df_numEvents.query("condition=='LTD5'")['portionREMpostReplay'].sem()
+print(f'{mean_fam} +/- {SEM_fam}')
+
+#%% STATS
+pg.ttest(
+    x=df_numEvents.query("condition=='LTD1'")['portionREMpostReplay'],
+    y=df_numEvents.query("condition=='LTD5'")['portionREMpostReplay'],
+    paired=True)
 
 #%% Plot results
 plt.figure(figsize=(.75,1))
