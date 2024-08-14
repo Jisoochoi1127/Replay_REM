@@ -107,7 +107,8 @@ plt.subplot(211)
 plt.imshow(data_block[sort_idx].T,
            interpolation='none',
            aspect='auto',
-           cmap='gray_r')
+           cmap='gray_r',
+           rasterized=True)
 plt.yticks([])
 plt.xticks([])
 

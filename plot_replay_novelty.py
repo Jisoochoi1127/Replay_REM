@@ -9,6 +9,8 @@ import yaml
 import h5py
 from tqdm import tqdm
 from utils.helperFunctions import load_data
+from utils.helperFunctions import extract_seqReplay_score
+from utils.helperFunctions import extract_H
 
 plt.style.use("plot_style.mplstyle")
 
@@ -149,7 +151,24 @@ plt.savefig("../../output_REM/replayNovelty_exampleBayesianReplay.pdf")
 
 
 #%% Plot seqNMF examples
-# load replay timestamps
+data_wakeLTD1 = load_data(mouse='pv1060', condition='LTD1', state='wake', params=params)
+data_wakeLTD5 = load_data(mouse='pv1060', condition='LTD5', state='wake', params=params)
+params['numNeurons']=128
+_, _, _, W_ref_LTD1 = extract_seqReplay_score(data_wakeLTD1['binaryData'][:,selected_neurons_LTD1],
+                                                                                     data_LTD1['binaryData'][:,selected_neurons_LTD1],
+                                                                                     params)
+
+
+# Same for familiar condition
+_, _, _, W_ref_LTD5 = extract_seqReplay_score(data_wakeLTD5['binaryData'][:,selected_neurons_LTD5],
+                                                                                     data_LTD5['binaryData'][:,selected_neurons_LTD5],
+                                                                                     params)
+
+#%%
+H_LTD1 = extract_H(W_ref_LTD1, data_LTD1['binaryData'][:,selected_neurons_LTD1])
+H_LTD5 = extract_H(W_ref_LTD5, data_LTD5['binaryData'][:,selected_neurons_LTD5])
+
+#%% load replay timestamps
 with h5py.File(
                 os.path.join(
                     params["path_to_output"],
@@ -170,20 +189,23 @@ with h5py.File(
             ) as seqNMF_file:
                 LTD5_seqNMF_ts = seqNMF_file['seqReplayLocs'][()]
 
+#%%
 plt.figure(figsize=(4,1)) # TODO plot examples with Eric
 plt.subplot(221)
 plt.title('REM post (novel)')
-plt.imshow(
-     data_LTD1['binaryData'][:,selected_neurons_LTD1].T,
-     aspect='auto',
-     interpolation='none',
-     cmap='gray_r',
-     rasterized=True
-     )
+plt.plot(H_LTD1[0].T,color='C0')
+plt.plot(H_LTD1[1].T,color='C4')
+# plt.imshow(
+#      data_LTD1['binaryData'][:,selected_neurons_LTD1].T,
+#      aspect='auto',
+#      interpolation='none',
+#      cmap='gray_r',
+#      rasterized=True
+#      )
 plt.xlim(0,3000)
 plt.xticks([0,1800,3600],['','',''])
-plt.yticks([0,128,256])
-plt.ylabel('Neuron ID')
+plt.ylim(0,56)
+plt.ylabel('Replay strength')
 
 plt.subplot(425)
 #event_colors = ['C{}'.format(i) for i in range(len(LTD1_ID))]
@@ -197,16 +219,19 @@ plt.ylabel('')
 
 plt.subplot(222)
 plt.title('REM post (familiar)')
-plt.imshow(
-     data_LTD5['binaryData'][:,selected_neurons_LTD5].T,
-     aspect='auto',
-     interpolation='none',
-     cmap='gray_r',
-     rasterized=True
-     )
+plt.plot(H_LTD5[0].T,color='C0')
+plt.plot(H_LTD5[1].T,color='C4')
+# plt.imshow(
+#      data_LTD5['binaryData'][:,selected_neurons_LTD5].T,
+#      aspect='auto',
+#      interpolation='none',
+#      cmap='gray_r',
+#      rasterized=True
+#      )
 plt.xlim(0,3600)
 plt.xticks([0,1800,3600],['','',''])
-plt.yticks([0,128,256],['','',''])
+plt.ylim(0,56)
+#plt.yticks([0,128,256],['','',''])
 plt.ylabel('')
 
 plt.subplot(426)
