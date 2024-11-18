@@ -44,26 +44,25 @@ nonSig_indices = indices[p_values > 0.05]
 sorted_sig_info = np.argsort(
     sig_info * -1
 )  # -1 to find descending idx, instead of ascending
-sorted_info = np.argsort(
-    h5_file["info"]
-)  # find ascending idx, for worst place cells
 
+#%%
 # Establish list of neurons to use
-for i, numNeurons in enumerate(numNeurons_list):
+numNeurons_scores = np.zeros((len(numNeurons_list), params["K"])) # array of size numNeuronslist, numSeqs (usually 2)
+
+for i, numNeurons in enumerate(tqdm(numNeurons_list)):
+    params['numNeurons'] = numNeurons
     selected_neurons = sig_indices[sorted_sig_info][0 : numNeurons]
+    seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref = extract_seqReplay_score(
+        data_LT["binaryData"][:, selected_neurons],
+        data_REMpost["binaryData"][:, selected_neurons],
+        params,
+    )
 
-    numNeurons_scores = np.zeros((len(numNeurons_list), params["K"])) # array of size numNeuronslist, numSeqs (usually 2)
-    for i, L in enumerate(tqdm(numNeurons_list)):
-        params["L"] = L  # Override parameters
-        seqReplay_scores, seqReplay_pvalues, seqReplay_locs = extract_seqReplay_score(
-            data_LT["binaryData"][:, selected_neurons],
-            data_REMpost["binaryData"][:, selected_neurons],
-            params,
-        )
-
-        numNeurons_scores[i, 0] = len(seqReplay_locs[0])
-        numNeurons_scores[i, 1] = len(seqReplay_locs[1])
+    numNeurons_scores[i, 0] = len(seqReplay_locs[0])
+    numNeurons_scores[i, 1] = len(seqReplay_locs[1])
 
 # %% Save data
 with h5py.File(os.path.join(params["path_to_output"], f"{mouse_ID}_optimal_numNeurons.h5"), "w") as f:
     f.create_dataset("numNeurons_scores", data=numNeurons_scores)
+
+# %%
