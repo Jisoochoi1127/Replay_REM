@@ -109,8 +109,8 @@ plt.imshow(
      interpolation='none',
      cmap='magma',
      rasterized=True,
-     vmin=0,
-     vmax=.075
+     vmin=0.02,
+     vmax=.045
      )
 plt.xlim(0,3000)
 plt.xticks([0,1800,3600],['','',''])
@@ -133,8 +133,8 @@ plt.imshow(
      interpolation='none',
      cmap='magma',
      rasterized=True,
-     vmin=0,
-     vmax=.075
+     vmin=0.02,
+     vmax=.045
      )
 plt.xlim(0,3600)
 plt.xticks([0,1800,3600],['','',''])
