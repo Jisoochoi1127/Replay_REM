@@ -146,6 +146,5 @@ print(f'{mean_REMpost} +/- {SEM_REMpost}')
 pg.ttest(
     x=df.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpre'")['PVC'],
     y=df.query("condition=='LTD1' and state_ref=='wake' and state_pred=='REMpost'")['PVC'],
-    paired=True)
-
-# %%
+    paired=True,
+    )
