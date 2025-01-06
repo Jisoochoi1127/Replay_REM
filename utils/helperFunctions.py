@@ -181,9 +181,9 @@ def extract_seqReplay_score(data_ref, data_pred, params):
     
     return seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref
 
-def extract_PVC(data_A, data_B, params):
-    binary_A = data_A['binaryData']
-    binary_B = data_B['binaryData']
+def extract_PVC(vec_A, vec_B):
+    binary_A = vec_A
+    binary_B = vec_B
 
     PVC = pearsonr(
         np.mean(binary_A,0),
