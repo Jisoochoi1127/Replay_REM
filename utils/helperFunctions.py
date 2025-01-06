@@ -1,12 +1,12 @@
 import numpy as np
 from seqnmf import seqnmf
 import os
-from scipy.stats import skew
+from scipy.stats import skew, pearsonr
 import h5py
 import scipy.io as sio
 from scipy.signal import find_peaks
 from scipy.ndimage.interpolation import zoom
-from pycaan.functions.signal_processing import binarize_ca_traces, preprocess_data
+from pycaan.functions.signal_processing import preprocess_data
 from .dataloaders import load_data as pycaan_load
 
 
@@ -151,7 +151,6 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         for neuron in range(params['numNeurons']):
             shuffled_W[neuron,:,:] = np.roll(W_ref[neuron,:,:],shift=np.random.randint(W_ref.shape[2]),axis=1)
         
-        
         temp = extract_H(shuffled_W,data_pred)
         shuffled_pred_H[shuffle_i,:,:] = temp
         seqReplay_shuffled_score[shuffle_i,:] = skew(temp,axis=1)
@@ -181,3 +180,14 @@ def extract_seqReplay_score(data_ref, data_pred, params):
         seqReplay_pvalues[k] = sum(seqReplay_shuffled_score[:,k]>seqReplay_scores[k])/params['numShuffles']
     
     return seqReplay_scores, seqReplay_pvalues, seqReplay_locs, W_ref
+
+def extract_PVC(data_A, data_B, params):
+    binary_A = data_A['binaryData']
+    binary_B = data_B['binaryData']
+
+    PVC = pearsonr(
+        np.mean(binary_A,0),
+        np.mean(binary_B,0)
+    )[0]
+
+    return PVC

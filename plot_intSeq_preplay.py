@@ -373,10 +373,10 @@ plt.imshow(
      interpolation='none',
      cmap='magma',
      rasterized=True,
-     vmin=0,
-     vmax=.075
+     vmin=0.02,
+     vmax=.045
      )
-plt.xlim(0,3000)
+plt.xlim(0,3600)
 plt.xticks([0,1800,3600],['','',''])
 plt.yticks([0,19,39],[0,50,100])
 plt.ylabel('Location (cm)')
@@ -390,9 +390,6 @@ plt.xlabel('Time (min)')
 plt.ylabel('')
 
 plt.savefig("../../output_REM/preplay_exampleBayesianReplay.pdf")
-
-
-
 
 #%% Analysis
 results_dir = params['path_to_output']+"/bayesian_replay"
