@@ -54,6 +54,25 @@ df = pd.DataFrame(data_list)
 #     value_name = 'Num. assemblies'
 # )
 
+plt.figure(figsize=(1,.75))
+sns.heatmap(data=df.query("condition=='LTD1'").pivot_table(
+    index='state_ref',
+    columns='state_pred', 
+    values='PVC'
+    ),
+    cmap='magma',
+    vmin=0,
+    vmax=.5,
+    rasterized=True,
+    cbar_kws={'label':'PV correlation'}
+)
+#plt.xticks([])
+#plt.yticks([])
+plt.xlabel('')
+plt.ylabel('')
+plt.savefig("../../output_REM/PVC_heatmap.pdf")
+
+
 #%% Plot results
 plt.figure(figsize=(.5,.5))
 sns.barplot(
