@@ -30,7 +30,7 @@ for condition, mouse in tqdm(
     ):
         # Load precomputed tuning curves and accessory data
         current_path = os.path.join(
-            params["path_to_output"], "tuning", f"tuning_{condition}_{mouse}.h5"
+            params["path_to_output"], "equal_tuning", f"tuning_{condition}_{mouse}.h5" #GE 20250130: changed from tuning to equal_tuning
         )
         if os.path.exists(current_path):
             with h5py.File(current_path, "r") as f:
@@ -86,7 +86,7 @@ for condition, mouse in tqdm(
             with h5py.File(
                 os.path.join(
                     params["path_to_output"],
-                    "posterior_probs",
+                    "equal_posterior_probs", #GE 20250130: changed from posterior_probs to equal_posterior_probs
                     f"posterior_probs_{condition}_{mouse}.h5",
                 ),
                 "w",

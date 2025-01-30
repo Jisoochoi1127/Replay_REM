@@ -199,8 +199,8 @@ def extract_equal_samples(var, inclusion_ts):
     '''
 
     # Bin var into 2 bins split at the middle
-    bins = [0,50,100]
-    bin_vector = np.digitize(var, bins, right=False)
+    bins = [0,50]
+    bin_vector = np.digitize(var, bins, right=False)-1
 
     # Extract occupancy for each bin using bin_vector variable
     occupancy_frames = np.histogram(a=bin_vector[inclusion_ts], bins=2)[0]
@@ -214,4 +214,6 @@ def extract_equal_samples(var, inclusion_ts):
         bin_samples = np.where(bin_vector[inclusion_ts]==bin_i)[0]
         equal_samples = np.concatenate((equal_samples,np.random.choice(bin_samples,min_occupancy,replace=False)))
     
-    return inclusion_ts[equal_samples]
+    inclusion_ts[~equal_samples] = False
+
+    return inclusion_ts
