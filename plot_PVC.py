@@ -60,6 +60,7 @@ sns.heatmap(data=df.query("condition=='LTD1'").pivot_table(
     columns='state_pred', 
     values='PVC'
     ),
+    order=['REMpre','wake','REMpost'],
     cmap='magma',
     vmin=0,
     vmax=.5,

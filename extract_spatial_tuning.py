@@ -6,7 +6,7 @@ import itertools
 
 import yaml
 import h5py
-from utils.helperFunctions import load_data
+from utils.helperFunctions import load_data, extract_equal_samples
 from pycaan.functions.tuning import extract_tuning
 from pycaan.functions.metrics import (
     extract_firing_properties,
@@ -40,6 +40,14 @@ for condition, mouse in tqdm(
             # Load data
             data = load_data(mouse, condition, "wake", params)
 
+            if params['equalize_sampling']:
+                # Extract equal samples of running periods
+                timestamps = extract_equal_samples(data["position"][:,0], data['running_ts'])
+
+            else:
+                # Only consider running periods
+                timestamps=data['running_ts']
+
             # Extract tuning info/tuning
             bin_vec = np.arange(
                 0, 100 + params["spatialBinSize"], params["spatialBinSize"]
@@ -53,7 +61,7 @@ for condition, mouse in tqdm(
                 peak_loc,
                 peak_val,
             ) = extract_tuning(
-                data["binaryData"], data["position"][:, 0], data["running_ts"], bin_vec
+                data["binaryData"], data["position"][:, 0], timestamps, bin_vec
             )
             total_distance_travelled = extract_total_distance_travelled(
                 data["position"]

@@ -191,3 +191,27 @@ def extract_PVC(vec_A, vec_B):
     )[0]
 
     return PVC
+
+def extract_equal_samples(var, inclusion_ts):
+    '''
+    Extract equal samples of specific timestamps.
+    Ideal for HAT task to ensure both ends of the track are sampled equally.
+    '''
+
+    # Bin var into 2 bins split at the middle
+    bins = [0,50,100]
+    bin_vector = np.digitize(var, bins, right=False)
+
+    # Extract occupancy for each bin using bin_vector variable
+    occupancy_frames = np.histogram(a=bin_vector[inclusion_ts], bins=2)[0]
+
+    # Establish the minimum occupancy
+    min_occupancy = np.min(occupancy_frames)
+
+    # Extract equal samples of each bin
+    equal_samples = np.zeros(0,dtype=int)
+    for bin_i in range(2):
+        bin_samples = np.where(bin_vector[inclusion_ts]==bin_i)[0]
+        equal_samples = np.concatenate((equal_samples,np.random.choice(bin_samples,min_occupancy,replace=False)))
+    
+    return inclusion_ts[equal_samples]

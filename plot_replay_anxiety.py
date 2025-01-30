@@ -449,13 +449,6 @@ plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/HATDS_MAP_location.pdf')
 #%%
 
-
-
-
-
-
-
-
 #%% SeqNMF
 results_dir = '../../output_REM/seqNMF'
 resultsList=os.listdir(results_dir)

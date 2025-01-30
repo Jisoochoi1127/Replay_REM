@@ -10,9 +10,12 @@ train_test_ratio: .5
 seed: 42 # Seed for reproducibility
 z_threshold: 2
 numNeurons: 256
-spatialBinSize: 2.5 # cm
 overwrite_mode: "always" # Set as 'always' or 'never'
 event_overlap_window: 30 # in frames
+
+# Tuning curves
+spatialBinSize: 2.5 # cm
+equalize_sampling: True
 
 # SeqNMF
 L: 100 # sequence length in frames
