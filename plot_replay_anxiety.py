@@ -149,7 +149,10 @@ plt.savefig("../../output_REM/anxietyReplay_assemblyPeakLoc.pdf")
 
 
 #%% Bayesian replay
-results_dir = params['path_to_output']+"/bayesian_replay"
+if params['equalize_sampling']:
+    results_dir = params['path_to_output']+"/equal_bayesian_replay"
+else:
+    results_dir = params['path_to_output']+"/bayesian_replay"
 resultsList = os.listdir(results_dir)
 
 data_list = []
@@ -191,7 +194,6 @@ for file_name in tqdm(resultsList):
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(num_event_list)
 
-
 #%% Plot number of events per condition
 plt.figure(figsize=(.75,1))
 sns.barplot(
@@ -212,7 +214,7 @@ plt.xticks(rotation=90)
 plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
 plt.savefig('../../output_REM/anxiety_bayesian_numEvents.pdf')
 
-#%% DESCRIPTIVES
+#%% DESCRIPTIVES (TODO: change var names to safe/anxiety)
 mean_novelty = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].mean()
 SEM_novelty = df_numEvents.query("condition=='LTD5' and Type=='replay'")['numReplayEvents'].sem()
 print(f'Novel: {mean_novelty} +/- {SEM_novelty}')
@@ -267,10 +269,10 @@ pg.anova(
 
 #%% Example posteriors
 mouse = 'pv1069'
-with h5py.File(os.path.join(params['path_to_output'],'posterior_probs', 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
+with h5py.File(os.path.join(params['path_to_output'],'equal_posterior_probs', 'posterior_probs_LTD5_pv1060.h5'), 'r') as f:
     familiar_posteriors = f[f'REMpost_posterior_probs'][()]
 
-with h5py.File(os.path.join(params['path_to_output'],'posterior_probs', 'posterior_probs_HATD1_pv1060.h5'), 'r') as f:
+with h5py.File(os.path.join(params['path_to_output'],'equal_posterior_probs', 'posterior_probs_HATD1_pv1060.h5'), 'r') as f:
     anxiety_posteriors = f[f'REMpost_posterior_probs'][()]
 
 plt.figure(figsize=(3.5,.75))
@@ -332,7 +334,10 @@ plt.xticks(rotation=90)
 plt.savefig('../../output_REM/anxietyReplay_examplePosteriors.pdf')
 
 # %% List posteriors results
-results_dir = params['path_to_output']+'/posterior_probs'
+if params['equalize_sampling']:
+    results_dir = params['path_to_output']+'/equal_posterior_probs'
+else:
+    results_dir = params['path_to_output']+'/posterior_probs'
 resultsList=os.listdir(results_dir)
 
 # %% Load data

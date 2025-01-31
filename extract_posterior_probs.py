@@ -24,7 +24,7 @@ for condition, mouse in tqdm(
     if not os.path.exists(
         os.path.join(
             params["path_to_output"],
-            "posterior_probs",
+            "equal_posterior_probs",
             f"posterior_probs_{condition}_{mouse}.h5",
         )
     ):
