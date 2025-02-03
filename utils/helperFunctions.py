@@ -192,28 +192,49 @@ def extract_PVC(vec_A, vec_B):
 
     return PVC
 
-def extract_equal_samples(var, inclusion_ts):
+def extract_equal_samples(var, bins, inclusion_ts):
     '''
     Extract equal samples of specific timestamps.
     Ideal for HAT task to ensure both ends of the track are sampled equally.
     '''
+    
+    if var.ndim > 1:
+        bin_dims = tuple([len(b) for b in bins])  # TODO assert that d_var == d_bins
+    else:
+        bin_dims = len(bins)
 
-    # Bin var into 2 bins split at the middle
-    bins = [0,50]
-    bin_vector = np.digitize(var, bins, right=False)-1
+    # Compute occupancy
+    if var.ndim > 1:
+        occupancy_frames = np.histogramdd(sample=var[inclusion_ts], bins=bins)[0]
+    else:
+        occupancy_frames = np.histogram(a=var[inclusion_ts], bins=bins)[0]
 
-    # Extract occupancy for each bin using bin_vector variable
-    occupancy_frames = np.histogram(a=bin_vector[inclusion_ts], bins=2)[0]
+    # Digitize variable for info computations
+    if var.ndim > 1:
+        digitized = np.zeros(var.shape, dtype=int)
+        for i in range(len(bins)):
+            digitized[:, i] = np.digitize(var[:, i], bins[i], right=False)
+
+        bin_vector = np.zeros(len(digitized))
+        for i in range(len(digitized)):
+            bin_vector[i] = np.ravel_multi_index(
+                multi_index=digitized[i]-1, dims=bin_dims, mode='clip'
+            )-1  # Convert to 1D
+
+    else:
+        bin_vector = np.digitize(var, bins, right=False)-1
 
     # Establish the minimum occupancy
     min_occupancy = np.min(occupancy_frames)
 
     # Extract equal samples of each bin
     equal_samples = np.zeros(0,dtype=int)
-    for bin_i in range(2):
-        bin_samples = np.where(bin_vector[inclusion_ts]==bin_i)[0]
+    for bin_i in range(len(bins)-1):
+        bin_samples = np.where(np.logical_and(bin_vector==bin_i, inclusion_ts==True))[0]
         equal_samples = np.concatenate((equal_samples,np.random.choice(bin_samples,min_occupancy,replace=False)))
     
-    inclusion_ts[~equal_samples] = False
+    # Now ensure equal_samples is same length as inclusion_ts and boolean
+    inclusion_ts = np.zeros(len(inclusion_ts),dtype=bool)
+    inclusion_ts[equal_samples] = True
 
     return inclusion_ts

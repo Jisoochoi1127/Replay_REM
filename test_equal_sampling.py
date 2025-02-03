@@ -16,19 +16,26 @@ with open('params.yaml','r') as file:
 np.random.seed(params['seed'])
 
 #%% Load data
-data = load_data(mouse='pv1252',condition='HATD1', state='wake', params=params)
+data = load_data(mouse='pv1069',condition='HATD5', state='wake', params=params)
 
 #%% Plot exploration
 plt.plot(data['position'][:,0])
+
+#%%
+plt.plot(data['position'][data['running_ts'],0])
+
+#%%
+bin_vec = np.arange(
+                0, 100 + 25, 25
+            )
+
 #%% Extract equal samples
-timestamps = extract_equal_samples(data['position'][:,0], data['running_ts'])
+timestamps = extract_equal_samples(data['position'][:,0], 
+                                   bin_vec,
+                                   data['running_ts'])
 
 #%%
 plt.plot(data['position'][timestamps,0])
-
-
-#%%
-
 
 #%% Define conditions, dataset
 condition_list = ['LTD1','LTD5','HATD1','HATD5']
