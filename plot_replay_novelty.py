@@ -613,6 +613,31 @@ pg.ttest(
     paired=False
 )
 
+# #%% Plot speed as a function of novelty
+# plt.figure(figsize=(.75,1))
+# sns.boxenplot(
+#     data=df.query("condition=='LTD1' or condition=='LTD5'"),
+#     x='condition',
+#     y='replayEventSlope',
+#     order=['LTD1', 'LTD5'],
+#     palette=(['C3','gray']),
+#     showfliers=False
+#     #errorbar='se',
+#     #capsize=.2
+# )
+
+# plt.ylabel('Speed (cm.s$^-1$)')
+# plt.xticks([0,1],['Novel','Familiar'])
+# plt.xlabel('')
+# plt.xticks(rotation=90)
+# plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+# plt.savefig('../../output_REM/novelty_bayesian_speeds.pdf')
+
+#%%
+mean_speed = df.query("condition=='LTD5' or condition=='LTD5'")['replayEventSlope'].mean()
+SEM_speed = df.query("condition=='LTD5' or condition=='LTD5'")['replayEventSlope'].sem()
+print(f'Average speed: {mean_speed} +/- {SEM_speed}')
+
 #%% Plot jumpiness as a function of novelty
 plt.figure(figsize=(.75,1))
 sns.barplot(
