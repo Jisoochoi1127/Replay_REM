@@ -16,6 +16,67 @@ plt.style.use("plot_style.mplstyle")
 with open("params.yaml", "r") as file:
     params = yaml.full_load(file)
 
+#%% Assembly replay data from table
+df = pd.read_csv(
+    os.path.join(params['path_to_output'], 'assembly_HAT_results.csv')
+)
+
+#%% Plot results
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    data=df.query("session=='LTD5' or session=='HATD1'"),
+    x='session',
+    hue='session',
+    y='Post_rate',
+    order=['LTD5', 'HATD1'],
+    palette=(['C0','C4']),
+    errorbar='se',
+    capsize=.2
+)
+
+# sns.stripplot(
+#     data=df.query("session=='LTD5' or session=='HATD1'"),
+#     x='session',
+#     hue='session',
+#     y='Post_rate',
+#     order=['LTD5', 'HATD1'],
+#     palette=(['C0','C4']),
+#     size=2
+# )
+plt.xticks([0,1],['Control','Anxiety'],rotation=90)
+plt.xlabel('')
+plt.ylabel('Reactivation\nper min')
+plt.savefig("../../output_REM/anxiety_assembly_rate.pdf")
+
+#%% STATS
+pg.ttest(
+    x=df.query("session=='LTD5'")['Post_rate'],
+    y=df.query("session=='HATD1'")['Post_rate'],
+)
+
+#%% Plot reactivation locations
+plt.figure(figsize=(1,.75))
+sns.histplot(
+    data=df.query("session=='LTD5' or session=='HATD1'"),
+    x='trk_peak',
+    hue='session',
+    #y='session',
+    #order=['LTD5', 'HATD1'],
+    palette=(['C0','C4']),
+    legend=False
+)
+#plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+#plt.yticks([0,1],['Control','Anxiety'])
+plt.xlabel('')
+plt.ylabel('Location (cm)')
+
+plt.savefig("../../output_REM/anxiety_assembly_locations.pdf")
+
+
+
+
+
+
 #%% Assemblies
 results_dir = params['path_to_output']+"/assembly"
 resultsList = os.listdir(results_dir)
