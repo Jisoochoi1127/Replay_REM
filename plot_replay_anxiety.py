@@ -64,22 +64,40 @@ SEM_familiar = df.query("session=='LTD5'")['Post_rate'].sem()
 print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% Plot reactivation locations
-plt.figure(figsize=(1,.75))
+plt.figure(figsize=(1.25,.75))
 sns.histplot(
     data=df.query("session=='LTD5' or session=='HATD1'"),
     x='trk_peak',
     hue='session',
-    #y='session',
-    #order=['LTD5', 'HATD1'],
-    palette=(['C0','C4']),
-    legend=False
+    hue_order=['LTD5', 'HATD1'],
+    palette=['C0','C4'],
+    stat='density',
+    legend=False,
+    element='step'
 )
-#plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
-#plt.yticks([0,1],['Control','Anxiety'])
-plt.xlabel('')
-plt.ylabel('Location (cm)')
-
+plt.xlabel('Location (cm)')
 plt.savefig("../../output_REM/anxiety_assembly_locations.pdf")
+
+
+
+
+
+
+# sns.histplot(
+#     data=df.query("session=='LTD5' or session=='HATD1'"),
+#     x='trk_peak',
+#     hue='session',
+#     #y='session',
+#     #order=['LTD5', 'HATD1'],
+#     palette=(['C0','C4']),
+#     legend=False
+# )
+# #plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+# #plt.yticks([0,1],['Control','Anxiety'])
+# plt.xlabel('')
+# plt.ylabel('Location (cm)')
+
+
 
 
 
