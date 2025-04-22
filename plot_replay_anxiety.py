@@ -22,7 +22,7 @@ df = pd.read_csv(
 )
 
 #%% Plot results
-plt.figure(figsize=(.75,1))
+plt.figure(figsize=(.5,1))
 sns.barplot(
     data=df.query("session=='LTD5' or session=='HATD1'"),
     x='session',
@@ -53,6 +53,15 @@ pg.ttest(
     x=df.query("session=='LTD5'")['Post_rate'],
     y=df.query("session=='HATD1'")['Post_rate'],
 )
+
+#%% DESCRIPTIVES
+mean_anxiety = df.query("session=='HATD1'")['Post_rate'].mean()
+SEM_anxiety = df.query("session=='HATD1'")['Post_rate'].sem()
+print(f'Anxiety: {mean_anxiety} +/- {SEM_anxiety}')
+
+mean_familiar = df.query("session=='LTD5'")['Post_rate'].mean()
+SEM_familiar = df.query("session=='LTD5'")['Post_rate'].sem()
+print(f'Familiar: {mean_familiar} +/- {SEM_familiar}')
 
 #%% Plot reactivation locations
 plt.figure(figsize=(1,.75))
