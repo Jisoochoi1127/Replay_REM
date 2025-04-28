@@ -277,6 +277,7 @@ for file_name in tqdm(resultsList):
             {
                 "mouse": h5_file["mouse"][0].decode("utf-8"),
                 "condition": h5_file["condition"][0].decode("utf-8"),
+                "avgNumNeurons": h5_file["A_sig_cells"][()].sum(axis=1).mean(),
                 "numSigEvents": np.sum(h5_file['post_rem_A_sig'][()]==1),
                 "numAssemblies": np.max(h5_file['post_rem_A_ID']),
                 "meanReactPerAssembly": np.mean(np.unique(h5_file['post_rem_A_ID'][()],return_counts=True)),
@@ -305,6 +306,10 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(data_list_num_events)    
+
+#%% Average number of events per mouse
+print("Avg num events per mouse: " + str(df_numEvents.query("condition=='LTD1'")['numSigEvents'].mean()))
+print("Avg num cells : " + str(df_numEvents.query("condition=='LTD1'")['avgNumNeurons'].mean()))
 
 #%% Plot awake assemblies
 plt.figure(figsize=(.75,1))
@@ -532,6 +537,9 @@ df = pd.DataFrame(data_list)
 df_numEvents = pd.DataFrame(num_event_list)
 df_numEvents = df_numEvents.query("Type=='replay'")
 
+#%%
+print("Avg Bayesian rep events: " + str(df_numEvents.query('condition=="LTD1"')['numReplayEvents'].mean()))
+
 #%% Plot number of events per condition
 plt.figure(figsize=(.75,1))
 sns.barplot(
@@ -701,6 +709,8 @@ resultsList=os.listdir(results_dir)
 
 #%%
 data_list = []
+event_data_list = []
+
 for file_name in resultsList:
     if (
         file_name.startswith('seqReplayResults_')
@@ -715,25 +725,6 @@ for file_name in resultsList:
                          )
         numFrames = data['binaryData'].shape[0]
         recordingLength = numFrames/params['sampling_frequency']
-
-        # Per event analysis
-        # for i in range(len(h5_file["replay_locs"][()])):
-        #     data_list.append(  # This will create one list entry per cell
-        #         {
-        #             "eventID": i,
-        #             "mouse": h5_file["mouse"][()].decode("utf-8"),
-        #             "condition": h5_file["condition"][()].decode("utf-8"),
-        #             "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
-        #             "replayEventTime": h5_file['replay_locs'][i]/params['sampling_frequency'],
-        #             "replayEventScore": h5_file['replay_score'][i],
-        #             "replayEventJumpiness": h5_file['replay_jumpiness'][i],
-        #             "replayEventLength": h5_file['replay_length'][i],
-        #             "replayEventSlope": abs(h5_file['replay_slope'][i])
-        #         }
-        #     )
-
-
-
 
         data_list.append( #This will create one list entry per cell
                 {
@@ -756,6 +747,9 @@ for file_name in resultsList:
         h5_file.close()
 
 df_replay = pd.DataFrame(data_list)
+
+#%%
+print("Avg seqNMF replay events: " + str(df_replay.query('condition=="LTD1"')['S1_numSeqs'].mean()))
 
 #%%
 df_replay_stats=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
