@@ -247,10 +247,19 @@ plt.savefig("../../output_REM/preplay_seqNMF_example.pdf")
 results_dir = '../../output_REM/seqNMF'
 resultsList=os.listdir(results_dir)
 
+#%%
 data_list = []
+event_data_list = []
 for file_name in resultsList:
     if file_name.startswith('seqReplayResults_') and file_name.endswith('.h5'): # Only include seqResults, not replay results
         h5_file = h5py.File(os.path.join(results_dir,file_name))
+        data = load_data(h5_file["mouse"][()].decode("utf-8"),
+                         h5_file["condition"][()].decode("utf-8"),
+                         'REMpost',
+                         params
+                         )
+        numFrames = data['binaryData'].shape[0]
+        recordingLength = numFrames/params['sampling_frequency']
         data_list.append( #This will create one list entry per cell
                 {
                     'state_ref':h5_file['state_ref'][()].decode("utf-8"),
@@ -259,6 +268,8 @@ for file_name in resultsList:
                     'mouse':h5_file['mouse'][()].decode("utf-8"),
                     'S1_numSeqs':h5_file['S1_numSeqs'][()],
                     'S2_numSeqs':h5_file['S2_numSeqs'][()],
+                    'S1_freq':h5_file['S1_numSeqs'][()]/recordingLength,
+                    'S2_freq':h5_file['S2_numSeqs'][()]/recordingLength,
                     'S1_score':h5_file['S1_score'][()],
                     'S2_score':h5_file['S2_score'][()],
                     'S1_pvalue':h5_file['S1_pvalue'][()],
@@ -272,6 +283,9 @@ for file_name in resultsList:
 df_replay = pd.DataFrame(data_list)
 df_replay_stats=df_replay.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
 
+#%%
+print("Avg seqNMF replay events: " + str(df_replay.query('condition=="LTD1"')['S1_freq'].mean()))
+print("Avg seqNMF replay events: " + str(df_replay.query('condition=="LTD1"')['S1_freq'].sem()))
 #%%
 plt.figure(figsize=(1,.75))
 sns.heatmap(data=df_replay_stats.query("condition=='LTD1'").pivot_table(
