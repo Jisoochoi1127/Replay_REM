@@ -31,18 +31,20 @@ sns.barplot(
     order=['LTD5', 'HATD1'],
     palette=(['C0','C4']),
     errorbar='se',
+    fill=False,
     capsize=.2
 )
 
-# sns.stripplot(
-#     data=df.query("session=='LTD5' or session=='HATD1'"),
-#     x='session',
-#     hue='session',
-#     y='Post_rate',
-#     order=['LTD5', 'HATD1'],
-#     palette=(['C0','C4']),
-#     size=2
-# )
+sns.stripplot(
+    data=df.query("session=='LTD5' or session=='HATD1'"),
+    x='session',
+    hue='session',
+    y='Post_rate',
+    order=['LTD5', 'HATD1'],
+    palette=(['C0','C4']),
+    alpha=.2,
+    size=1,
+)
 plt.xticks([0,1],['Control','Anxiety'],rotation=90)
 plt.xlabel('')
 plt.ylabel('Reactivation\nper min')
@@ -77,11 +79,6 @@ sns.histplot(
 )
 plt.xlabel('Location (cm)')
 plt.savefig("../../output_REM/anxiety_assembly_locations.pdf")
-
-
-
-
-
 
 # sns.histplot(
 #     data=df.query("session=='LTD5' or session=='HATD1'"),
@@ -484,11 +481,24 @@ sns.barplot(
     data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
     x='Zone',
     y='Median posterior',
+    fill=False,
     hue='Condition',
     hue_order=['LTD5', 'HATD1'],
     palette = ['C0','C4'],
     errorbar='se',
     capsize=.2
+    )
+
+sns.stripplot(
+    data=df.query("Condition =='LTD5' or Condition=='HATD1'"),
+    x='Zone',
+    y='Median posterior',
+    hue='Condition',
+    hue_order=['LTD5', 'HATD1'],
+    palette = ['C0','C4'],
+    alpha=.2,
+    size=1,
+    dodge=True
     )
 
 plt.ylim(.023,.026)
@@ -585,9 +595,19 @@ sns.barplot(
     y='numSeqs',
     x='seqType',
     palette=(['gray','C4']),
-    # showfliers=False
+    fill=False,
     errorbar='se',
     capsize=.2
+)
+sns.stripplot(
+    data=df_replay_stats.query("condition == 'LTD5' or condition == 'HATD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    hue='condition',
+    y='numSeqs',
+    x='seqType',
+    palette=(['gray','C4']),
+    dodge=True,
+    size=1,
+    alpha=.2
 )
 
 plt.xticks([0,1],['S1', 'S2'])

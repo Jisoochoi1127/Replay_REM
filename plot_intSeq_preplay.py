@@ -177,38 +177,38 @@ pg.ttest(
     paired=True)
 
 #%% Load example
-with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
-    selected_neurons = f['place_cells'][()]
-# data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='wake', params=params)
-data_REMpre = load_data(mouse='pv1060', condition='LTD1', state='REMpre', params=params)
+# with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
+#     selected_neurons = f['place_cells'][()]
+# # data_LTD1 = load_data(mouse='pv1060', condition='LTD1', state='wake', params=params)
+# data_REMpre = load_data(mouse='pv1060', condition='LTD1', state='REMpre', params=params)
 
-#%% Plot example
-plt.figure(figsize=(3,1))
-plt.imshow(
-    data_REMpre['binaryData'][:,selected_neurons].T,
-    interpolation='none',
-    aspect='auto',
-    cmap='Blues',
-    rasterized=True,
-    vmin=0,
-    vmax=1
-)
-event_times = df.query("mouse=='pv1060' and replayEventID==8 and condition=='LTD1'")['replayEventTime']
+# #%% Plot example
+# plt.figure(figsize=(3,1))
+# plt.imshow(
+#     data_REMpre['binaryData'][:,selected_neurons].T,
+#     interpolation='none',
+#     aspect='auto',
+#     cmap='Blues',
+#     rasterized=True,
+#     vmin=0,
+#     vmax=1
+# )
+# event_times = df.query("mouse=='pv1060' and replayEventID==8 and condition=='LTD1'")['replayEventTime']
 
-for key in event_times.keys():
-    timeStamp = event_times[key]*30
-    plt.plot([timeStamp, timeStamp],[-10,0],
-             color='C4')
-plt.xlim(0,2700)
-plt.xticks([0,900,1800,2700],[0,30,60,90])
-plt.xlabel('Time (s)')
-plt.ylabel('Neuron ID')
-plt.yticks([0,128,256])
-plt.title('Pre-task REM (naive)')
-plt.savefig("../../output_REM/preplay_assembly_example.pdf")
+# for key in event_times.keys():
+#     timeStamp = event_times[key]*30
+#     plt.plot([timeStamp, timeStamp],[-10,0],
+#              color='C4')
+# plt.xlim(0,2700)
+# plt.xticks([0,900,1800,2700],[0,30,60,90])
+# plt.xlabel('Time (s)')
+# plt.ylabel('Neuron ID')
+# plt.yticks([0,128,256])
+# plt.title('Pre-task REM (naive)')
+# plt.savefig("../../output_REM/preplay_assembly_example.pdf")
 
 #%% SeqNMF
-# Load example
+# Load preplay example
 mouse = 'pv1060'
 with h5py.File(os.path.join(params['path_to_output'],"neuron_selection", "selected_neurons_LTD1_pv1060.h5")) as f:
     selected_neurons = f['place_cells'][()]
@@ -242,6 +242,41 @@ plt.ylabel('Neuron ID')
 plt.yticks([0,128,256])
 plt.title('Pre-task REM (naive)')
 plt.savefig("../../output_REM/preplay_seqNMF_example.pdf")
+
+#%% Evaluate spatial location of neurons replayed in sequence
+# Load SPFs for that session
+with h5py.File(os.path.join(params['path_to_dataset'],f"{mouse}", "LTD1", "SFP.mat")) as f:
+    SFPs = f['SFP'][()]
+
+# Focus analysis on identified place cells
+selected_SFPs = SFPs[:,:,selected_neurons]
+
+# Compute average activity for each cell (output=1val per neuron) for each sequence
+seq1_vals = np.max(W_ref[seqSortingIndex,0,:],axis=1)
+seq2_vals = np.max(W_ref[seqSortingIndex,1,:],axis=1)
+
+# Create background (will be grayscale)
+background_cells = np.max(SFPs,axis=2).T
+
+# Factorize value to SFPs and project into 2D plane for each sequence
+seq1_cells = np.max(selected_SFPs[:,:,0:127],axis=2).T
+seq2_cells = np.max(selected_SFPs[:,:,128:255],axis=2).T
+
+# Final image
+final_projection = np.zeros((SFPs.shape[1],SFPs.shape[0],3))
+final_projection[:,:,0] = background_cells/np.max(background_cells[:])*0.5
+final_projection[:,:,1] = background_cells/np.max(background_cells[:])*0.5
+final_projection[:,:,2] = background_cells/np.max(background_cells[:])*0.5
+
+final_projection[:,:,0] += seq1_cells/np.max(seq1_cells[:])*0.8
+final_projection[:,:,2] += seq1_cells/np.max(seq1_cells[:])*0.8
+
+final_projection[:,:,1] += seq2_cells/np.max(seq2_cells[:])*0.8
+
+# Plot results
+plt.imshow(final_projection)
+plt.axis('off')
+plt.savefig("../../output_REM/preplay_spatial_footprints.pdf")
 
 #%% Analysis
 results_dir = '../../output_REM/seqNMF'
