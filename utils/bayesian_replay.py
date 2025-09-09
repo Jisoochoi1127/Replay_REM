@@ -99,7 +99,6 @@ def extract_raw_linear_replay(sorted_binary, params):
 
     shuffled_active_neuron = np.zeros((params['numShuffles'],len(sorted_binary)))*np.nan
 
-    
     for shuffle_i in range(params['numShuffles']):
         # Shuffle cell identities as recommended in Foster, 2017
         cellIdx = np.arange(sorted_binary.shape[1])
@@ -117,30 +116,32 @@ def extract_raw_linear_replay(sorted_binary, params):
     while currentWindowIdx[-1]<len(sorted_binary):
         shuffled_maps = np.zeros((params['numShuffles'],len(sorted_binary)))*np.nan
         # For each window, compute score, jumpiness, portion replayed
-        actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
-            currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
-            active_neuron[currentWindowIdx]
-            )
 
-        # Same for shuffled
-        shuffled_score = np.zeros(params['numShuffles'])
-        shuffled_jumpiness = np.zeros(params['numShuffles'])
-        shuffled_portion = np.zeros(params['numShuffles'])
-        for shuffle_i in range(params['numShuffles']):
-            shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(
-                currentWindowIdx/params['sampling_frequency'],
-                shuffled_active_neuron[shuffle_i,currentWindowIdx]
+        if sum(~np.isnan(active_neuron[currentWindowIdx]))>0: # assert that window contains 'some' activity
+            actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
+                currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
+                active_neuron[currentWindowIdx]
                 )
-    
-        # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
-        if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
-            if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
-                replayLocs.append(currentWindowIdx[0])
-                replayScore.append(actual_score)
-                replayJumpiness.append(actual_jumpiness)
-                replayPortion.append(actual_portion)
-                replaySlope.append(actual_slope)
+
+            # Same for shuffled
+            shuffled_score = np.zeros(params['numShuffles'])
+            shuffled_jumpiness = np.zeros(params['numShuffles'])
+            shuffled_portion = np.zeros(params['numShuffles'])
+            for shuffle_i in range(params['numShuffles']):
+                shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(
+                    currentWindowIdx/params['sampling_frequency'],
+                    shuffled_active_neuron[shuffle_i,currentWindowIdx]
+                    )
         
-        currentWindowIdx+=params['stepSize'] # Step forward
+            # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
+            if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
+                if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
+                    replayLocs.append(currentWindowIdx[0])
+                    replayScore.append(actual_score)
+                    replayJumpiness.append(actual_jumpiness)
+                    replayPortion.append(actual_portion)
+                    replaySlope.append(actual_slope)
+            
+            currentWindowIdx+=params['stepSize'] # Step forward
 
     return replayLocs, replayScore, replayJumpiness, replayPortion, replaySlope
