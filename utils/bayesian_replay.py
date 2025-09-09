@@ -104,7 +104,7 @@ def extract_raw_linear_replay(sorted_binary, params):
         # Shuffle cell identities as recommended in Foster, 2017
         cellIdx = np.arange(sorted_binary.shape[1])
         np.random.shuffle(cellIdx)
-        shuffled_binary = sorted_binary[cellIdx,:]
+        shuffled_binary = sorted_binary[:,cellIdx]
         
         # Compute argmax on shuffled data
         shuffled_active_neuron[shuffle_i,:] = np.argmax(shuffled_binary,axis=1).astype('float') # idetify active neuron
