@@ -1,6 +1,7 @@
 # %% Imports
 import numpy as np
 from numpy import polyfit
+
 #%%
 def linear_fit(time_vec, position):
     # Assess replay length
@@ -12,11 +13,16 @@ def linear_fit(time_vec, position):
     position = position[~nanIdx]
 
     # Compute replay score
-    p, residuals, _, _, _ = polyfit(x=time_vec, y=position, deg=1, full=True)
-    score = 1 - residuals[0]/((len(position)-1) * np.var(position))
-    jumpiness = np.nanmax(np.diff(position)) # Maximum jump across two frames
-    slope = p[0]
-
+    score = np.nan
+    jumpiness = np.nan
+    slope = np.nan
+    if len(position)>0:
+        p, residuals, _, _, _ = polyfit(x=time_vec, y=position, deg=1, full=True)
+        if len(residuals)>0:
+            score = 1 - residuals[0]/((len(position)-1) * np.var(position))
+            jumpiness = np.nanmax(np.diff(position)) # Maximum jump across two frames
+            slope = p[0]
+        
     return score, jumpiness, portion_window, slope
 
 def extract_linear_replay(posterior_probs, params):
@@ -52,6 +58,7 @@ def extract_linear_replay(posterior_probs, params):
     currentWindowIdx = np.arange(params['windowSize'])
 
     while currentWindowIdx[-1]<len(posterior_probs):
+
         # For each window, compute score, jumpiness, portion replayed
         actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
             currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
@@ -117,31 +124,30 @@ def extract_raw_linear_replay(sorted_binary, params):
         shuffled_maps = np.zeros((params['numShuffles'],len(sorted_binary)))*np.nan
         # For each window, compute score, jumpiness, portion replayed
 
-        if sum(~np.isnan(active_neuron[currentWindowIdx]))>0: # assert that window contains 'some' activity
-            actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
-                currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
-                active_neuron[currentWindowIdx]
-                )
+        actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
+            currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
+            active_neuron[currentWindowIdx]
+            )
 
-            # Same for shuffled
-            shuffled_score = np.zeros(params['numShuffles'])
-            shuffled_jumpiness = np.zeros(params['numShuffles'])
-            shuffled_portion = np.zeros(params['numShuffles'])
-            for shuffle_i in range(params['numShuffles']):
-                shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(
-                    currentWindowIdx/params['sampling_frequency'],
-                    shuffled_active_neuron[shuffle_i,currentWindowIdx]
-                    )
+        # Same for shuffled
+        shuffled_score = np.zeros(params['numShuffles'])
+        shuffled_jumpiness = np.zeros(params['numShuffles'])
+        shuffled_portion = np.zeros(params['numShuffles'])
+        for shuffle_i in range(params['numShuffles']):
+            shuffled_score[shuffle_i], shuffled_jumpiness[shuffle_i], shuffled_portion[shuffle_i], _ = linear_fit(
+                currentWindowIdx/params['sampling_frequency'],
+                shuffled_active_neuron[shuffle_i,currentWindowIdx]
+                )
+    
+        # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
+        if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
+            if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
+                replayLocs.append(currentWindowIdx[0])
+                replayScore.append(actual_score)
+                replayJumpiness.append(actual_jumpiness)
+                replayPortion.append(actual_portion)
+                replaySlope.append(actual_slope)
         
-            # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
-            if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
-                if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
-                    replayLocs.append(currentWindowIdx[0])
-                    replayScore.append(actual_score)
-                    replayJumpiness.append(actual_jumpiness)
-                    replayPortion.append(actual_portion)
-                    replaySlope.append(actual_slope)
-            
-            currentWindowIdx+=params['stepSize'] # Step forward
+        currentWindowIdx+=params['stepSize'] # Step forward
 
     return replayLocs, replayScore, replayJumpiness, replayPortion, replaySlope
