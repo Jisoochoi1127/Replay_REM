@@ -30,7 +30,9 @@ for condition, mouse in tqdm(
     ):
         # Load precomputed tuning curves and accessory data
         current_path = os.path.join(
-            params["path_to_output"], "equal_tuning", f"tuning_{condition}_{mouse}.h5" #GE 20250130: changed from tuning to equal_tuning
+            params["path_to_output"],
+            "equal_tuning",
+            f"tuning_{condition}_{mouse}.h5",  # GE 20250130: changed from tuning to equal_tuning
         )
         if os.path.exists(current_path):
             with h5py.File(current_path, "r") as f:
@@ -49,6 +51,39 @@ for condition, mouse in tqdm(
                 "r",
             ) as f:
                 selected_neurons = f["place_cells"][()]
+
+            # Pick different mouse for control
+            keep_going = False
+            while (
+                keep_going == False
+            ):  # ensure we are looking at two distinct mice for control
+                control_mouse = np.random.choice(mouse_list)
+                control_condition = np.random.choice(condition_list) # necessary if initial condition not available
+                control_path = os.path.join(
+                    params["path_to_output"],
+                    "equal_tuning",
+                    f"tuning_{control_condition}_{control_mouse}.h5",  # GE 20250130: changed from tuning to equal_tuning
+                )
+                if os.path.exists(control_path) and control_mouse != mouse:
+                    keep_going = True
+
+            # Load precomputed tuning curves and accessory data
+            with h5py.File(control_path, "r") as f:
+                control_tuning_curves = f["tuning_curves"][()]
+                control_marginal_likelihood = f["marginal_likelihood"][()]
+                # Use uniform prior
+                control_occupancy = np.ones(control_tuning_curves.shape[1]) / control_tuning_curves.shape[1]
+
+            # Load selected neurons
+            with h5py.File(
+                os.path.join(
+                    params["path_to_output"],
+                    "neuron_selection",
+                    f"selected_neurons_{control_condition}_{control_mouse}.h5",
+                ),
+                "r",
+            ) as f:
+                control_selected_neurons = f["place_cells"][()]
 
             # Load REMpre data
             data_REMpre = load_data(mouse, condition, "REMpre", params)
@@ -72,21 +107,41 @@ for condition, mouse in tqdm(
                 data_REMpost["binaryData"][:, selected_neurons],
             )
 
-            if params['filtWindowSize']>0:
+            # Decode REM using tuning curves from another mouse
+            control_REMpre_posterior_probs, _ = bayesian_decode(
+                control_tuning_curves[control_selected_neurons],
+                control_occupancy,
+                control_marginal_likelihood[control_selected_neurons],
+                data_REMpre["binaryData"][:, selected_neurons],
+            )
+
+            # Extract posterior probs on REMpost and save results
+            control_REMpost_posterior_probs, _ = bayesian_decode(
+                control_tuning_curves[control_selected_neurons],
+                control_occupancy,
+                control_marginal_likelihood[control_selected_neurons],
+                data_REMpost["binaryData"][:, selected_neurons],
+            )
+
+            if params["filtWindowSize"] > 0:
                 REMpre_posterior_probs = temporal_bayesian_filter(
-                    REMpre_posterior_probs,
-                    params['filtWindowSize']
-                    )
+                    REMpre_posterior_probs, params["filtWindowSize"]
+                )
                 REMpost_posterior_probs = temporal_bayesian_filter(
-                    REMpost_posterior_probs,
-                    params['filtWindowSize']
-                    )
+                    REMpost_posterior_probs, params["filtWindowSize"]
+                )
+                control_REMpre_posterior_probs = temporal_bayesian_filter(
+                    control_REMpre_posterior_probs, params["filtWindowSize"]
+                )
+                control_REMpost_posterior_probs = temporal_bayesian_filter(
+                    control_REMpost_posterior_probs, params["filtWindowSize"]
+                )
 
             # Save results
             with h5py.File(
                 os.path.join(
                     params["path_to_output"],
-                    "equal_posterior_probs", #GE 20250130: changed from posterior_probs to equal_posterior_probs
+                    "equal_posterior_probs",  # GE 20250130: changed from posterior_probs to equal_posterior_probs
                     f"posterior_probs_{condition}_{mouse}.h5",
                 ),
                 "w",
@@ -96,5 +151,13 @@ for condition, mouse in tqdm(
                 f.create_dataset("REMpre_posterior_probs", data=REMpre_posterior_probs)
                 f.create_dataset(
                     "REMpost_posterior_probs", data=REMpost_posterior_probs
+                )
+                f.create_dataset(
+                    "control_REMpre_posterior_probs",
+                    data=control_REMpre_posterior_probs,
+                )
+                f.create_dataset(
+                    "control_REMpost_posterior_probs",
+                    data=control_REMpost_posterior_probs,
                 )
 # %%
