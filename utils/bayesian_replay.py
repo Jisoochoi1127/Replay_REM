@@ -196,31 +196,7 @@ def extract_linear_replay_shuffle_types(posterior_probs, params):
         
         currentWindowIdx+=params['stepSize'] # Step forward
 
-    output_dict = {
-        'position_shuffle': {
-            'replayLocs_P': replayLocs_P, 
-            'replayScore_P':replayScore_P,
-            'replayJumpiness_P': replayJumpiness_P,
-            'replayPortion_P': replayPortion_P,
-            'replaySlope_P': replaySlope_P
-        },
-        'time_shuffle': {
-            'replayLocs_T': replayLocs_T, 
-            'replayScore_T': replayScore_T,
-            'replayJumpiness_T': replayJumpiness_T,
-            'replayPortion_T': replayPortion_T,
-            'replaySlope_T': replaySlope_T
-        },
-        'position_time_shuffle': {
-            'replayLocs_PT': replayLocs_PT, 
-            'replayScore_PT': replayScore_PT,
-            'replayJumpiness_PT': replayJumpiness_PT,
-            'replayPortion_PT': replayPortion_PT,
-            'replaySlope_PT': replaySlope_PT
-        }
-    }
-
-    return output_dict
+    return replayLocs_P, replayScore_P, replayJumpiness_P, replayPortion_P, replaySlope_P, replayLocs_T, replayScore_T, replayJumpiness_T, replayPortion_T, replaySlope_T, replayLocs_PT, replayScore_PT, replayJumpiness_PT, replayPortion_PT, replaySlope_PT
 
 def extract_raw_linear_replay(sorted_binary, params):
     np.random.seed(params['seed']) # For reproducibility

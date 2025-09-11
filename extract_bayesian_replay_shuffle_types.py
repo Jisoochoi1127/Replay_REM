@@ -25,12 +25,54 @@ for file_name in tqdm(resultsList):
                     posterior_probs = f[f'{state}_posterior_probs'][()]
                     posterior_control = f[f'control_{state}_posterior_probs'][()]
                     
-                    output_dict = extract_linear_replay_shuffle_types(posterior_probs, params)
-                    control_output_dict = extract_linear_replay_shuffle_types(posterior_control, params)
+                    (
+                        replayLocs_P,
+                        replayScore_P,
+                        replayJumpiness_P,
+                        replayPortion_P,
+                        replaySlope_P,
+                        replayLocs_T,
+                        replayScore_T,
+                        replayJumpiness_T,
+                        replayPortion_T,
+                        replaySlope_T,
+                        replayLocs_PT,
+                        replayScore_PT,
+                        replayJumpiness_PT,
+                        replayPortion_PT,
+                        replaySlope_PT
+                    ) = extract_linear_replay_shuffle_types(posterior_probs, params)
+                    (
+                        control_replayLocs_P,
+                        control_replayScore_P,
+                        control_replayJumpiness_P,
+                        control_replayPortion_P,
+                        control_replaySlope_P,
+                        control_replayLocs_T,
+                        control_replayScore_T,
+                        control_replayJumpiness_T,
+                        control_replayPortion_T,
+                        control_replaySlope_T,
+                        control_replayLocs_PT,
+                        control_replayScore_PT,
+                        control_replayJumpiness_PT,
+                        control_replayPortion_PT,
+                        control_replaySlope_PT
+                    ) = extract_linear_replay_shuffle_types(posterior_control, params)
                     
                     # Save results
                     with h5py.File(os.path.join(params['path_to_output'],"controlled_bayesian_replay", f'controlled_bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
                         f2.create_dataset('mouse', data=mouse)
                         f2.create_dataset('condition', data=condition)
-                        f2.create_dataset('output_dict', data=output_dict)
-                        f2.create_dataset('control_output_dict', data=control_output_dict)
+                        f2.create_dataset('replayLocs_P', data=replayLocs_P)
+                        f2.create_dataset('control_replayLocs_P', data=control_replayLocs_P)
+                        f2.create_dataset('replayScore_P', data=replayScore_P)
+                        f2.create_dataset('control_replayScore_P', data=control_replayScore_P)
+                        f2.create_dataset('replayLocs_T', data=replayLocs_T)
+                        f2.create_dataset('control_replayLocs_T', data=control_replayLocs_T)
+                        f2.create_dataset('replayScore_T', data=replayScore_T)
+                        f2.create_dataset('control_replayScore_T', data=control_replayScore_T)
+                        f2.create_dataset('replayLocs_PT', data=replayLocs_PT)
+                        f2.create_dataset('control_replayLocs_PT', data=control_replayLocs_PT)
+                        f2.create_dataset('replayScore_PT', data=replayScore_PT)
+                        f2.create_dataset('control_replayScore_PT', data=control_replayScore_PT)
