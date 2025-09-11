@@ -90,24 +90,21 @@ def extract_linear_replay(posterior_probs, params):
 
 def extract_linear_replay_shuffle_types(posterior_probs, params):
     np.random.seed(params['seed']) # For reproducibility
-
-    (
-        replayLocs_P, 
-        replayScore_P,
-        replayJumpiness_P,
-        replayPortion_P,
-        replaySlope_P,
-        replayLocs_T, 
-        replayScore_T,
-        replayJumpiness_T,
-        replayPortion_T,
-        replaySlope_T,
-        replayLocs_PT, 
-        replayScore_PT,
-        replayJumpiness_PT,
-        replayPortion_PT,
-        replaySlope_PT,
-        ) = []
+    replayLocs_P = []
+    replayScore_P = []
+    replayJumpiness_P = []
+    replayPortion_P = []
+    replaySlope_P = []
+    replayLocs_T = []
+    replayScore_T = []
+    replayJumpiness_T = []
+    replayPortion_T = []
+    replaySlope_T = []
+    replayLocs_PT = [] 
+    replayScore_PT = []
+    replayJumpiness_PT = []
+    replayPortion_PT = []
+    replaySlope_PT = []
 
     positionIdx = np.arange(posterior_probs.shape[0])
     locationIdx = np.arange(posterior_probs.shape[1]) # Will be used to shuffle
@@ -125,7 +122,8 @@ def extract_linear_replay_shuffle_types(posterior_probs, params):
         np.random.shuffle(positionIdx)
         shuffled_posteriors_T = posterior_probs[:,locationIdx] # time only
         shuffled_posteriors_P = posterior_probs[positionIdx,:] # position only
-        shuffled_posteriors_PT = posterior_probs[positionIdx,locationIdx] # time and position
+        shuffled_posteriors_PT = posterior_probs[positionIdx,:] # position...
+        shuffled_posteriors_PT = shuffled_posteriors_PT[:,locationIdx] # ... and time
         
         # Compute argmax on shuffled data
         shuffled_maps_P[shuffle_i,:] = (np.argmax(shuffled_posteriors_P,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
@@ -144,17 +142,15 @@ def extract_linear_replay_shuffle_types(posterior_probs, params):
             )
 
         # Same for shuffled
-        (
-            shuffled_score_P, 
-            shuffled_jumpiness_P, 
-            shuffled_portion_P,
-            shuffled_score_T, 
-            shuffled_jumpiness_T, 
-            shuffled_portion_T,
-            shuffled_score_PT, 
-            shuffled_jumpiness_PT, 
-            shuffled_portion_PT,
-         ) = np.zeros(params['numShuffles'])
+        shuffled_score_P = np.zeros(params['numShuffles']) 
+        shuffled_jumpiness_P = np.zeros(params['numShuffles']) 
+        shuffled_portion_P = np.zeros(params['numShuffles']) 
+        shuffled_score_T = np.zeros(params['numShuffles']) 
+        shuffled_jumpiness_T = np.zeros(params['numShuffles']) 
+        shuffled_portion_T = np.zeros(params['numShuffles']) 
+        shuffled_score_PT = np.zeros(params['numShuffles']) 
+        shuffled_jumpiness_PT = np.zeros(params['numShuffles']) 
+        shuffled_portion_PT = np.zeros(params['numShuffles'])
 
         for shuffle_i in range(params['numShuffles']):
             shuffled_score_P[shuffle_i], shuffled_jumpiness_P[shuffle_i], shuffled_portion_P[shuffle_i], _ = linear_fit(
