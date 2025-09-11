@@ -88,6 +88,143 @@ def extract_linear_replay(posterior_probs, params):
 
     return replayLocs, replayScore, replayJumpiness, replayPortion, replaySlope
 
+def extract_linear_replay_shuffle_types(posterior_probs, params):
+    np.random.seed(params['seed']) # For reproducibility
+
+    (
+        replayLocs_P, 
+        replayScore_P,
+        replayJumpiness_P,
+        replayPortion_P,
+        replaySlope_P,
+        replayLocs_T, 
+        replayScore_T,
+        replayJumpiness_T,
+        replayPortion_T,
+        replaySlope_T,
+        replayLocs_PT, 
+        replayScore_PT,
+        replayJumpiness_PT,
+        replayPortion_PT,
+        replaySlope_PT,
+        ) = []
+
+    positionIdx = np.arange(posterior_probs.shape[0])
+    locationIdx = np.arange(posterior_probs.shape[1]) # Will be used to shuffle
+    # Compute actual maximum a posteriori from posterior probabilities, convert to cm
+    actual_map = (np.argmax(posterior_probs,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+
+    # Shuffle posteriors, extract shuffled maps
+    shuffled_maps_T = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan #shuffle time
+    shuffled_maps_P = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan #shuffle position
+    shuffled_maps_PT = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan #shuffle time and position
+    
+    for shuffle_i in range(params['numShuffles']):
+        # Shuffle position
+        np.random.shuffle(locationIdx)
+        np.random.shuffle(positionIdx)
+        shuffled_posteriors_T = posterior_probs[:,locationIdx] # time only
+        shuffled_posteriors_P = posterior_probs[positionIdx,:] # position only
+        shuffled_posteriors_PT = posterior_probs[positionIdx,locationIdx] # time and position
+        
+        # Compute argmax on shuffled data
+        shuffled_maps_P[shuffle_i,:] = (np.argmax(shuffled_posteriors_P,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+        shuffled_maps_T[shuffle_i,:] = (np.argmax(shuffled_posteriors_T,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+        shuffled_maps_PT[shuffle_i,:] = (np.argmax(shuffled_posteriors_PT,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+
+    ## Sliding window analysis
+    # Initialize first window
+    currentWindowIdx = np.arange(params['windowSize'])
+    while currentWindowIdx[-1]<len(posterior_probs):
+
+        # For each window, compute score, jumpiness, portion replayed
+        actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
+            currentWindowIdx/params['sampling_frequency'], # Divide to compute slope in cm/s
+            actual_map[currentWindowIdx]
+            )
+
+        # Same for shuffled
+        (
+            shuffled_score_P, 
+            shuffled_jumpiness_P, 
+            shuffled_portion_P,
+            shuffled_score_T, 
+            shuffled_jumpiness_T, 
+            shuffled_portion_T,
+            shuffled_score_PT, 
+            shuffled_jumpiness_PT, 
+            shuffled_portion_PT,
+         ) = np.zeros(params['numShuffles'])
+
+        for shuffle_i in range(params['numShuffles']):
+            shuffled_score_P[shuffle_i], shuffled_jumpiness_P[shuffle_i], shuffled_portion_P[shuffle_i], _ = linear_fit(
+                currentWindowIdx/params['sampling_frequency'],
+                shuffled_maps_P[shuffle_i,currentWindowIdx]
+                )
+            shuffled_score_T[shuffle_i], shuffled_jumpiness_T[shuffle_i], shuffled_portion_T[shuffle_i], _ = linear_fit(
+                currentWindowIdx/params['sampling_frequency'],
+                shuffled_maps_T[shuffle_i,currentWindowIdx]
+                )
+            shuffled_score_PT[shuffle_i], shuffled_jumpiness_PT[shuffle_i], shuffled_portion_PT[shuffle_i], _ = linear_fit(
+                currentWindowIdx/params['sampling_frequency'],
+                shuffled_maps_PT[shuffle_i,currentWindowIdx]
+                )
+    
+        # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
+        # FOR POSITION
+        if actual_score>=np.percentile(shuffled_score_P, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness_P,5) and actual_portion>=np.percentile(shuffled_portion_P,95):
+            if not replayLocs_P or replayLocs_P[-1]+params['windowSize'] <= currentWindowIdx[0]:
+                replayLocs_P.append(currentWindowIdx[0])
+                replayScore_P.append(actual_score)
+                replayJumpiness_P.append(actual_jumpiness)
+                replayPortion_P.append(actual_portion)
+                replaySlope_P.append(actual_slope)
+
+        # FOR TIME
+        if actual_score>=np.percentile(shuffled_score_T, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness_T,5) and actual_portion>=np.percentile(shuffled_portion_T,95):
+            if not replayLocs_T or replayLocs_T[-1]+params['windowSize'] <= currentWindowIdx[0]:
+                replayLocs_T.append(currentWindowIdx[0])
+                replayScore_T.append(actual_score)
+                replayJumpiness_T.append(actual_jumpiness)
+                replayPortion_T.append(actual_portion)
+                replaySlope_T.append(actual_slope)
+
+        # FOR POSITION AND TIME
+        if actual_score>=np.percentile(shuffled_score_PT, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness_PT,5) and actual_portion>=np.percentile(shuffled_portion_PT,95):
+            if not replayLocs_PT or replayLocs_PT[-1]+params['windowSize'] <= currentWindowIdx[0]:
+                replayLocs_PT.append(currentWindowIdx[0])
+                replayScore_PT.append(actual_score)
+                replayJumpiness_PT.append(actual_jumpiness)
+                replayPortion_PT.append(actual_portion)
+                replaySlope_PT.append(actual_slope)
+        
+        currentWindowIdx+=params['stepSize'] # Step forward
+
+    output_dict = {
+        'position_shuffle': {
+            'replayLocs_P': replayLocs_P, 
+            'replayScore_P':replayScore_P,
+            'replayJumpiness_P': replayJumpiness_P,
+            'replayPortion_P': replayPortion_P,
+            'replaySlope_P': replaySlope_P
+        },
+        'time_shuffle': {
+            'replayLocs_T': replayLocs_T, 
+            'replayScore_T': replayScore_T,
+            'replayJumpiness_T': replayJumpiness_T,
+            'replayPortion_T': replayPortion_T,
+            'replaySlope_T': replaySlope_T
+        },
+        'position_time_shuffle': {
+            'replayLocs_PT': replayLocs_PT, 
+            'replayScore_PT': replayScore_PT,
+            'replayJumpiness_PT': replayJumpiness_PT,
+            'replayPortion_PT': replayPortion_PT,
+            'replaySlope_PT': replaySlope_PT
+        }
+    }
+
+    return output_dict
 
 def extract_raw_linear_replay(sorted_binary, params):
     np.random.seed(params['seed']) # For reproducibility
