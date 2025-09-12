@@ -37,7 +37,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Position",
                     "Decoding": "Actual",
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_P'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_P'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_P']) 
                 }
             )
         
@@ -48,7 +49,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Position",
                     "Decoding": "Control",
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_P'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_P'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_P'])
                 }
             )
         
@@ -59,7 +61,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Time",
                     "Decoding": "Actual",
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_T'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_T'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_T'])
                 }
             )
         
@@ -70,7 +73,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Time",
                     "Decoding": "Control",
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_T'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_T'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_T'])
                 }
             )
 
@@ -81,7 +85,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Position_Time",
                     "Decoding": "Actual",
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_PT'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_PT'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_PT'])
                 }
             )
         
@@ -92,7 +97,8 @@ for file_name in tqdm(resultsList):
                     "Type": "replay" if file_name.endswith("REMpost.h5") else "preplay",
                     "Shuffle": "Position_Time",
                     "Decoding": "Control",
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_PT'])) # num of actual events
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_PT'])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_PT'])
                 }
             )
         
@@ -126,3 +132,30 @@ plt.title('REM post')
 plt.xlabel('N events')
 #plt.ylabel('N')
 plt.savefig("../../output_REM/bayesian_control.pdf")
+
+# %% Plot results
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and condition=='LTD1'"),
+    x='replayScores',
+    y="Shuffle",
+    hue="Decoding",
+    legend=False,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and condition=='LTD1'"),
+    x='replayScores',
+    y="Shuffle",
+    hue="Decoding",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('R$^{2}$')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesian_control_scores.pdf")
+# %%
