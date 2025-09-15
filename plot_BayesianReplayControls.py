@@ -6,6 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import h5py
 import yaml
+import pingouin as pg
 from tqdm import tqdm
 
 plt.style.use("plot_style.mplstyle")
@@ -158,4 +159,10 @@ plt.title('REM post')
 plt.xlabel('R$^{2}$')
 #plt.ylabel('N')
 plt.savefig("../../output_REM/bayesian_control_scores.pdf")
+# %% STATS
+pg.anova(
+    data=df.query("Type=='replay' and condition=='LTD1'"),
+    dv='replayScores',
+    between=['Shuffle','Decoding']
+)
 # %%
