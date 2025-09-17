@@ -28,6 +28,7 @@ lambda_L1W: 0
 shift: True
 
 # Bayesian decoding
+FDR_method: 'None' # Can be 'None', 'Bonferroni', or 'HD'
 stepSize: 5 #step_size (in frames)
 windowSize: 15 # Time window (in frames)
 filtWindowSize: 2 # Time window for Bayesian temporal filtering. 0 for no filtering
