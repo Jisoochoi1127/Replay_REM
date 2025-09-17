@@ -27,7 +27,6 @@ def linear_fit(time_vec, position):
 
 def extract_linear_replay(posterior_probs, params):
     np.random.seed(params['seed']) # For reproducibility
-
     replayLocs = []
     replayScore = []
     replayJumpiness = []
@@ -56,8 +55,17 @@ def extract_linear_replay(posterior_probs, params):
     ## Sliding window analysis
     # Initialize first window
     currentWindowIdx = np.arange(params['windowSize'])
+    numWindows = np.floor((len(posterior_probs)-params['windowSize']-2)/params['stepSize']+1).astype('int')
+    
+    # FDR correction
+    match params['FDR_method']:
+        case 'None':
+            alpha = 5 # fifth percentile
+        case 'Bonferroni':
+            alpha = 5/numWindows # divide percentile by number of windows
 
     while currentWindowIdx[-1]<len(posterior_probs):
+        numWindows+=1 # Used at the end to perform Bonferroni correction
 
         # For each window, compute score, jumpiness, portion replayed
         actual_score, actual_jumpiness, actual_portion, actual_slope = linear_fit(
@@ -76,7 +84,7 @@ def extract_linear_replay(posterior_probs, params):
                 )
     
         # If scores and jumpiness exceed shuffled surrogate, append index and properties to variables
-        if actual_score>=np.percentile(shuffled_score, 95) and actual_jumpiness<=np.percentile(shuffled_jumpiness,5) and actual_portion>=np.percentile(shuffled_portion,95):
+        if actual_score>=np.percentile(shuffled_score, 100-alpha) and actual_jumpiness<=np.percentile(shuffled_jumpiness, alpha) and actual_portion>=np.percentile(shuffled_portion,100-alpha):
             if not replayLocs or replayLocs[-1]+params['windowSize'] <= currentWindowIdx[0]:
                 replayLocs.append(currentWindowIdx[0])
                 replayScore.append(actual_score)

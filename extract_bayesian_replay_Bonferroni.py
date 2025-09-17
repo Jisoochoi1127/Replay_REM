@@ -9,7 +9,7 @@ from utils.bayesian_replay import extract_linear_replay
 with open('params.yaml','r') as file:
     params = yaml.full_load(file)
 
-params['FDR_method'] = 'None' # Set this for the vanilla experiment / previous results
+params['FDR_method'] = 'Bonferroni' # Perform Bonferroni correction
 
 results_dir = params['path_to_output']+'/equal_posterior_probs' # GE 20250130: changed from posterior_probs to equal_posterior_probs
 resultsList=os.listdir(results_dir)
@@ -22,14 +22,14 @@ for file_name in tqdm(resultsList):
             condition = f['condition'][()].decode("utf-8")
 
             for state in ['REMpre', 'REMpost']:
-                if not os.path.exists(os.path.join(params['path_to_output'],"equal_bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5')):
+                if not os.path.exists(os.path.join(params['path_to_output'],"bayesian_replay_Bonferroni", f'bayesian_replay_{condition}_{mouse}_{state}.h5')):
                 # Load precomputed tuning curves and accessory data
                     posterior_probs = f[f'{state}_posterior_probs'][()]
                     
                     replayLocs, replayScore, replayJumpiness, replayPortion, replaySlope = extract_linear_replay(posterior_probs, params)
                 
                     # Save results
-                    with h5py.File(os.path.join(params['path_to_output'],"equal_bayesian_replay", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
+                    with h5py.File(os.path.join(params['path_to_output'],"bayesian_replay_Bonferroni", f'bayesian_replay_{condition}_{mouse}_{state}.h5'),'w') as f2:
                         f2.create_dataset('mouse', data=mouse)
                         f2.create_dataset('condition', data=condition)
                         f2.create_dataset('replay_locs', data=replayLocs)
