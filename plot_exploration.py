@@ -70,3 +70,5 @@ for condition, mouse in tqdm(
 
 plt.tight_layout()
 plt.savefig("../../output_REM/speed_thresholded_explorations.pdf")
+
+# %%

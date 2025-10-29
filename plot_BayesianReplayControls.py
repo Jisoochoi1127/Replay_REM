@@ -222,22 +222,22 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 
-# %% Plot results
+# %% Plot results: within vs across replay
 plt.figure(figsize=(2,1))
 sns.barplot(
-    data=df.query("Type=='replay' and condition=='LTD1' and Shuffle=='Position'"),
+    data=df.query("Type=='replay' and FDR=='None'"),
     x='replayEvents',
-    y='FDR',
     hue="Decoding",
+    y='Shuffle',
     legend=True,
     errorbar='se'
 )
 
 sns.stripplot(
-    data=df.query("Type=='replay' and condition=='LTD1' and Shuffle=='Position'"),
+    data=df.query("Type=='replay' and FDR=='None'"),
     x='replayEvents',
-    y="FDR",
     hue="Decoding",
+    y='Shuffle',
     legend=False,
     dodge=True,
     size=1
@@ -246,24 +246,26 @@ sns.stripplot(
 plt.title('REM post')
 plt.xlabel('N events')
 #plt.ylabel('N')
-plt.savefig("../../output_REM/bayesian_control.pdf")
+plt.savefig("../../output_REM/bayesianReplay_events_shuffleVScontrol.pdf")
 
-# %% Plot results
+#%% STATS
+
+# %% Plot results: within vs across replay
 plt.figure(figsize=(2,1))
 sns.barplot(
-    data=df.query("Type=='replay' and condition=='LTD1' and Shuffle=='Position'"),
+    data=df.query("Type=='replay' and FDR=='None'"),
     x='replayScores',
-    y="FDR",
     hue="Decoding",
+    y='Shuffle',
     legend=False,
     errorbar='se'
 )
 
 sns.stripplot(
-    data=df.query("Type=='replay' and condition=='LTD1' and Shuffle=='Position'"),
+    data=df.query("Type=='replay' and FDR=='None'"),
     x='replayScores',
-    y="FDR",
     hue="Decoding",
+    y='Shuffle',
     legend=False,
     dodge=True,
     size=1
@@ -272,11 +274,240 @@ sns.stripplot(
 plt.title('REM post')
 plt.xlabel('R$^{2}$')
 #plt.ylabel('N')
-plt.savefig("../../output_REM/bayesian_control_scores.pdf")
+plt.savefig("../../output_REM/bayesianReplay_R2_shuffleVScontrol.pdf")
+# %% STATS
+pg.anova(
+    data=df.query("Type=='replay' and FDR=='None' and replayScores>0.5"),
+    dv='replayEvents',
+    between=['Shuffle','Decoding']
+).round(4)
+
+# %% Plot results: LTD1 vs LTD5?
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and FDR=='None'"),
+    x='replayScores',
+    hue="Decoding",
+    y='Shuffle',
+    legend=False,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and FDR=='None'"),
+    x='replayScores',
+    hue="Decoding",
+    y='Shuffle',
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('R$^{2}$')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_R2_shuffleVScontrol.pdf")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# %% Plot results: within vs across replay
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and FDR=='None' and Shuffle=='Position_Time'"),
+    x='replayEvents',
+    y="Decoding",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and FDR=='None' and Shuffle=='Position_Time'"),
+    x='replayEvents',
+    y="Decoding",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_events_acrossVSwithin.pdf")
+
+#%% STATS
+
+# %% Plot results: within vs across replay
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and FDR=='None' and Shuffle=='Position_Time'"),
+    x='replayScores',
+    y="Decoding",
+    legend=False,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and FDR=='None' and Shuffle=='Position_Time'"),
+    x='replayScores',
+    y="Decoding",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('R$^{2}$')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_R2_acrossVSwithin.pdf")
 # %% STATS
 pg.anova(
     data=df.query("Type=='replay' and condition=='LTD1'"),
     dv='replayScores',
     between=['Shuffle','Decoding', 'FDR']
 ).round(4)
+
+#%% STATS
+
+# %% Plot results: noFDR vs Bonferroni
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time'"),
+    x='replayEvents',
+    y="FDR",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time'"),
+    x='replayEvents',
+    y="FDR",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_events_BonferroniVSnoFDR.pdf")
+# %% STATS
+
+# %% Plot results: noFDR vs Bonferroni
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time'"),
+    x='replayScores',
+    y="FDR",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time'"),
+    x='replayScores',
+    y="FDR",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_R2_BonferroniVSnoFDR.pdf")
+
+# %% STATS
+
+# %% Plot results: shuffle type
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='None'"),
+    x='replayEvents',
+    y="Shuffle",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='None'"),
+    x='replayEvents',
+    y="Shuffle",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_events_shuffleType.pdf")
+# %% STATS
+
+# %% Plot results: shuffle type
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='None'"),
+    x='replayScores',
+    y="Shuffle",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='None'"),
+    x='replayScores',
+    y="Shuffle",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_R2_shuffleType.pdf")
+
+# %% STATS
+
+# %% Plot results: most conservative caste
+plt.figure(figsize=(2,1))
+sns.barplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='Bonferroni' and Shuffle=='Time'"),
+    x='replayEvents',
+    y="condition",
+    legend=True,
+    errorbar='se'
+)
+
+sns.stripplot(
+    data=df.query("Type=='replay' and Decoding=='Actual' and FDR=='Bonferroni' and Shuffle=='Time'"),
+    x='replayEvents',
+    y="condition",
+    legend=False,
+    dodge=True,
+    size=1
+)
+
+plt.title('REM post')
+plt.xlabel('N events')
+#plt.ylabel('N')
+plt.savefig("../../output_REM/bayesianReplay_events_conservative.pdf")
+
 # %%
