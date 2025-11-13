@@ -222,33 +222,53 @@ for file_name in tqdm(resultsList):
 
 df = pd.DataFrame(data_list)
 
-# %% Plot results: within vs across replay
+# %% Plot results: Bonferroni correction for novelty
 plt.figure(figsize=(2,1))
 sns.barplot(
-    data=df.query("Type=='replay' and FDR=='None'"),
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time' and condition=='LTD1' or condition=='LTD5'"),
     x='replayEvents',
-    hue="Decoding",
-    y='Shuffle',
+    hue="condition",
+    y='FDR',
     legend=True,
     errorbar='se'
 )
 
 sns.stripplot(
-    data=df.query("Type=='replay' and FDR=='None'"),
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time' and condition=='LTD1' or condition=='LTD5'"),
     x='replayEvents',
-    hue="Decoding",
-    y='Shuffle',
+    hue="condition",
+    y='FDR',
     legend=False,
     dodge=True,
     size=1
 )
 
+# sns.pointplot(
+#     data=df.query("Type=='replay' and FDR=='None' and Shuffle=='Time'"),
+#     y='replayScores',
+#     x="Decoding",
+#     units='mouse',
+#     #estimator=None,
+#     #y='Shuffle',
+#     legend=False,
+#     dodge=True,
+#     #size=1
+# )
+
 plt.title('REM post')
 plt.xlabel('N events')
 #plt.ylabel('N')
-plt.savefig("../../output_REM/bayesianReplay_events_shuffleVScontrol.pdf")
+#plt.xlim(.4,.8)
+#plt.savefig("../../output_REM/bayesianReplay_events_shuffleVScontrol.pdf")
 
 #%% STATS
+pg.anova(
+    data=df.query("Type=='replay' and Decoding=='Actual' and Shuffle=='Position_Time' and condition=='LTD1' or condition=='LTD5'"),
+    dv='replayEvents',
+    between=['condition', 'FDR']
+).round(4)
+
+
 
 # %% Plot results: within vs across replay
 plt.figure(figsize=(2,1))
@@ -307,23 +327,6 @@ plt.title('REM post')
 plt.xlabel('R$^{2}$')
 #plt.ylabel('N')
 plt.savefig("../../output_REM/bayesianReplay_R2_shuffleVScontrol.pdf")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # %% Plot results: within vs across replay

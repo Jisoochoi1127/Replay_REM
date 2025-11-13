@@ -26,6 +26,8 @@ def linear_fit(time_vec, position):
     return score, jumpiness, portion_window, slope
 
 def extract_linear_replay(posterior_probs, params):
+    #THIS FUNCTION IS LEGACY, USE extract_linear_replay_shuffle_types INSTEAD
+    #SPECIFICALLY TO OBTAIN INDIVIDUAL P-VALUES
     np.random.seed(params['seed']) # For reproducibility
     replayLocs = []
     replayScore = []
