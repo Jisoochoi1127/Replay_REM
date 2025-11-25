@@ -64,7 +64,7 @@ for condition, mouse in tqdm(
                     "equal_tuning",
                     f"tuning_{control_condition}_{control_mouse}.h5",  # GE 20250130: changed from tuning to equal_tuning
                 )
-                if os.path.exists(control_path) and control_mouse != mouse:
+                if os.path.exists(control_path) and control_path != current_path:
                     keep_going = True
 
             # Load precomputed tuning curves and accessory data

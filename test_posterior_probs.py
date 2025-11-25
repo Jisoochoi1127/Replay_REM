@@ -3,7 +3,7 @@ import h5py
 import yaml
 import os
 from utils.helperFunctions import load_data
-from pycaan.functions.decoding import bayesian_decode, temporal_bayesian_filter
+from utils.bayesian_replay import extract_linear_replay_shuffle_types
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -16,55 +16,54 @@ with open("params.yaml", "r") as file:
 condition = 'LTD1'
 mouse = 'pv1069'
 
-#%%
-current_path = os.path.join(
-            params["path_to_output"], "tuning", f"tuning_{condition}_{mouse}.h5"
-        )
-        
-with h5py.File(current_path, "r") as f:
-    tuning_curves = f["tuning_curves"][()]
-    marginal_likelihood = f["marginal_likelihood"][()]
-    # Use uniform prior
-    occupancy = np.ones(tuning_curves.shape[1]) / tuning_curves.shape[1]
+with open('params.yaml','r') as file:
+    params = yaml.full_load(file)
 
-data_REMpost = load_data(mouse, condition, "REMpost", params)
+results_dir = params['path_to_output']+'/equal_posterior_probs' # GE 20250130: changed from posterior_probs to equal_posterior_probs
+resultsList=os.listdir(results_dir)
+
 
 #%%
-REMpost_posterior_probs, _ = bayesian_decode(
-                tuning_curves,
-                occupancy,
-                marginal_likelihood,
-                data_REMpost["binaryData"],
-            )
-#%%
-plt.imshow(REMpost_posterior_probs.T,aspect='auto',
-           interpolation='none')
+for file_name in tqdm(resultsList):
+    if file_name.startswith('posterior'):
+        with h5py.File(os.path.join(results_dir, file_name), 'r') as f:
+            mouse = f['mouse'][()].decode("utf-8")
+            condition = f['condition'][()].decode("utf-8")
+
+            for state in ['REMpre', 'REMpost']:
+                posterior_probs = f[f'{state}_posterior_probs'][()]
 
 #%%
-windowSize = params['filtWindowSize']
-smoothed_posteriors = np.zeros((REMpost_posterior_probs.shape))*np.nan
+
+(replayLocs_P,
+ replayScore_P,
+ replayJumpiness_P,
+ replayPortion_P,
+ replaySlope_P,
+ pvalue_P,
+ replayLocs_T,
+ replayScore_T,
+ replayJumpiness_T,
+ replayPortion_T,
+ replaySlope_T,
+ pvalue_T,
+ replayLocs_PT,
+ replayScore_PT,
+ replayJumpiness_PT,
+ replayPortion_PT,
+ replaySlope_PT,
+ pvalue_P
+ ) = extract_linear_replay_shuffle_types(posterior_probs, params)
 
 #%%
-posterior_probs = np.concatenate((
-        np.zeros((int(windowSize/2),REMpost_posterior_probs.shape[1])),
-        REMpost_posterior_probs,
-        np.zeros((int(windowSize/2),REMpost_posterior_probs.shape[1]))
-        ))
+plt.imshow(posterior_probs, interpolation=None, aspect='auto')
 
 #%%
-currentWindowIdx = np.arange(windowSize)
+nan_locs = np.max(np.isnan(posterior_probs),axis=1)
+actual_map = (np.argmax(posterior_probs,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+actual_map[np.isnan(nan_locs)] = np.nan # place back the nans
 
-for i in range(len(smoothed_posteriors)):
-    bayesian_step_prob = posterior_probs[currentWindowIdx]
-    smoothed_posteriors[i,:] = np.expm1(np.nansum(np.log1p(bayesian_step_prob),axis=0)) # This should be used instead of simple product to avoid numerical underflow
-    smoothed_posteriors[i,:] = smoothed_posteriors[i,:]/np.nansum(smoothed_posteriors[i,:]) # Normalize into a probability distribution
-    currentWindowIdx+=1 # Step forward
-
-
-
-# %%
-filtered_posteriors = temporal_bayesian_filter(
-                    REMpost_posterior_probs,
-                    params['filtWindowSize']
-                    )
+#%%
+plt.plot(actual_map)
+plt.xlim(0,1000)
 # %%

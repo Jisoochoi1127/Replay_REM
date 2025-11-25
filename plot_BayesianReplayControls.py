@@ -22,6 +22,9 @@ results_dir = params['path_to_output']+"/controlled_bayesian_replay"
 resultsList = os.listdir(results_dir)
 
 #%%
+alpha = 0.05
+
+#%%
 data_list = []
 
 for file_name in tqdm(resultsList):
@@ -40,14 +43,16 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Position",
                     "Decoding": "Actual",
                     "FDR": 'None',
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_P'][h5_file['pvalue_P'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['replayScore_P'][h5_file['pvalue_P'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_P'][h5_file['pvalue_P'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_P'][h5_file['pvalue_P'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_P'][h5_file['pvalue_P'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_P'][h5_file['pvalue_P'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_P'][h5_file['pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_P'][h5_file['pvalue_P'][()]<alpha]),
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['pvalue_P'][()])
+        bonferroni_alpha = alpha/len(h5_file['pvalue_P'][()])
         data_list.append(
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -59,6 +64,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['replayLocs_P'][h5_file['pvalue_P'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['replayScore_P'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['replayJumpiness_P'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_P'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_P'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
         
@@ -71,14 +78,16 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Position",
                     "Decoding": "Control",
                     'FDR':'None',
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_P'][h5_file['control_pvalue_P'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['control_replayScore_P'][h5_file['control_pvalue_P'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_P'][h5_file['control_pvalue_P'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_P'][h5_file['control_pvalue_P'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_P'][h5_file['control_pvalue_P'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_P'][h5_file['control_pvalue_P'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_P'][h5_file['control_pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_P'][h5_file['control_pvalue_P'][()]<alpha]),
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['control_pvalue_P'][()])
+        bonferroni_alpha = alpha/len(h5_file['control_pvalue_P'][()])
         data_list.append(
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -90,6 +99,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_P'][h5_file['control_pvalue_P'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['control_replayScore_P'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_P'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_P'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_P'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
 
@@ -102,14 +113,17 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Time",
                     "Decoding": "Actual",
                     'FDR':'None',
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_T'][h5_file['pvalue_T'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['replayScore_T'][h5_file['pvalue_T'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_T'][h5_file['pvalue_T'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_T'][h5_file['pvalue_T'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_T'][h5_file['pvalue_T'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_T'][h5_file['pvalue_T'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_T'][h5_file['pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_T'][h5_file['pvalue_P'][()]<alpha]),
+                    
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['pvalue_T'][()])
+        bonferroni_alpha = alpha/len(h5_file['pvalue_T'][()])
         data_list.append( 
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -121,6 +135,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['replayLocs_T'][h5_file['pvalue_T'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['replayScore_T'][h5_file['pvalue_T'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['replayJumpiness_T'][h5_file['pvalue_T'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_T'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_T'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
         
@@ -133,14 +149,16 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Time",
                     "Decoding": "Control",
                     'FDR':'None',
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_T'][h5_file['control_pvalue_T'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['control_replayScore_T'][h5_file['control_pvalue_T'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_T'][h5_file['control_pvalue_T'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_T'][h5_file['control_pvalue_T'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_T'][h5_file['control_pvalue_T'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_T'][h5_file['control_pvalue_T'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_T'][h5_file['control_pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_T'][h5_file['control_pvalue_P'][()]<alpha]),
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['control_pvalue_T'][()])
+        bonferroni_alpha = alpha/len(h5_file['control_pvalue_T'][()])
         data_list.append(
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -152,6 +170,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_T'][h5_file['control_pvalue_T'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['control_replayScore_T'][h5_file['control_pvalue_T'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_T'][h5_file['control_pvalue_T'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_T'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_T'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
 
@@ -164,14 +184,16 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Position_Time",
                     "Decoding": "Actual",
                     'FDR':'None',
-                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_PT'][h5_file['pvalue_PT'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['replayScore_PT'][h5_file['pvalue_PT'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_PT'][h5_file['pvalue_PT'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['replayLocs_PT'][h5_file['pvalue_PT'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['replayScore_PT'][h5_file['pvalue_PT'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['replayJumpiness_PT'][h5_file['pvalue_PT'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_PT'][h5_file['pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_PT'][h5_file['pvalue_P'][()]<alpha]),
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['pvalue_PT'][()])
+        bonferroni_alpha = alpha/len(h5_file['pvalue_PT'][()])
         data_list.append( 
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -183,6 +205,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['replayLocs_PT'][h5_file['pvalue_PT'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['replayScore_PT'][h5_file['pvalue_PT'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['replayJumpiness_PT'][h5_file['pvalue_PT'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['replayPortion_PT'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['replaySlope_PT'][h5_file['pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
         
@@ -195,14 +219,16 @@ for file_name in tqdm(resultsList):
                     "Shuffle": "Position_Time",
                     "Decoding": "Control",
                     'FDR':'None',
-                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_PT'][h5_file['control_pvalue_PT'][()]<0.05])), # num of actual events
-                    "replayScores": np.nanmean(h5_file['control_replayScore_PT'][h5_file['control_pvalue_PT'][()]<0.05]),
-                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_PT'][h5_file['control_pvalue_PT'][()]<0.05]),
+                    "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_PT'][h5_file['control_pvalue_PT'][()]<alpha])), # num of actual events
+                    "replayScores": np.nanmean(h5_file['control_replayScore_PT'][h5_file['control_pvalue_PT'][()]<alpha]),
+                    "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_PT'][h5_file['control_pvalue_PT'][()]<alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_PT'][h5_file['control_pvalue_P'][()]<alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_PT'][h5_file['control_pvalue_P'][()]<alpha]),
                 }
             )
         
         # Bonferroni
-        bonferroni_alpha = 0.05/len(h5_file['control_pvalue_PT'][()])
+        bonferroni_alpha = alpha/len(h5_file['control_pvalue_PT'][()])
         data_list.append(
                 {
                     "mouse": h5_file["mouse"][()].decode("utf-8"),
@@ -214,6 +240,8 @@ for file_name in tqdm(resultsList):
                     "replayEvents": sum(~np.isnan(h5_file['control_replayLocs_PT'][h5_file['control_pvalue_PT'][()]<bonferroni_alpha])), # num of actual events
                     "replayScores": np.nanmean(h5_file['control_replayScore_PT'][h5_file['control_pvalue_PT'][()]<bonferroni_alpha]),
                     "replayJumpiness": np.nanmean(h5_file['control_replayJumpiness_PT'][h5_file['control_pvalue_PT'][()]<bonferroni_alpha]),
+                    "replayPortion": np.nanmean(h5_file['control_replayPortion_PT'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
+                    "replaySlope": np.nanmean(h5_file['control_replaySlope_PT'][h5_file['control_pvalue_P'][()]<bonferroni_alpha]),
                 }
             )
         
@@ -274,7 +302,7 @@ pg.anova(
 plt.figure(figsize=(2,1))
 sns.barplot(
     data=df.query("Type=='replay' and FDR=='None'"),
-    x='replayScores',
+    x='replayEvents',
     hue="Decoding",
     y='Shuffle',
     legend=False,
@@ -283,7 +311,7 @@ sns.barplot(
 
 sns.stripplot(
     data=df.query("Type=='replay' and FDR=='None'"),
-    x='replayScores',
+    x='replayEvents',
     hue="Decoding",
     y='Shuffle',
     legend=False,

@@ -37,7 +37,9 @@ def extract_linear_replay(posterior_probs, params):
 
     locationIdx = np.arange(posterior_probs.shape[1]) # Will be used to shuffle
     # Compute actual maximum a posteriori from posterior probabilities, convert to cm
+    nan_locs = np.max(np.isnan(posterior_probs),axis=1)
     actual_map = (np.argmax(posterior_probs,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+    actual_map[np.isnan(nan_locs)] = np.nan # place back the nans
 
     # Shuffle posteriors, extract shuffled maps
     shuffled_maps = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan

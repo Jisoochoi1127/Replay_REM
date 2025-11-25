@@ -140,6 +140,12 @@ for file_name in resultsList:
                     'S2_score':h5_file['S2_score'][()],
                     'S1_pvalue':h5_file['S1_pvalue'][()],
                     'S2_pvalue':h5_file['S2_pvalue'][()],
+                    'across_S1_score':h5_file['across_S1_score'][()],
+                    'across_S2_score':h5_file['across_S2_score'][()],
+                    'across_S1_pvalue':h5_file['across_S1_pvalue'][()],
+                    'across_S2_pvalue':h5_file['across_S2_pvalue'][()],
+                    'across_S1_numSeqs':h5_file['across_S1_numSeqs'][()],
+                    'across_S2_numSeqs':h5_file['across_S2_numSeqs'][()],
                 }
             )
 
@@ -148,11 +154,56 @@ for file_name in resultsList:
 
 df_replay = pd.DataFrame(data_list)
 
-#%%
+#%% REVISIONS: compare with across
 df_replay_stats = df_replay
-df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs'],var_name='seqType')
+df_replay_stats=df_replay_stats.melt(id_vars=['state_ref','state_pred','mouse', 'condition'],value_name='numSeqs',value_vars=['S1_numSeqs', 'S2_numSeqs', 'across_S1_numSeqs', 'across_S2_numSeqs'], var_name='seqType')
+df_replay_stats['isAcross'] = df_replay_stats['seqType'].apply(
+    lambda x: 'Across' if x.startswith('across_') else 'Within'
+)
+df_replay_stats['Condition'] = df_replay_stats['seqType'].str.extract(r'(S[12])')
+df_replay_stats = df_replay_stats.drop(columns=['seqType'])
 
-# %% 
+#%% REVISIONS PLOT AGAINST ACROSS-CONTROL
+plt.figure(figsize=(.75,1))
+sns.barplot(
+    #data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    #x='Condition',
+    y='numSeqs',
+    x='isAcross',
+    palette=(['C0','C4']),
+    errorbar='se',
+    capsize=.2
+)
+
+sns.stripplot(
+    # data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
+    data=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost'"),
+    #x='Condition',
+    y='numSeqs',
+    x='isAcross',
+    color='gray',
+    size=1,
+    dodge=True,
+    legend=False
+)
+
+#plt.xticks([0,1],['S1', 'S2'])
+plt.ylabel('Num. significant \nsequences')
+plt.xticks([0,1],['S1','S2'])
+plt.xlabel('')
+#plt.ylim(0,22)
+plt.legend(bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0)
+plt.savefig('../../output_REM/PCs_numSeqReplay_LTD1_control.pdf')
+
+
+#%% STATS
+pg.ttest(
+    x=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost' and isAcross == 'Within'")['numSeqs'],
+    y=df_replay_stats.query("state_ref == 'wake' and state_pred == 'REMpost' and isAcross == 'Across'")['numSeqs']
+)
+
+# %%  TODO UPDATE TO REMOVE ACROSS CONTROL FROM VALUES HERE!
 plt.figure(figsize=(.75,1))
 sns.barplot(
     data=df_replay_stats.query("condition == 'LTD1' and state_ref == 'wake' and state_pred == 'REMpost'"),
@@ -170,7 +221,7 @@ sns.stripplot(
     y='numSeqs',
     # hue='seqType',
     color='gray',
-    size=2,
+    size=1,
     #dodge=True,
     legend=False
 )
