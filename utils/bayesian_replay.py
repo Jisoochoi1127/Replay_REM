@@ -124,7 +124,9 @@ def extract_linear_replay_shuffle_types(posterior_probs, params):
     positionIdx = np.arange(posterior_probs.shape[0])
     locationIdx = np.arange(posterior_probs.shape[1]) # Will be used to shuffle
     # Compute actual maximum a posteriori from posterior probabilities, convert to cm
+    nan_locs = np.isnan(np.max(posterior_probs,axis=1))
     actual_map = (np.argmax(posterior_probs,axis=1)+params['spatialBinSize']/2)*params['spatialBinSize']
+    actual_map[nan_locs] = actual_map[nan_locs]*np.nan # add back the nans
 
     # Shuffle posteriors, extract shuffled maps
     shuffled_maps_T = np.zeros((params['numShuffles'],len(posterior_probs)))*np.nan #shuffle time
